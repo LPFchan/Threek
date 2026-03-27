@@ -1,0 +1,71 @@
+name: Threek
+options:
+  bundleIdPrefix: com.lpfchan
+  deploymentTarget:
+    macOS: "13.0"
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    PRODUCT_NAME: Threek
+    SWIFT_VERSION: "5.9"
+    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: ""
+    ENABLE_HARDENED_RUNTIME: YES
+    CODE_SIGN_IDENTITY: "-"
+
+targets:
+  Threek:
+    type: application
+    platform: macOS
+
+    sources:
+      - path: App
+      - path: MediaKeys
+      - path: NowPlaying
+        excludes:
+          - "**/*.md"
+      - path: Popup
+      - path: Preferences
+      - path: Resources
+      - path: Threek-Bridging-Header.h
+
+    resources:
+      - path: Resources/Assets.xcassets
+
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.lpfchan.Threek
+        INFOPLIST_FILE: Info.plist
+        SWIFT_VERSION: "5.9"
+        ENABLE_HARDENED_RUNTIME: YES
+        CODE_SIGN_ENTITLEMENTS: Threek.entitlements
+        SWIFT_OBJC_BRIDGING_HEADER: Threek-Bridging-Header.h
+        # Menu bar app — no dock icon
+        # Set LSUIElement in Info.plist below
+
+    info:
+      path: Info.plist
+      properties:
+        CFBundleName: Threek
+        CFBundleIdentifier: com.lpfchan.Threek
+        CFBundleVersion: "1"
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleIconName: AppIcon
+        LSUIElement: true
+        NSHighResolutionCapable: true
+        NSHumanReadableCopyright: "© 2026 LPFchan. All rights reserved."
+        NSPrincipalClass: NSApplication
+        NSSupportsAutomaticTermination: false
+        NSSupportsSuddenTermination: false
+        # Accessibility usage description for Accessibility prompt
+        NSAccessibilityUsageDescription: "Threek needs Accessibility access to intercept media keys and let you choose which app receives them."
+
+    entitlements:
+      path: Threek.entitlements
+
+    scheme:
+      buildAction:
+        parallelizeBuild: true
