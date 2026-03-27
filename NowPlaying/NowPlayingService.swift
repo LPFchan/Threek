@@ -26,8 +26,11 @@ final class NowPlayingService {
     // Function pointer typedefs — ObjC blocks use @convention(block)
     // ---------------------------------------------------------------------------
 
-    // MRMediaRemoteGetNowPlayingApplications(dispatch_queue_t, ^(NSArray *))
-    private typealias GetAppsFunc = @convention(c) (
+    // MRMediaRemoteGetNowPlayingClients(dispatch_queue_t, ^(NSArray *clients))
+    // Renamed from MRMediaRemoteGetNowPlayingApplications in later macOS.
+    // Each element is an _MRNowPlayingClientProtocol ObjC object with
+    // `bundleIdentifier` and `displayName` properties.
+    private typealias GetClientsFunc = @convention(c) (
         DispatchQueue,
         @convention(block) (CFArray?) -> Void
     ) -> Void
@@ -50,7 +53,7 @@ final class NowPlayingService {
     // ---------------------------------------------------------------------------
     // Resolved function pointers
     // ---------------------------------------------------------------------------
-    private var fnGetApps: GetAppsFunc?
+    private var fnGetClients: GetClientsFunc?
     private var fnSendCommandToApp: SendCommandToAppFunc?
     private var fnSendCommand: SendCommandFunc?
 
@@ -92,9 +95,17 @@ final class NowPlayingService {
             return nil
         }
 
-        if let p = sym("MRMediaRemoteGetNowPlayingApplications") {
-            fnGetApps = unsafeBitCast(p, to: GetAppsFunc.self)
-            print("[NowPlayingService] ✓ MRMediaRemoteGetNowPlayingApplications")
+        // Prefer the newer name; fall back to the older one for pre-macOS-15 compatibility.
+        if let p = sym("MRMediaRemoteGetNowPlayingClients") {
+            fnGetClients = unsafeBitCast(p, to: GetClientsFunc.self)
+            print("[NowPlayingService] ✓ MRMediaRemoteGetNowPlayingClients")
+        } else if let p = sym("MRMediaRemoteGetNowPlayingApplications") {
+            // Older name returns [NSString] (bundle IDs directly).
+            // We reuse the same signature — the block param behaves identically.
+            fnGetClients = unsafeBitCast(p, to: GetClientsFunc.self)
+            print("[NowPlayingService] ✓ MRMediaRemoteGetNowPlayingApplications (legacy)")
+        } else {
+            print("[NowPlayingService] ✗ No Now Playing clients API found.")
         }
         if let p = sym("MRMediaRemoteSendCommandToApp") {
             fnSendCommandToApp = unsafeBitCast(p, to: SendCommandToAppFunc.self)
@@ -111,35 +122,56 @@ final class NowPlayingService {
     /// Returns all apps with active Now Playing sessions.
     /// The OS returns them most-recently-active first; we preserve that order.
     func fetchApps() async -> [NowPlayingApp] {
-        guard let fnGetApps else {
-            print("[NowPlayingService] MRMediaRemoteGetNowPlayingApplications unavailable.")
+        guard let fnGetClients else {
+            print("[NowPlayingService] MRMediaRemoteGetNowPlayingClients unavailable.")
             return []
         }
 
-        let bundleIDs: [String] = await withCheckedContinuation { continuation in
-            fnGetApps(DispatchQueue.global(qos: .userInitiated)) { cfArray in
-                let ids = (cfArray as? [String]) ?? []
-                continuation.resume(returning: ids)
+        let rawItems: [AnyObject] = await withCheckedContinuation { continuation in
+            fnGetClients(DispatchQueue.global(qos: .userInitiated)) { cfArray in
+                let items = (cfArray as? [AnyObject]) ?? []
+                continuation.resume(returning: items)
             }
         }
 
-        guard !bundleIDs.isEmpty else { return [] }
+        guard !rawItems.isEmpty else { return [] }
+
+        // Each item is EITHER:
+        //  • An NSString (bundle ID) — older macOS / older API name
+        //  • An _MRNowPlayingClientProtocol ObjC object — newer macOS
+        //    with a `bundleIdentifier` property.
+        var bundleIDs: [String] = []
+        for item in rawItems {
+            if let id = item as? String {
+                bundleIDs.append(id)
+            } else if let id = (item as AnyObject).value(forKey: "bundleIdentifier") as? String {
+                bundleIDs.append(id)
+            } else {
+                // Last resort: ObjC perform
+                let sel = NSSelectorFromString("bundleIdentifier")
+                if (item as AnyObject).responds(to: sel),
+                   let rv = (item as AnyObject).perform(sel),
+                   let id = rv.takeUnretainedValue() as? String {
+                    bundleIDs.append(id)
+                }
+            }
+        }
+
+        guard !bundleIDs.isEmpty else {
+            print("[NowPlayingService] fetchApps: could not extract bundleIDs from \(rawItems.count) client objects")
+            return []
+        }
 
         // Preserve OS ordering (index 0 = most recently active).
-        // Assign a synthetic lastActive date so sort is stable.
         let now = Date()
-        var apps: [NowPlayingApp] = []
-        for (index, bundleID) in bundleIDs.enumerated() {
-            let icon = resolveIcon(for: bundleID)
-            let syntheticDate = now.addingTimeInterval(-Double(index))
-            apps.append(NowPlayingApp(
+        return bundleIDs.enumerated().map { (index, bundleID) in
+            NowPlayingApp(
                 id: bundleID,
-                icon: icon,
-                lastActive: syntheticDate,
+                icon: resolveIcon(for: bundleID),
+                lastActive: now.addingTimeInterval(-Double(index)),
                 isPlaying: true
-            ))
+            )
         }
-        return apps
     }
 
     /// Sends a play/pause toggle to the specified app by bundle ID.
