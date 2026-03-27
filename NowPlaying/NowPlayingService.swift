@@ -122,10 +122,10 @@ final class NowPlayingService {
     /// Fetches all apps with active Now Playing sessions and delivers the result
     /// on the **main queue** via `completion`. Index 0 = most recently active.
     ///
-    /// Intentionally NOT async: bridging the MediaRemote ObjC block callback
-    /// through Swift concurrency continuations causes main-actor deadlocks because
-    /// the C function always dispatches its callback on the main queue regardless
-    /// of the queue argument we pass.
+    /// MRMediaRemoteGetNowPlayingClients makes a synchronous XPC call to
+    /// mediaremoted. Calling it directly on the main thread blocks AppKit's
+    /// run loop → beachball. We hop to a background thread first, then
+    /// deliver results back to main.
     func fetchApps(completion: @escaping ([NowPlayingApp]) -> Void) {
         guard let fnGetClients else {
             print("[NowPlayingService] MRMediaRemoteGetNowPlayingClients unavailable.")
@@ -133,13 +133,16 @@ final class NowPlayingService {
             return
         }
 
-        // Pass the main queue; the C function dispatches its callback there anyway.
-        // By making this explicit we guarantee thread-safety for all downstream work.
-        fnGetClients(DispatchQueue.main) { [weak self] cfArray in
+        // Must NOT be called from the main thread: the C function blocks on XPC.
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
-            // Already on the main queue at this point.
-            let rawItems = (cfArray as? [AnyObject]) ?? []
-            completion(self.appsFromRawItems(rawItems))
+            // Pass main queue so the callback arrives there directly.
+            self.fnGetClients!(DispatchQueue.main) { [weak self] cfArray in
+                guard let self else { return }
+                // Now on main queue.
+                let rawItems = (cfArray as? [AnyObject]) ?? []
+                completion(self.appsFromRawItems(rawItems))
+            }
         }
     }
 
