@@ -6,14 +6,12 @@ import AppKit
 // ---------------------------------------------------------------------------
 // Wraps the private MediaRemote.framework via dlopen/dlsym.
 //
-// Key design notes:
-// - MRMediaRemoteGetNowPlayingApplications: async, returns array of bundleIDs
-//   ordered most-recently-active first by the OS.
-// - MRMediaRemoteGetNowPlayingInfo: async, returns info for the *currently active*
-//   Now Playing app globally (no per-bundleID variant in the APIs we use).
-// - MRMediaRemoteSendCommandToApp: sends a command to a *specific* app by bundleID —
-//   the correct targeted dispatch API.
-// - MRMediaRemoteSendCommand: global fallback, sends to the currently active app.
+// Critical loading notes:
+// - Load via NSBundle first so the linker resolves internal references,
+//   AND dlopen with RTLD_GLOBAL so RTLD_DEFAULT lookups work on macOS 13+.
+// - Completion handlers ARE Objective-C blocks → must use @convention(block).
+//   Using a plain Swift closure (@escaping) as a @convention(c) function
+//   parameter prevents Swift from bridging it correctly.
 // ---------------------------------------------------------------------------
 
 final class NowPlayingService {
@@ -25,28 +23,28 @@ final class NowPlayingService {
     private var frameworkHandle: UnsafeMutableRawPointer?
 
     // ---------------------------------------------------------------------------
-    // Function pointer typedefs
+    // Function pointer typedefs — ObjC blocks use @convention(block)
     // ---------------------------------------------------------------------------
 
-    // MRMediaRemoteGetNowPlayingApplications(dispatch_queue_t, ^(NSArray<NSString*>*))
+    // MRMediaRemoteGetNowPlayingApplications(dispatch_queue_t, ^(NSArray *))
     private typealias GetAppsFunc = @convention(c) (
         DispatchQueue,
-        @escaping (NSArray) -> Void
+        @convention(block) (CFArray?) -> Void
     ) -> Void
 
-    // MRMediaRemoteSendCommandToApp(NSString*, MRMediaRemoteCommand, NSDictionary*, dispatch_queue_t, ^(BOOL, NSError*))
+    // MRMediaRemoteSendCommandToApp(NSString *, int, NSDictionary *, dispatch_queue_t, ^(BOOL, NSError *))
     private typealias SendCommandToAppFunc = @convention(c) (
-        CFString,       // bundleID
-        Int32,          // command (MRMediaRemoteCommand)
-        CFDictionary?,  // options (may be NULL)
-        DispatchQueue,  // completion queue
-        @escaping (Bool, CFError?) -> Void
+        CFString,
+        Int32,
+        CFDictionary?,
+        DispatchQueue,
+        @convention(block) (Bool, CFError?) -> Void
     ) -> Void
 
-    // Fallback: MRMediaRemoteSendCommand(MRMediaRemoteCommand, NSDictionary*)
+    // MRMediaRemoteSendCommand(int, NSDictionary *) → BOOL
     private typealias SendCommandFunc = @convention(c) (
-        Int32,         // command
-        CFDictionary?  // options (may be NULL)
+        Int32,
+        CFDictionary?
     ) -> Bool
 
     // ---------------------------------------------------------------------------
@@ -64,25 +62,47 @@ final class NowPlayingService {
     // MARK: - Framework Loading
 
     private func loadFramework() {
-        let path = "/System/Library/PrivateFrameworks/MediaRemote.framework/MediaRemote"
-        guard let handle = dlopen(path, RTLD_LAZY | RTLD_LOCAL) else {
-            print("[NowPlayingService] Failed to load MediaRemote: \(String(cString: dlerror()))")
-            return
-        }
-        frameworkHandle = handle
+        let frameworkDir  = "/System/Library/PrivateFrameworks/MediaRemote.framework"
+        let frameworkBin  = frameworkDir + "/MediaRemote"
 
-        if let ptr = dlsym(handle, "MRMediaRemoteGetNowPlayingApplications") {
-            fnGetApps = unsafeBitCast(ptr, to: GetAppsFunc.self)
+        // Step 1: Load via NSBundle so its internal ObjC classes / static initializers run.
+        let bundle = Bundle(path: frameworkDir)
+        if bundle?.isLoaded == false {
+            bundle?.load()
+        }
+
+        // Step 2: dlopen with RTLD_GLOBAL so RTLD_DEFAULT can find the symbols.
+        //         If the binary was already mapped (by NSBundle), RTLD_NOLOAD returns the handle.
+        if let handle = dlopen(frameworkBin, RTLD_LAZY | RTLD_GLOBAL) {
+            frameworkHandle = handle
+        } else if let handle = dlopen(frameworkBin, RTLD_NOLOAD) {
+            frameworkHandle = handle
         } else {
-            print("[NowPlayingService] MRMediaRemoteGetNowPlayingApplications not found.")
+            print("[NowPlayingService] dlopen failed: \(String(cString: dlerror()))")
         }
 
-        if let ptr = dlsym(handle, "MRMediaRemoteSendCommandToApp") {
-            fnSendCommandToApp = unsafeBitCast(ptr, to: SendCommandToAppFunc.self)
+        // Step 3: Resolve symbols — prefer specific handle, fall back to RTLD_DEFAULT.
+        // RTLD_DEFAULT (-2 as UnsafeMutableRawPointer) searches all loaded images.
+        let rtldDefault = UnsafeMutableRawPointer(bitPattern: -2)
+
+        func sym(_ name: String) -> UnsafeMutableRawPointer? {
+            if let h = frameworkHandle, let p = dlsym(h, name) { return p }
+            if let p = dlsym(rtldDefault, name) { return p }
+            print("[NowPlayingService] Symbol not found: \(name)")
+            return nil
         }
 
-        if let ptr = dlsym(handle, "MRMediaRemoteSendCommand") {
-            fnSendCommand = unsafeBitCast(ptr, to: SendCommandFunc.self)
+        if let p = sym("MRMediaRemoteGetNowPlayingApplications") {
+            fnGetApps = unsafeBitCast(p, to: GetAppsFunc.self)
+            print("[NowPlayingService] ✓ MRMediaRemoteGetNowPlayingApplications")
+        }
+        if let p = sym("MRMediaRemoteSendCommandToApp") {
+            fnSendCommandToApp = unsafeBitCast(p, to: SendCommandToAppFunc.self)
+            print("[NowPlayingService] ✓ MRMediaRemoteSendCommandToApp")
+        }
+        if let p = sym("MRMediaRemoteSendCommand") {
+            fnSendCommand = unsafeBitCast(p, to: SendCommandFunc.self)
+            print("[NowPlayingService] ✓ MRMediaRemoteSendCommand")
         }
     }
 
@@ -97,16 +117,16 @@ final class NowPlayingService {
         }
 
         let bundleIDs: [String] = await withCheckedContinuation { continuation in
-            fnGetApps(DispatchQueue.global(qos: .userInitiated)) { nsArray in
-                let ids = nsArray as? [String] ?? []
+            fnGetApps(DispatchQueue.global(qos: .userInitiated)) { cfArray in
+                let ids = (cfArray as? [String]) ?? []
                 continuation.resume(returning: ids)
             }
         }
 
         guard !bundleIDs.isEmpty else { return [] }
 
-        // Build app models preserving OS ordering (index 0 = most recently active).
-        // Assign a synthetic lastActive date based on index so sort is stable.
+        // Preserve OS ordering (index 0 = most recently active).
+        // Assign a synthetic lastActive date so sort is stable.
         let now = Date()
         var apps: [NowPlayingApp] = []
         for (index, bundleID) in bundleIDs.enumerated() {
@@ -116,14 +136,13 @@ final class NowPlayingService {
                 id: bundleID,
                 icon: icon,
                 lastActive: syntheticDate,
-                isPlaying: true  // All apps returned by MediaRemote have active sessions
+                isPlaying: true
             ))
         }
         return apps
     }
 
     /// Sends a play/pause toggle to the specified app by bundle ID.
-    /// Uses MRMediaRemoteSendCommandToApp (targeted) when available.
     func sendPlayPause(to bundleID: String) {
         let kMRTogglePlayPause: Int32 = 2
 
@@ -141,7 +160,7 @@ final class NowPlayingService {
             return
         }
 
-        // Fallback: set as active app then send globally
+        // Fallback: set active app override then send globally
         setNowPlayingAppOverride(bundleID: bundleID)
         if let fnSendCommand {
             _ = fnSendCommand(kMRTogglePlayPause, nil)
