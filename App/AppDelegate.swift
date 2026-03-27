@@ -103,14 +103,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return true
         }
 
-        // Async fetch then decide
-        Task { @MainActor in
-            let apps = await NowPlayingService.shared.fetchApps()
+        // Fetch then decide; completion fires on main queue
+        NowPlayingService.shared.fetchApps { [weak self] apps in
+            guard let self else { return }
             if apps.count <= 1 {
-                // 0 or 1 app — synthesize key event and pass through
-                passPlayPauseThroughToSystem()
+                self.passPlayPauseThroughToSystem()
             } else {
-                popupController.show(apps: apps)
+                self.popupController.show(apps: apps)
             }
         }
         // Consume the original event; we'll re-inject if needed
@@ -161,12 +160,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func applicationTerminated(_ note: Notification) {
         guard popupController.isShowing else { return }
-        Task { @MainActor in
-            let apps = await NowPlayingService.shared.fetchApps()
+        NowPlayingService.shared.fetchApps { [weak self] apps in
+            guard let self else { return }
             if apps.count <= 1 {
-                popupController.dismiss()
+                self.popupController.dismiss()
             } else {
-                popupController.refresh(apps: apps)
+                self.popupController.refresh(apps: apps)
             }
         }
     }
@@ -290,8 +289,7 @@ extension AppDelegate: NSMenuDelegate {
         submenu.removeAllItems()
         submenu.addItem(NSMenuItem(title: "Loading…", action: nil, keyEquivalent: ""))
 
-        Task { @MainActor in
-            let apps = await NowPlayingService.shared.fetchApps()
+        NowPlayingService.shared.fetchApps { apps in
             submenu.removeAllItems()
             if apps.isEmpty {
                 submenu.addItem(NSMenuItem(title: "Nothing playing", action: nil, keyEquivalent: ""))

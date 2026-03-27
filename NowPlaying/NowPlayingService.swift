@@ -119,21 +119,33 @@ final class NowPlayingService {
 
     // MARK: - Public API
 
-    /// Returns all apps with active Now Playing sessions.
-    /// The OS returns them most-recently-active first; we preserve that order.
-    func fetchApps() async -> [NowPlayingApp] {
+    /// Fetches all apps with active Now Playing sessions and delivers the result
+    /// on the **main queue** via `completion`. Index 0 = most recently active.
+    ///
+    /// Intentionally NOT async: bridging the MediaRemote ObjC block callback
+    /// through Swift concurrency continuations causes main-actor deadlocks because
+    /// the C function always dispatches its callback on the main queue regardless
+    /// of the queue argument we pass.
+    func fetchApps(completion: @escaping ([NowPlayingApp]) -> Void) {
         guard let fnGetClients else {
             print("[NowPlayingService] MRMediaRemoteGetNowPlayingClients unavailable.")
-            return []
+            DispatchQueue.main.async { completion([]) }
+            return
         }
 
-        let rawItems: [AnyObject] = await withUnsafeContinuation { continuation in
-            fnGetClients(DispatchQueue.global(qos: .userInitiated)) { cfArray in
-                let items = (cfArray as? [AnyObject]) ?? []
-                continuation.resume(returning: items)
-            }
+        // Pass the main queue; the C function dispatches its callback there anyway.
+        // By making this explicit we guarantee thread-safety for all downstream work.
+        fnGetClients(DispatchQueue.main) { [weak self] cfArray in
+            guard let self else { return }
+            // Already on the main queue at this point.
+            let rawItems = (cfArray as? [AnyObject]) ?? []
+            completion(self.appsFromRawItems(rawItems))
         }
+    }
 
+    // MARK: - Private parsing helper
+
+    private func appsFromRawItems(_ rawItems: [AnyObject]) -> [NowPlayingApp] {
         guard !rawItems.isEmpty else { return [] }
 
         // Each item is EITHER:
@@ -147,7 +159,6 @@ final class NowPlayingService {
             } else if let id = (item as AnyObject).value(forKey: "bundleIdentifier") as? String {
                 bundleIDs.append(id)
             } else {
-                // Last resort: ObjC perform
                 let sel = NSSelectorFromString("bundleIdentifier")
                 if (item as AnyObject).responds(to: sel),
                    let rv = (item as AnyObject).perform(sel),
@@ -158,11 +169,10 @@ final class NowPlayingService {
         }
 
         guard !bundleIDs.isEmpty else {
-            print("[NowPlayingService] fetchApps: could not extract bundleIDs from \(rawItems.count) client objects")
+            print("[NowPlayingService] appsFromRawItems: could not extract bundleIDs from \(rawItems.count) client objects")
             return []
         }
 
-        // Preserve OS ordering (index 0 = most recently active).
         let now = Date()
         return bundleIDs.enumerated().map { (index, bundleID) in
             NowPlayingApp(
