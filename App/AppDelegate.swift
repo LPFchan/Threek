@@ -208,7 +208,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             img.isTemplate = true
             button.image = img
         }
-        button.toolTip = trusted ? nil : "Threek: Accessibility access required"
+        button.toolTip = trusted ? nil : "Threek: tap menu → Grant Accessibility Access"
+        // Refresh the menu so the Accessibility item title/action updates.
+        buildMenu()
+        statusItem?.menu = menu
     }
 
     func setupMenuBar() {
@@ -254,6 +257,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         m.addItem(.separator())
 
+        // Accessibility status / re-grant item (shown when tap is not running)
+        let axItem = NSMenuItem(
+            title: interceptor.isRunning ? "Accessibility: ✓ Active" : "Grant Accessibility Access…",
+            action: interceptor.isRunning ? nil : #selector(resetAndPromptAccessibility),
+            keyEquivalent: ""
+        )
+        axItem.target = self
+        axItem.tag = 3
+        m.addItem(axItem)
+
+        m.addItem(.separator())
+
         // Launch at Login
         let loginItem = NSMenuItem(
             title: "Launch at Login",
@@ -281,6 +296,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     // MARK: - Menu actions
+
+    @objc private func resetAndPromptAccessibility() {
+        // Reset the stale TCC entry for this bundle so macOS will prompt fresh.
+        // This is needed when Xcode rebuilds the binary (new hash) but the old
+        // grant is still showing in System Settings.
+        let proc = Process()
+        proc.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+        proc.arguments = ["reset", "Accessibility", "com.lpfchan.Threek"]
+        try? proc.run()
+        proc.waitUntilExit()
+
+        // Now re-trigger the system TCC prompt.
+        let options: NSDictionary = [
+            kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true
+        ]
+        AXIsProcessTrustedWithOptions(options)
+        pollForAccessibility()
+    }
 
     @objc private func toggleEnabled(_ item: NSMenuItem) {
         isEnabled.toggle()
