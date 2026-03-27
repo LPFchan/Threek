@@ -84,7 +84,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.handleTapInvalidated()
         }
         interceptor.start()
-        updateMenuBarIcon(trusted: true)
+        // Only mark trusted if the tap actually created successfully.
+        // start() prints a failure message if it can't create the tap.
+        // Give the run loop one cycle to settle, then poll the real state.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            guard let self else { return }
+            if self.interceptor.isRunning {
+                self.updateMenuBarIcon(trusted: true)
+            } else {
+                // Tap creation failed despite AXIsProcessTrusted() returning true.
+                // This can happen when TCC hasn't fully propagated. Re-poll.
+                self.updateMenuBarIcon(trusted: false)
+                self.pollForAccessibility()
+            }
+        }
     }
 
     private func handleTapInvalidated() {
@@ -115,9 +128,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Fetch then decide; completion fires on main queue
         NowPlayingService.shared.fetchApps { [weak self] apps in
             guard let self else { return }
+            print("[AppDelegate] handleMediaKey: fetchApps returned \(apps.count) app(s): \(apps.map(\.bundleID))")
             if apps.count <= 1 {
+                print("[AppDelegate] handleMediaKey: ≤ 1 app, re-injecting key")
                 self.passPlayPauseThroughToSystem()
             } else {
+                print("[AppDelegate] handleMediaKey: \(apps.count) apps, showing popup")
                 self.popupController.show(apps: apps)
             }
         }

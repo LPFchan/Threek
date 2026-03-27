@@ -27,7 +27,7 @@ final class MediaKeyInterceptor {
 
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
-    private var isRunning = false
+    private(set) var isRunning = false
 
     // NX_KEYTYPE constants from IOKit/hidsystem/ev_keymap.h
     private let NX_KEYTYPE_PLAY: Int32     = 16
