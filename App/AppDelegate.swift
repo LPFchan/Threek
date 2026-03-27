@@ -130,10 +130,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NowPlayingService.shared.fetchApps { [weak self] apps in
             guard let self else { return }
             print("[AppDelegate] handleMediaKey: fetchApps returned \(apps.count) app(s): \(apps.map(\.bundleID))")
-            if apps.count <= 1 {
-                print("[AppDelegate] handleMediaKey: ≤ 1 app, re-injecting key")
+            switch apps.count {
+            case 0:
+                // Nothing outputting audio — pass the key through so the system handles it
+                print("[AppDelegate] handleMediaKey: 0 apps, passing through")
                 self.passPlayPauseThroughToSystem()
-            } else {
+            case 1:
+                // Exactly one app — send directly to it, bypassing macOS Now Playing routing
+                // (which may pick a different app, e.g. Music when Spotify is the one playing)
+                print("[AppDelegate] handleMediaKey: 1 app, sending directly to \(apps[0].bundleID)")
+                NowPlayingService.shared.sendPlayPause(to: apps[0].bundleID)
+            default:
+                // Multiple apps — show the picker popup
                 print("[AppDelegate] handleMediaKey: \(apps.count) apps, showing popup")
                 self.popupController.show(apps: apps)
             }
