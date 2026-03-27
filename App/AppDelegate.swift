@@ -46,37 +46,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Accessibility check
 
     private func checkAccessibilityAndStart() {
-        // Check silently first — avoid triggering the system prompt on every launch
-        // when permission is already granted (e.g. after a debug rebuild).
         if AXIsProcessTrusted() {
             startInterceptor()
             return
         }
 
-        // Not granted yet: show the system grant-access prompt once.
+        // Not yet granted. Fire the system TCC prompt once — macOS shows
+        // "Threek wants to control your computer" the first time only.
+        // NOTE: after a debug rebuild the binary hash changes so TCC may
+        // show the toggle as ON but return false here. In that case,
+        // toggle Threek OFF then ON again in System Settings to re-grant.
         let options: NSDictionary = [
             kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true
         ]
         AXIsProcessTrustedWithOptions(options)
-
-        // Poll until granted — open System Settings if the user dismisses without granting.
-        pollForAccessibility(attempts: 60)
+        updateMenuBarIcon(trusted: false)
+        pollForAccessibility()
     }
 
-    private func pollForAccessibility(attempts: Int) {
-        guard attempts > 0 else {
-            // Timed out: open System Settings privacy panel directly, no blocking alert.
-            let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-            NSWorkspace.shared.open(url)
-            // Keep polling so it starts the moment the user grants it.
-            pollForAccessibility(attempts: 60)
-            return
-        }
+    private func pollForAccessibility() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+            guard let self else { return }
             if AXIsProcessTrusted() {
-                self?.startInterceptor()
+                self.updateMenuBarIcon(trusted: true)
+                self.startInterceptor()
             } else {
-                self?.pollForAccessibility(attempts: attempts - 1)
+                self.pollForAccessibility()
             }
         }
     }
@@ -89,10 +84,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.handleTapInvalidated()
         }
         interceptor.start()
+        updateMenuBarIcon(trusted: true)
     }
 
     private func handleTapInvalidated() {
-        showAccessibilityAlert(prompt: false)
+        // The CGEvent tap was torn down (usually because Accessibility was revoked).
+        // Stop cleanly and re-poll; the interceptor will restart automatically once
+        // the user re-grants access in System Settings.
+        interceptor.stop()
+        updateMenuBarIcon(trusted: false)
+        pollForAccessibility()
     }
 
     // MARK: - Media key routing
@@ -180,21 +181,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Accessibility alert
 
-    private func showAccessibilityAlert(prompt: Bool) {
-        let alert = NSAlert()
-        alert.messageText = "Accessibility Access Required"
-        alert.informativeText = "Threek needs Accessibility access to intercept media keys.\n\nOpen System Settings → Privacy & Security → Accessibility and enable Threek."
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "Open System Settings")
-        alert.addButton(withTitle: "Later")
-
-        if alert.runModal() == .alertFirstButtonReturn {
-            let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-            NSWorkspace.shared.open(url)
-        }
-    }
-
     // MARK: - Menu bar setup
+
+    /// Updates the status bar icon to indicate whether Accessibility is granted.
+    /// Trusted → normal icon. Untrusted → strikethrough / warning variant.
+    private func updateMenuBarIcon(trusted: Bool) {
+        guard let button = statusItem?.button else { return }
+        let symbolName = trusted ? "3.circle.fill" : "3.circle"
+        if let img = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Threek") {
+            img.isTemplate = true
+            button.image = img
+        }
+        button.toolTip = trusted ? nil : "Threek: Accessibility access required"
+    }
 
     func setupMenuBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
