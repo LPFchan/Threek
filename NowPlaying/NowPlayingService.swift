@@ -30,18 +30,26 @@ final class NowPlayingService {
     // Renamed from MRMediaRemoteGetNowPlayingApplications in later macOS.
     // Each element is an _MRNowPlayingClientProtocol ObjC object with
     // `bundleIdentifier` and `displayName` properties.
+    //
+    // IMPORTANT: The callback parameter MUST be Optional<@convention(block)...>.
+    // Non-optional @convention(block) parameters in @convention(c) types are
+    // treated as @noescape by Swift, which sets BLOCK_IS_NOESCAPE on the block.
+    // The C function calls _Block_copy internally (async dispatch), which traps
+    // on a noescape block. Optional closures are implicitly @escaping, avoiding
+    // the flag entirely.
     private typealias GetClientsFunc = @convention(c) (
         DispatchQueue,
-        @convention(block) (CFArray?) -> Void
+        Optional<@convention(block) (CFArray?) -> Void>
     ) -> Void
 
     // MRMediaRemoteSendCommandToApp(NSString *, int, NSDictionary *, dispatch_queue_t, ^(BOOL, NSError *))
+    // Same Optional trick required for the same reason.
     private typealias SendCommandToAppFunc = @convention(c) (
         CFString,
         Int32,
         CFDictionary?,
         DispatchQueue,
-        @convention(block) (Bool, CFError?) -> Void
+        Optional<@convention(block) (Bool, CFError?) -> Void>
     ) -> Void
 
     // MRMediaRemoteSendCommand(int, NSDictionary *) → BOOL
@@ -133,15 +141,15 @@ final class NowPlayingService {
             return
         }
 
-        // Must NOT be called from the main thread: the C function blocks on XPC.
+        // Must NOT be called from the main thread: the C function may block on XPC.
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
-            // Pass main queue so the callback arrives there directly.
             self.fnGetClients!(DispatchQueue.main) { [weak self] cfArray in
-                guard let self else { return }
-                // Now on main queue.
+                // The C function may fire this on any queue; always hop to main.
                 let rawItems = (cfArray as? [AnyObject]) ?? []
-                completion(self.appsFromRawItems(rawItems))
+                guard let self else { return }
+                let apps = self.appsFromRawItems(rawItems)
+                DispatchQueue.main.async { completion(apps) }
             }
         }
     }
@@ -196,12 +204,13 @@ final class NowPlayingService {
                 bundleID as CFString,
                 kMRTogglePlayPause,
                 nil,
-                DispatchQueue.main
-            ) { success, error in
-                if !success, let error {
-                    print("[NowPlayingService] sendCommandToApp failed: \(error)")
+                DispatchQueue.main,
+                Optional<@convention(block) (Bool, CFError?) -> Void> { success, error in
+                    if !success, let error {
+                        print("[NowPlayingService] sendCommandToApp failed: \(error)")
+                    }
                 }
-            }
+            )
             return
         }
 
