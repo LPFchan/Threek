@@ -42,6 +42,11 @@ final class NowPlayingService {
         Optional<@convention(block) (CFArray?) -> Void>
     ) -> Void
 
+    // MRMediaRemoteRegisterForNowPlayingNotifications(dispatch_queue_t)
+    // MUST be called before GetNowPlayingClients; without this, mediaremoted
+    // treats the process as unregistered and returns empty arrays.
+    private typealias RegisterForNotificationsFunc = @convention(c) (DispatchQueue) -> Void
+
     // MRMediaRemoteSendCommandToApp(NSString *, int, NSDictionary *, dispatch_queue_t, ^(BOOL, NSError *))
     // Same Optional trick required for the same reason.
     private typealias SendCommandToAppFunc = @convention(c) (
@@ -62,12 +67,14 @@ final class NowPlayingService {
     // Resolved function pointers
     // ---------------------------------------------------------------------------
     private var fnGetClients: GetClientsFunc?
+    private var fnRegister: RegisterForNotificationsFunc?
     private var fnSendCommandToApp: SendCommandToAppFunc?
     private var fnSendCommand: SendCommandFunc?
 
     // MARK: Init
     private init() {
         loadFramework()
+        registerForNowPlayingNotifications()
     }
 
     // MARK: - Framework Loading
@@ -115,6 +122,12 @@ final class NowPlayingService {
         } else {
             print("[NowPlayingService] ✗ No Now Playing clients API found.")
         }
+        if let p = sym("MRMediaRemoteRegisterForNowPlayingNotifications") {
+            fnRegister = unsafeBitCast(p, to: RegisterForNotificationsFunc.self)
+            print("[NowPlayingService] ✓ MRMediaRemoteRegisterForNowPlayingNotifications")
+        } else {
+            print("[NowPlayingService] ✗ MRMediaRemoteRegisterForNowPlayingNotifications not found")
+        }
         if let p = sym("MRMediaRemoteSendCommandToApp") {
             fnSendCommandToApp = unsafeBitCast(p, to: SendCommandToAppFunc.self)
             print("[NowPlayingService] ✓ MRMediaRemoteSendCommandToApp")
@@ -126,6 +139,18 @@ final class NowPlayingService {
     }
 
     // MARK: - Public API
+
+    /// Registers with mediaremoted so it starts publishing Now Playing client data
+    /// to this process. Must be called before fetchApps() or the daemon returns
+    /// empty arrays.
+    private func registerForNowPlayingNotifications() {
+        guard let fnRegister else {
+            print("[NowPlayingService] registerForNowPlayingNotifications: symbol unavailable")
+            return
+        }
+        fnRegister(DispatchQueue.main)
+        print("[NowPlayingService] registered for Now Playing notifications")
+    }
 
     /// Fetches all apps with active Now Playing sessions and delivers the result
     /// on the **main queue** via `completion`. Index 0 = most recently active.
@@ -142,13 +167,18 @@ final class NowPlayingService {
         }
 
         // Must NOT be called from the main thread: the C function may block on XPC.
+        print("[NowPlayingService] fetchApps: dispatching to background thread")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
+            print("[NowPlayingService] fetchApps: calling fnGetClients on background thread=\(Thread.current)")
             self.fnGetClients!(DispatchQueue.main) { [weak self] cfArray in
-                // The C function may fire this on any queue; always hop to main.
+                print("[NowPlayingService] fetchApps: callback fired on thread=\(Thread.current)")
+                print("[NowPlayingService] fetchApps: cfArray=\(String(describing: cfArray))")
                 let rawItems = (cfArray as? [AnyObject]) ?? []
+                print("[NowPlayingService] fetchApps: rawItems.count=\(rawItems.count)")
                 guard let self else { return }
                 let apps = self.appsFromRawItems(rawItems)
+                print("[NowPlayingService] fetchApps: resolved \(apps.count) apps")
                 DispatchQueue.main.async { completion(apps) }
             }
         }
@@ -157,13 +187,29 @@ final class NowPlayingService {
     // MARK: - Private parsing helper
 
     private func appsFromRawItems(_ rawItems: [AnyObject]) -> [NowPlayingApp] {
-        guard !rawItems.isEmpty else { return [] }
+        guard !rawItems.isEmpty else {
+            print("[NowPlayingService] appsFromRawItems: empty array")
+            return []
+        }
 
         var bundleIDs: [String] = []
         for (i, item) in rawItems.enumerated() {
-            // Log the actual class and description on first item to aid debugging
-            if i == 0 {
-                print("[NowPlayingService] client[0] class=\(type(of: item)) desc=\(item)")
+            print("[NowPlayingService] client[\(i)] class=\(type(of: item))")
+            print("[NowPlayingService] client[\(i)] description=\(item)")
+
+            // Dump every property the object claims to have via KVC
+            if let obj = item as? NSObject {
+                let knownKeys = ["bundleIdentifier", "appBundleIdentifier", "bundleID",
+                                 "applicationBundleIdentifier", "displayName", "pid",
+                                 "processIdentifier", "name"]
+                for key in knownKeys {
+                    // performSelector crashes on non-existent selectors; guard with responds(to:)
+                    let sel = NSSelectorFromString(key)
+                    if obj.responds(to: sel) {
+                        let val = obj.perform(sel)
+                        print("[NowPlayingService] client[\(i)].\(key) = \(String(describing: val?.takeUnretainedValue()))")
+                    }
+                }
             }
 
             if let id = item as? String {
