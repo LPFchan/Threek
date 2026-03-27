@@ -12,9 +12,9 @@ settings:
     SWIFT_VERSION: "5.9"
     MACOSX_DEPLOYMENT_TARGET: "13.0"
     CODE_SIGN_STYLE: Automatic
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: ""        # Set this to your Apple Team ID (Xcode → Signing & Capabilities)
     ENABLE_HARDENED_RUNTIME: YES
-    CODE_SIGN_IDENTITY: "-"
+    CODE_SIGN_IDENTITY: "Apple Development"
 
 targets:
   Threek:
