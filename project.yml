@@ -66,6 +66,9 @@ targets:
     entitlements:
       path: Threek.entitlements
 
+    dependencies:
+      - sdk: CoreAudio.framework
+
     scheme:
       buildAction:
         parallelizeBuild: true

@@ -1,17 +1,13 @@
 import Foundation
 import AppKit
+import CoreAudio
 
 // ---------------------------------------------------------------------------
 // MARK: - NowPlayingService
 // ---------------------------------------------------------------------------
-// Wraps the private MediaRemote.framework via dlopen/dlsym.
-//
-// Critical loading notes:
-// - Load via NSBundle first so the linker resolves internal references,
-//   AND dlopen with RTLD_GLOBAL so RTLD_DEFAULT lookups work on macOS 13+.
-// - Completion handlers ARE Objective-C blocks → must use @convention(block).
-//   Using a plain Swift closure (@escaping) as a @convention(c) function
-//   parameter prevents Swift from bridging it correctly.
+// Enumerate audio-outputting processes via the CoreAudio HAL — no private
+// API entitlements needed. Route play/pause via MediaRemote's
+// MRMediaRemoteSendCommandToApp (works without entitlements).
 // ---------------------------------------------------------------------------
 
 final class NowPlayingService {
@@ -23,32 +19,13 @@ final class NowPlayingService {
     private var frameworkHandle: UnsafeMutableRawPointer?
 
     // ---------------------------------------------------------------------------
-    // Function pointer typedefs — ObjC blocks use @convention(block)
+    // Function pointer typedefs for MediaRemote send-command path.
+    // These work without special entitlements.
     // ---------------------------------------------------------------------------
 
-    // MRMediaRemoteGetNowPlayingClients(dispatch_queue_t, ^(NSArray *clients))
-    // Renamed from MRMediaRemoteGetNowPlayingApplications in later macOS.
-    // Each element is an _MRNowPlayingClientProtocol ObjC object with
-    // `bundleIdentifier` and `displayName` properties.
-    //
-    // IMPORTANT: The callback parameter MUST be Optional<@convention(block)...>.
-    // Non-optional @convention(block) parameters in @convention(c) types are
-    // treated as @noescape by Swift, which sets BLOCK_IS_NOESCAPE on the block.
-    // The C function calls _Block_copy internally (async dispatch), which traps
-    // on a noescape block. Optional closures are implicitly @escaping, avoiding
-    // the flag entirely.
-    private typealias GetClientsFunc = @convention(c) (
-        DispatchQueue,
-        Optional<@convention(block) (CFArray?) -> Void>
-    ) -> Void
-
-    // MRMediaRemoteRegisterForNowPlayingNotifications(dispatch_queue_t)
-    // MUST be called before GetNowPlayingClients; without this, mediaremoted
-    // treats the process as unregistered and returns empty arrays.
-    private typealias RegisterForNotificationsFunc = @convention(c) (DispatchQueue) -> Void
-
     // MRMediaRemoteSendCommandToApp(NSString *, int, NSDictionary *, dispatch_queue_t, ^(BOOL, NSError *))
-    // Same Optional trick required for the same reason.
+    // IMPORTANT: callback must be Optional<@convention(block)...> to avoid
+    // BLOCK_IS_NOESCAPE trap when the C function calls _Block_copy internally.
     private typealias SendCommandToAppFunc = @convention(c) (
         CFString,
         Int32,
@@ -66,15 +43,12 @@ final class NowPlayingService {
     // ---------------------------------------------------------------------------
     // Resolved function pointers
     // ---------------------------------------------------------------------------
-    private var fnGetClients: GetClientsFunc?
-    private var fnRegister: RegisterForNotificationsFunc?
     private var fnSendCommandToApp: SendCommandToAppFunc?
     private var fnSendCommand: SendCommandFunc?
 
     // MARK: Init
     private init() {
         loadFramework()
-        registerForNowPlayingNotifications()
     }
 
     // MARK: - Framework Loading
@@ -110,24 +84,6 @@ final class NowPlayingService {
             return nil
         }
 
-        // Prefer the newer name; fall back to the older one for pre-macOS-15 compatibility.
-        if let p = sym("MRMediaRemoteGetNowPlayingClients") {
-            fnGetClients = unsafeBitCast(p, to: GetClientsFunc.self)
-            print("[NowPlayingService] ✓ MRMediaRemoteGetNowPlayingClients")
-        } else if let p = sym("MRMediaRemoteGetNowPlayingApplications") {
-            // Older name returns [NSString] (bundle IDs directly).
-            // We reuse the same signature — the block param behaves identically.
-            fnGetClients = unsafeBitCast(p, to: GetClientsFunc.self)
-            print("[NowPlayingService] ✓ MRMediaRemoteGetNowPlayingApplications (legacy)")
-        } else {
-            print("[NowPlayingService] ✗ No Now Playing clients API found.")
-        }
-        if let p = sym("MRMediaRemoteRegisterForNowPlayingNotifications") {
-            fnRegister = unsafeBitCast(p, to: RegisterForNotificationsFunc.self)
-            print("[NowPlayingService] ✓ MRMediaRemoteRegisterForNowPlayingNotifications")
-        } else {
-            print("[NowPlayingService] ✗ MRMediaRemoteRegisterForNowPlayingNotifications not found")
-        }
         if let p = sym("MRMediaRemoteSendCommandToApp") {
             fnSendCommandToApp = unsafeBitCast(p, to: SendCommandToAppFunc.self)
             print("[NowPlayingService] ✓ MRMediaRemoteSendCommandToApp")
@@ -140,127 +96,91 @@ final class NowPlayingService {
 
     // MARK: - Public API
 
-    /// Registers with mediaremoted so it starts publishing Now Playing client data
-    /// to this process. Must be called before fetchApps() or the daemon returns
-    /// empty arrays.
-    private func registerForNowPlayingNotifications() {
-        guard let fnRegister else {
-            print("[NowPlayingService] registerForNowPlayingNotifications: symbol unavailable")
-            return
-        }
-        fnRegister(DispatchQueue.main)
-        print("[NowPlayingService] registered for Now Playing notifications")
-    }
-
-    /// Fetches all apps with active Now Playing sessions and delivers the result
-    /// on the **main queue** via `completion`. Index 0 = most recently active.
-    ///
-    /// MRMediaRemoteGetNowPlayingClients makes a synchronous XPC call to
-    /// mediaremoted. Calling it directly on the main thread blocks AppKit's
-    /// run loop → beachball. We hop to a background thread first, then
-    /// deliver results back to main.
+    /// Returns all apps currently outputting audio, via the CoreAudio HAL.
+    /// Delivers results on the **main queue**. Requires macOS 14+; returns
+    /// empty on macOS 13.
     func fetchApps(completion: @escaping ([NowPlayingApp]) -> Void) {
-        guard let fnGetClients else {
-            print("[NowPlayingService] MRMediaRemoteGetNowPlayingClients unavailable.")
-            DispatchQueue.main.async { completion([]) }
-            return
-        }
-
-        // Must NOT be called from the main thread: the C function may block on XPC.
-        print("[NowPlayingService] fetchApps: dispatching to background thread")
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
-            print("[NowPlayingService] fetchApps: calling fnGetClients on background thread=\(Thread.current)")
-            self.fnGetClients!(DispatchQueue.main) { [weak self] cfArray in
-                print("[NowPlayingService] fetchApps: callback fired on thread=\(Thread.current)")
-                print("[NowPlayingService] fetchApps: cfArray=\(String(describing: cfArray))")
-                let rawItems = (cfArray as? [AnyObject]) ?? []
-                print("[NowPlayingService] fetchApps: rawItems.count=\(rawItems.count)")
-                guard let self else { return }
-                let apps = self.appsFromRawItems(rawItems)
-                print("[NowPlayingService] fetchApps: resolved \(apps.count) apps")
-                DispatchQueue.main.async { completion(apps) }
+            let apps: [NowPlayingApp]
+            if #available(macOS 14, *) {
+                apps = self.fetchAppsViaCoreAudio()
+            } else {
+                apps = []
             }
+            print("[NowPlayingService] fetchApps: \(apps.count) app(s) outputting audio")
+            DispatchQueue.main.async { completion(apps) }
         }
     }
 
-    // MARK: - Private parsing helper
+    // MARK: - CoreAudio enumeration
 
-    private func appsFromRawItems(_ rawItems: [AnyObject]) -> [NowPlayingApp] {
-        guard !rawItems.isEmpty else {
-            print("[NowPlayingService] appsFromRawItems: empty array")
+    /// Enumerates processes currently outputting audio via the CoreAudio HAL.
+    /// No private API or special entitlements required.
+    @available(macOS 14, *)
+    private func fetchAppsViaCoreAudio() -> [NowPlayingApp] {
+        let systemObj = AudioObjectID(kAudioObjectSystemObject)
+        var listAddr = AudioObjectPropertyAddress(
+            mSelector: kAudioHardwarePropertyProcessObjectList,
+            mScope: kAudioObjectPropertyScopeGlobal,
+            mElement: kAudioObjectPropertyElementMain
+        )
+
+        var dataSize: UInt32 = 0
+        guard AudioObjectGetPropertyDataSize(systemObj, &listAddr, 0, nil, &dataSize) == noErr,
+              dataSize > 0 else {
+            print("[NowPlayingService] CoreAudio: can't get process list size")
             return []
         }
 
-        var bundleIDs: [String] = []
-        for (i, item) in rawItems.enumerated() {
-            print("[NowPlayingService] client[\(i)] class=\(type(of: item))")
-            print("[NowPlayingService] client[\(i)] description=\(item)")
-
-            // Dump every property the object claims to have via KVC
-            if let obj = item as? NSObject {
-                let knownKeys = ["bundleIdentifier", "appBundleIdentifier", "bundleID",
-                                 "applicationBundleIdentifier", "displayName", "pid",
-                                 "processIdentifier", "name"]
-                for key in knownKeys {
-                    // performSelector crashes on non-existent selectors; guard with responds(to:)
-                    let sel = NSSelectorFromString(key)
-                    if obj.responds(to: sel) {
-                        let val = obj.perform(sel)
-                        print("[NowPlayingService] client[\(i)].\(key) = \(String(describing: val?.takeUnretainedValue()))")
-                    }
-                }
-            }
-
-            if let id = item as? String {
-                // Older API: items ARE the bundle ID strings
-                bundleIDs.append(id)
-            } else {
-                // Newer API: items are _MRNowPlayingClientProtocol objects.
-                // Try every key name that has been observed across macOS versions.
-                let candidates = ["bundleIdentifier", "appBundleIdentifier", "bundleID", "applicationBundleIdentifier"]
-                var found: String?
-                for key in candidates {
-                    if let id = (item as AnyObject).value(forKey: key) as? String {
-                        found = id
-                        break
-                    }
-                }
-
-                if let id = found {
-                    bundleIDs.append(id)
-                } else {
-                    // Last resort: ObjC perform on every candidate selector
-                    for key in candidates {
-                        let sel = NSSelectorFromString(key)
-                        if (item as AnyObject).responds(to: sel),
-                           let rv = (item as AnyObject).perform(sel),
-                           let id = rv.takeUnretainedValue() as? String {
-                            bundleIDs.append(id)
-                            break
-                        }
-                    }
-                    if bundleIDs.count < i + 1 {
-                        print("[NowPlayingService] client[\(i)]: could not extract bundle ID")
-                    }
-                }
-            }
-        }
-
-        guard !bundleIDs.isEmpty else {
-            print("[NowPlayingService] appsFromRawItems: could not extract bundleIDs from \(rawItems.count) client objects")
+        let count = Int(dataSize) / MemoryLayout<AudioObjectID>.size
+        var objectIDs = [AudioObjectID](repeating: 0, count: count)
+        guard AudioObjectGetPropertyData(systemObj, &listAddr, 0, nil, &dataSize, &objectIDs) == noErr else {
+            print("[NowPlayingService] CoreAudio: can't get process list")
             return []
         }
 
-        let now = Date()
-        return bundleIDs.enumerated().map { (index, bundleID) in
-            NowPlayingApp(
-                id: bundleID,
-                icon: resolveIcon(for: bundleID),
-                lastActive: now.addingTimeInterval(-Double(index)),
-                isPlaying: true
+        let ourPID = ProcessInfo.processInfo.processIdentifier
+        var result: [NowPlayingApp] = []
+
+        for objID in objectIDs {
+            // Only include processes actively outputting audio right now.
+            var runAddr = AudioObjectPropertyAddress(
+                mSelector: kAudioProcessPropertyIsRunningOutput,
+                mScope: kAudioObjectPropertyScopeGlobal,
+                mElement: kAudioObjectPropertyElementMain
             )
+            var isRunning: UInt32 = 0
+            var rSz = UInt32(MemoryLayout<UInt32>.size)
+            guard AudioObjectGetPropertyData(objID, &runAddr, 0, nil, &rSz, &isRunning) == noErr,
+                  isRunning != 0 else { continue }
+
+            // Get the PID of this audio process.
+            var pidAddr = AudioObjectPropertyAddress(
+                mSelector: kAudioProcessPropertyPID,
+                mScope: kAudioObjectPropertyScopeGlobal,
+                mElement: kAudioObjectPropertyElementMain
+            )
+            var pid: pid_t = 0
+            var pidSz = UInt32(MemoryLayout<pid_t>.size)
+            guard AudioObjectGetPropertyData(objID, &pidAddr, 0, nil, &pidSz, &pid) == noErr,
+                  pid > 0, pid != ourPID else { continue }
+
+            // Map PID → running app. Skip daemons; only show regular UI apps.
+            guard let app = NSRunningApplication(processIdentifier: pid),
+                  let bundleID = app.bundleIdentifier,
+                  app.activationPolicy == .regular else { continue }
+
+            print("[NowPlayingService] CoreAudio: active output → \(bundleID) (pid=\(pid))")
+            result.append(NowPlayingApp(
+                id: bundleID,
+                icon: app.icon,
+                lastActive: Date(),
+                isPlaying: true
+            ))
         }
+
+        return result
     }
 
     /// Sends a play/pause toggle to the specified app by bundle ID.
