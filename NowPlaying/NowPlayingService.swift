@@ -159,22 +159,44 @@ final class NowPlayingService {
     private func appsFromRawItems(_ rawItems: [AnyObject]) -> [NowPlayingApp] {
         guard !rawItems.isEmpty else { return [] }
 
-        // Each item is EITHER:
-        //  • An NSString (bundle ID) — older macOS / older API name
-        //  • An _MRNowPlayingClientProtocol ObjC object — newer macOS
-        //    with a `bundleIdentifier` property.
         var bundleIDs: [String] = []
-        for item in rawItems {
+        for (i, item) in rawItems.enumerated() {
+            // Log the actual class and description on first item to aid debugging
+            if i == 0 {
+                print("[NowPlayingService] client[0] class=\(type(of: item)) desc=\(item)")
+            }
+
             if let id = item as? String {
-                bundleIDs.append(id)
-            } else if let id = (item as AnyObject).value(forKey: "bundleIdentifier") as? String {
+                // Older API: items ARE the bundle ID strings
                 bundleIDs.append(id)
             } else {
-                let sel = NSSelectorFromString("bundleIdentifier")
-                if (item as AnyObject).responds(to: sel),
-                   let rv = (item as AnyObject).perform(sel),
-                   let id = rv.takeUnretainedValue() as? String {
+                // Newer API: items are _MRNowPlayingClientProtocol objects.
+                // Try every key name that has been observed across macOS versions.
+                let candidates = ["bundleIdentifier", "appBundleIdentifier", "bundleID", "applicationBundleIdentifier"]
+                var found: String?
+                for key in candidates {
+                    if let id = (item as AnyObject).value(forKey: key) as? String {
+                        found = id
+                        break
+                    }
+                }
+
+                if let id = found {
                     bundleIDs.append(id)
+                } else {
+                    // Last resort: ObjC perform on every candidate selector
+                    for key in candidates {
+                        let sel = NSSelectorFromString(key)
+                        if (item as AnyObject).responds(to: sel),
+                           let rv = (item as AnyObject).perform(sel),
+                           let id = rv.takeUnretainedValue() as? String {
+                            bundleIDs.append(id)
+                            break
+                        }
+                    }
+                    if bundleIDs.count < i + 1 {
+                        print("[NowPlayingService] client[\(i)]: could not extract bundle ID")
+                    }
                 }
             }
         }

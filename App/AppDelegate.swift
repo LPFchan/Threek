@@ -46,22 +46,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Accessibility check
 
     private func checkAccessibilityAndStart() {
+        // Check silently first — avoid triggering the system prompt on every launch
+        // when permission is already granted (e.g. after a debug rebuild).
+        if AXIsProcessTrusted() {
+            startInterceptor()
+            return
+        }
+
+        // Not granted yet: show the system grant-access prompt once.
         let options: NSDictionary = [
             kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true
         ]
-        let trusted = AXIsProcessTrustedWithOptions(options)
+        AXIsProcessTrustedWithOptions(options)
 
-        if trusted {
-            startInterceptor()
-        } else {
-            // The system prompt launched; poll until granted (up to 30 s)
-            pollForAccessibility(attempts: 30)
-        }
+        // Poll until granted — open System Settings if the user dismisses without granting.
+        pollForAccessibility(attempts: 60)
     }
 
     private func pollForAccessibility(attempts: Int) {
         guard attempts > 0 else {
-            showAccessibilityAlert(prompt: false)
+            // Timed out: open System Settings privacy panel directly, no blocking alert.
+            let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+            NSWorkspace.shared.open(url)
+            // Keep polling so it starts the moment the user grants it.
+            pollForAccessibility(attempts: 60)
             return
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
