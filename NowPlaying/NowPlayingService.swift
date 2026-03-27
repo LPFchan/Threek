@@ -127,7 +127,7 @@ final class NowPlayingService {
             return []
         }
 
-        let rawItems: [AnyObject] = await withCheckedContinuation { continuation in
+        let rawItems: [AnyObject] = await withUnsafeContinuation { continuation in
             fnGetClients(DispatchQueue.global(qos: .userInitiated)) { cfArray in
                 let items = (cfArray as? [AnyObject]) ?? []
                 continuation.resume(returning: items)
