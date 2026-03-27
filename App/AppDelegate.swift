@@ -114,16 +114,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Returns true to consume the event, false to let it pass through.
     @discardableResult
     private func handleMediaKey(_ event: MediaKeyEvent) -> Bool {
-        guard isEnabled else { return false }  // Pass-through mode
+        guard isEnabled else { return false }
 
-        // ⏮/⏭ always pass through (spec)
-        guard event == .playPause else { return false }
-
-        // If popup is already showing (4+ app selector), route keys into it
+        // When the popup is visible ALL media keys are consumed and routed into it.
+        // This must come before the ⏮/⏭ pass-through guard below.
         if popupController.isShowing {
             popupController.handleKey(event)
             return true
         }
+
+        // Outside the popup: ⏮/⏭ always pass through (only ⏯ triggers Threek logic)
+        guard event == .playPause else { return false }
 
         // Fetch then decide; completion fires on main queue
         NowPlayingService.shared.fetchApps { [weak self] apps in
