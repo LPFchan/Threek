@@ -119,8 +119,14 @@ private struct AppIconView: View {
                 }
             }
             .frame(width: 76, height: 76)
+            .opacity(app.isControllable ? 1 : 0.35)
+            .saturation(app.isControllable ? 1 : 0)
             Text(app.displayName).font(.caption).lineLimit(1)
+                .foregroundStyle(app.isControllable ? .primary : .secondary)
         }
+        .opacity(app.isControllable ? 1 : 0.6)
+        .help(app.isControllable ? app.displayName
+              : "\(app.displayName) — can't be controlled right now")
     }
 }
 

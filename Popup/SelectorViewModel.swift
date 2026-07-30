@@ -39,11 +39,17 @@ final class SelectorViewModel: ObservableObject {
         pendingCommand = triggering
         cancelTimeout()
         if apps.count >= 4 {
-            state = .selecting(apps: apps, selectedIndex: 0)
+            state = .selecting(apps: apps,
+                               selectedIndex: Self.firstControllableIndex(in: apps) ?? 0)
         } else {
             state = .showing(apps: apps)
         }
         scheduleTimeout()
+    }
+
+    /// Index of the first app that can actually receive a command.
+    private static func firstControllableIndex(in apps: [NowPlayingApp]) -> Int? {
+        apps.firstIndex(where: { $0.isControllable })
     }
 
     @MainActor
@@ -52,24 +58,22 @@ final class SelectorViewModel: ObservableObject {
         switch state {
         case .showing(let apps):
             switch event {
-            case .previous: dispatch(apps[0])
-            case .next: dispatch(apps[apps.count == 2 ? 1 : 2])
-            case .playPause: dispatch(apps[apps.count == 3 ? 1 : 0])
+            case .previous: dispatchIfControllable(apps[0])
+            case .next: dispatchIfControllable(apps[apps.count == 2 ? 1 : 2])
+            case .playPause: dispatchIfControllable(apps[apps.count == 3 ? 1 : 0])
             case .other: break
             }
             return true
         case .selecting(let apps, let index):
             switch event {
             case .previous:
-                state = .selecting(apps: apps,
-                                   selectedIndex: (index - 1 + apps.count) % apps.count)
+                state = .selecting(apps: apps, selectedIndex: move(from: index, by: -1, in: apps))
                 resetTimeout()
             case .next:
-                state = .selecting(apps: apps,
-                                   selectedIndex: (index + 1) % apps.count)
+                state = .selecting(apps: apps, selectedIndex: move(from: index, by: 1, in: apps))
                 resetTimeout()
             case .playPause:
-                dispatch(apps[index])
+                dispatchIfControllable(apps[index])
             case .other:
                 break
             }
@@ -91,6 +95,25 @@ final class SelectorViewModel: ObservableObject {
         cancelTimeout()
         state = .idle
         onDispatch?(app.effectiveBundleID, pendingCommand)
+    }
+
+    /// Dispatches only if the app can actually be controlled; greyed-out apps
+    /// are inert so a pick never silently lands on the wrong target.
+    @MainActor
+    private func dispatchIfControllable(_ app: NowPlayingApp) {
+        guard app.isControllable else { return }
+        dispatch(app)
+    }
+
+    /// Moves the selection ring, skipping apps that can't be controlled. If
+    /// every app is greyed out, returns the current index unchanged.
+    private func move(from index: Int, by delta: Int, in apps: [NowPlayingApp]) -> Int {
+        guard apps.contains(where: { $0.isControllable }) else { return index }
+        var next = index
+        repeat {
+            next = (next + delta + apps.count) % apps.count
+        } while !apps[next].isControllable && next != index
+        return next
     }
 
     private func scheduleTimeout() {

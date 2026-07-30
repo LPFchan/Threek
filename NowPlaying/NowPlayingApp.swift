@@ -9,6 +9,12 @@ struct NowPlayingApp: Identifiable, Equatable, Hashable {
     /// (e.g. a WebKit GPU process for a browser tab). The parent bundle ID is
     /// what should be targeted and shown.
     let parentBundleID: String?
+    /// Whether picking this app will reliably reach it. Scriptable apps
+    /// (Music, Spotify) are always controllable via AppleScript; non-scriptable
+    /// apps (browsers, Zen) are only controllable while they're the current
+    /// now-playing app, where the adapter can reach them. Non-controllable apps
+    /// are shown greyed-out and can't be picked.
+    var isControllable: Bool = true
 
     var id: String { effectiveBundleID }
 

@@ -226,14 +226,20 @@ final class NowPlayingService {
         // keyed by the effective bundle ID so each real app appears once.
         var byBundleID: [String: NowPlayingApp] = [:]
         var order: [String] = []
+        let nowPlaying = self.currentNowPlayingBundleID()
         for client in response.clients {
             guard let bundleID = client.bundleIdentifier else { continue }
-            let app = NowPlayingApp(
+            var app = NowPlayingApp(
                 bundleID: bundleID,
                 displayName: client.displayName ?? bundleID,
                 processIdentifier: client.processIdentifier.map { pid_t($0) },
                 parentBundleID: client.parentApplicationBundleIdentifier
             )
+            // An app is reliably controllable if we can drive it directly with
+            // AppleScript, or if it's the current now-playing app (reachable
+            // via the adapter). Non-scriptable background apps get greyed out.
+            app.isControllable = Self.scriptableBundleIDs.contains(app.effectiveBundleID)
+                || app.effectiveBundleID == nowPlaying
             if byBundleID[app.effectiveBundleID] == nil {
                 order.append(app.effectiveBundleID)
             }
@@ -251,6 +257,30 @@ final class NowPlayingService {
             return false  // stable: keep registry order within a group
         }
         return sorted
+    }
+
+    /// Bundle IDs known to respond to `tell application id … to playpause`.
+    /// Anything not listed here is treated as non-scriptable (browsers, Zen)
+    /// and is only controllable while it is the active now-playing app.
+    private static let scriptableBundleIDs: Set<String> = [
+        "com.apple.Music",
+        "com.spotify.client",
+        "org.videolan.vlc",
+        "com.apple.TV",
+        "com.apple.Podcasts",
+        "com.colliderli.iina",
+        "com.cog.cog",
+    ]
+
+    /// The bundle ID of the app macOS currently reports as now-playing, read
+    /// from the adapter's `get` payload; nil if it can't be determined.
+    private func currentNowPlayingBundleID() -> String? {
+        guard let script = perlScriptURL, let framework = frameworkURL,
+              let data = runAdapter(arguments: [script.path, framework.path, "get"]),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+        return obj["bundleIdentifier"] as? String
     }
 
     /// Runs the perl adapter with the given arguments and returns its stdout.
