@@ -2,7 +2,7 @@ name: Threek
 options:
   bundleIdPrefix: com.lpfchan
   deploymentTarget:
-    macOS: "13.0"
+    macOS: "15.0"
   createIntermediateGroups: true
   generateEmptyDirectories: true
 
@@ -10,11 +10,11 @@ settings:
   base:
     PRODUCT_NAME: Threek
     SWIFT_VERSION: "5.9"
-    MACOSX_DEPLOYMENT_TARGET: "13.0"
+    MACOSX_DEPLOYMENT_TARGET: "15.0"
     CODE_SIGN_STYLE: Automatic
-    DEVELOPMENT_TEAM: ""        # Set this to your Apple Team ID (Xcode → Signing & Capabilities)
-    ENABLE_HARDENED_RUNTIME: YES
+    DEVELOPMENT_TEAM: "JV4AQ2NAC3"
     CODE_SIGN_IDENTITY: "Apple Development"
+    ENABLE_HARDENED_RUNTIME: YES
 
 targets:
   Threek:
@@ -23,17 +23,23 @@ targets:
 
     sources:
       - path: App
-      - path: MediaKeys
       - path: NowPlaying
-        excludes:
-          - "**/*.md"
       - path: Popup
+      - path: MediaKeys
       - path: Preferences
       - path: Resources
-      - path: Threek-Bridging-Header.h
+      # The perl shim and the built adapter framework/test client are staged
+      # into Build/Adapter by the pre-build script below and copied verbatim.
+      - path: Build/Adapter
 
     resources:
       - path: Resources/Assets.xcassets
+
+    preBuildScripts:
+      - name: Build MediaRemote Adapter
+        script: |
+          "$SRCROOT/Scripts/build-adapter.sh"
+        basedOnDependencyAnalysis: false
 
     settings:
       base:
@@ -42,9 +48,6 @@ targets:
         SWIFT_VERSION: "5.9"
         ENABLE_HARDENED_RUNTIME: YES
         CODE_SIGN_ENTITLEMENTS: Threek.entitlements
-        SWIFT_OBJC_BRIDGING_HEADER: Threek-Bridging-Header.h
-        # Menu bar app — no dock icon
-        # Set LSUIElement in Info.plist below
 
     info:
       path: Info.plist
@@ -52,7 +55,7 @@ targets:
         CFBundleName: Threek
         CFBundleIdentifier: com.lpfchan.Threek
         CFBundleVersion: "1"
-        CFBundleShortVersionString: "1.0.0"
+        CFBundleShortVersionString: "2.0.0"
         CFBundleIconName: AppIcon
         LSUIElement: true
         NSHighResolutionCapable: true
@@ -60,8 +63,8 @@ targets:
         NSPrincipalClass: NSApplication
         NSSupportsAutomaticTermination: false
         NSSupportsSuddenTermination: false
-        # Accessibility usage description for Accessibility prompt
         NSAccessibilityUsageDescription: "Threek needs Accessibility access to intercept media keys and let you choose which app receives them."
+        NSAppleEventsUsageDescription: "Threek needs to send play/pause to the media apps you choose."
 
     entitlements:
       path: Threek.entitlements

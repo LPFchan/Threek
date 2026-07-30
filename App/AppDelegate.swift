@@ -1,77 +1,66 @@
 import AppKit
 import SwiftUI
-import ServiceManagement
-
-// ---------------------------------------------------------------------------
-// MARK: - AppDelegate
-// ---------------------------------------------------------------------------
-// Owns: NSStatusItem (menu bar), MediaKeyInterceptor, PopupController.
-// Routes media key presses → NowPlayingService → popup or pass-through.
-// ---------------------------------------------------------------------------
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
-    // MARK: - Dependencies
     private let interceptor = MediaKeyInterceptor()
-    private let popupController = PopupController()
+    private let popup = PopupController()
 
-    // MARK: - Menu bar
     private var statusItem: NSStatusItem?
-    private var menu: NSMenu?
-
-    // MARK: - State
-    private var isEnabled = true  // Toggle to pass all keys through
-
-    // MARK: - App lifecycle
+    private var isEnabled = true
+    private var isPolling = false
+    /// True once we've confirmed the event tap actually receives events. A
+    /// stale TCC grant leaves AXIsProcessTrusted()==true but the tap blind.
+    private var tapVerified = false
+    private var selfTestKeyCode: Int32 = -1
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Hide from Dock (belt-and-suspenders; LSUIElement covers this)
         NSApp.setActivationPolicy(.accessory)
 
-        // Wire popup dispatch → NowPlayingService
-        popupController.onDispatch = { bundleID in
-            NowPlayingService.shared.sendPlayPause(to: bundleID)
+        popup.onDispatch = { [weak self] bundleID, key in
+            DispatchQueue.main.async {
+                self?.dispatch(key, to: bundleID)
+            }
         }
 
         setupMenuBar()
         checkAccessibilityAndStart()
-        observeApplicationTerminations()
+        NowPlayingService.shared.warmCache()
+        verifyTapHealth()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         interceptor.stop()
     }
 
-    // MARK: - Accessibility check
+    // MARK: - Accessibility
 
     private func checkAccessibilityAndStart() {
         if AXIsProcessTrusted() {
             startInterceptor()
             return
         }
-
-        // Not yet granted. Fire the system TCC prompt once — macOS shows
-        // "Threek wants to control your computer" the first time only.
-        // NOTE: after a debug rebuild the binary hash changes so TCC may
-        // show the toggle as ON but return false here. In that case,
-        // toggle Threek OFF then ON again in System Settings to re-grant.
-        let options: NSDictionary = [
-            kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true
-        ]
+        let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
         AXIsProcessTrustedWithOptions(options)
-        updateMenuBarIcon(trusted: false)
-        pollForAccessibility()
+        updateIcon(trusted: false)
+        startPolling()
     }
 
-    private func pollForAccessibility() {
+    private func startPolling() {
+        guard !isPolling else { return }
+        isPolling = true
+        poll()
+    }
+
+    private func poll() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             guard let self else { return }
             if AXIsProcessTrusted() {
-                self.updateMenuBarIcon(trusted: true)
+                self.isPolling = false
                 self.startInterceptor()
             } else {
-                self.pollForAccessibility()
+                self.poll()
             }
         }
     }
@@ -81,295 +70,212 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.handleMediaKey(event) ?? false
         }
         interceptor.onTapInvalidated = { [weak self] in
-            self?.handleTapInvalidated()
+            self?.interceptor.stop()
+            self?.updateIcon(trusted: false)
+            self?.startPolling()
         }
         interceptor.start()
-        // Only mark trusted if the tap actually created successfully.
-        // start() prints a failure message if it can't create the tap.
-        // Give the run loop one cycle to settle, then poll the real state.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+        Log.write("[AppDelegate] AXIsProcessTrusted=\(AXIsProcessTrusted()) interceptor.isRunning=\(interceptor.isRunning)")
+        updateIcon(trusted: interceptor.isRunning)
+        if !interceptor.isRunning { startPolling() }
+    }
+
+    // MARK: - Tap health
+
+    /// A media key we synthesize ourselves at startup. When our own tap sees
+    /// it, we know the tap is live. If it never arrives within the timeout,
+    /// the Accessibility grant is stale and the user must re-toggle it.
+    private func verifyTapHealth() {
+        guard interceptor.isRunning else { return }
+        // Use the EJECT key (14) — it has no system effect, so it's a safe
+        // canary that won't disturb playback even if it leaks through.
+        let keyCode: Int32 = 14
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self else { return }
-            if self.interceptor.isRunning {
-                self.updateMenuBarIcon(trusted: true)
+            self.selfTestKeyCode = keyCode
+            Self.postSystemDefined(keyCode: keyCode, down: true)
+            Self.postSystemDefined(keyCode: keyCode, down: false)
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { [weak self] in
+            guard let self else { return }
+            self.selfTestKeyCode = -1
+            if self.interceptor.hasSeenEvent {
+                self.tapVerified = true
+                self.updateIcon(trusted: true)
             } else {
-                // Tap creation failed despite AXIsProcessTrusted() returning true.
-                // This can happen when TCC hasn't fully propagated. Re-poll.
-                self.updateMenuBarIcon(trusted: false)
-                self.pollForAccessibility()
+                self.tapVerified = false
+                Log.write("[AppDelegate] tap is BLIND (stale Accessibility grant)")
+                self.updateIcon(trusted: false)
+                self.buildMenu()
             }
         }
     }
 
-    private func handleTapInvalidated() {
-        // The CGEvent tap was torn down (usually because Accessibility was revoked).
-        // Stop cleanly and re-poll; the interceptor will restart automatically once
-        // the user re-grants access in System Settings.
-        interceptor.stop()
-        updateMenuBarIcon(trusted: false)
-        pollForAccessibility()
+    /// Posts a raw system-defined (media-key) event at the HID tap.
+    static func postSystemDefined(keyCode: Int32, down: Bool) {
+        let data1 = (Int(keyCode) << 16) | (down ? 0x0a00 : 0x0b00)
+        let ev = NSEvent.otherEvent(
+            with: .systemDefined, location: .zero, modifierFlags: [],
+            timestamp: ProcessInfo.processInfo.systemUptime,
+            windowNumber: 0, context: nil, subtype: 8,
+            data1: data1, data2: -1)
+        ev?.cgEvent?.post(tap: .cghidEventTap)
     }
 
     // MARK: - Media key routing
 
-    /// Returns true to consume the event, false to let it pass through.
+    /// Returns true to consume, false to pass through.
     @discardableResult
     private func handleMediaKey(_ event: MediaKeyEvent) -> Bool {
+        // Swallow our own health-check canary without routing it anywhere.
+        if event.rawKeyCode == selfTestKeyCode {
+            tapVerified = true
+            return true
+        }
         guard isEnabled else { return false }
 
-        // When the popup is visible ALL media keys are consumed and routed into it.
-        // This must come before the ⏮/⏭ pass-through guard below.
-        if popupController.isShowing {
-            popupController.handleKey(event)
+        if popup.isShowing {
+            popup.handleKey(event)
             return true
         }
 
-        // Outside the popup: ⏮/⏭ always pass through (only ⏯ triggers Threek logic)
-        guard event == .playPause else { return false }
-
-        // Fetch then decide; completion fires on main queue
-        NowPlayingService.shared.fetchApps { [weak self] apps in
+        NowPlayingService.shared.fetchAppsFast { [weak self] apps in
             guard let self else { return }
-            print("[AppDelegate] handleMediaKey: fetchApps returned \(apps.count) app(s): \(apps.map(\.bundleID))")
             switch apps.count {
             case 0:
-                // Nothing outputting audio — pass the key through so the system handles it
-                print("[AppDelegate] handleMediaKey: 0 apps, passing through")
-                self.passPlayPauseThroughToSystem()
+                // Nothing registered — let the system handle the key normally.
+                self.reinjectKey(event)
             case 1:
-                // Exactly one app — send directly to it, bypassing macOS Now Playing routing
-                // (which may pick a different app, e.g. Music when Spotify is the one playing)
-                print("[AppDelegate] handleMediaKey: 1 app, sending directly to \(apps[0].bundleID)")
-                NowPlayingService.shared.sendPlayPause(to: apps[0].bundleID)
+                // Exactly one app — send straight to it, no picker.
+                self.dispatch(event, to: apps[0].effectiveBundleID)
             default:
-                // Multiple apps — show the picker popup
-                print("[AppDelegate] handleMediaKey: \(apps.count) apps, showing popup")
-                self.popupController.show(apps: apps)
+                // Multiple apps registered — intercept and let the user pick.
+                self.popup.show(apps: apps, triggering: event)
             }
         }
-        // Consume the original event; we'll re-inject if needed
         return true
     }
 
-    /// Re-injects a play/pause hardware key event so the system handles it normally.
-    private func passPlayPauseThroughToSystem() {
-        // Post a fake NSSystemDefined play/pause event
-        // subtype 8, data1 = (NX_KEYTYPE_PLAY << 16) | 0x0100 (key down flag = 0, play key)
-        let keyDown = NSEvent.otherEvent(
-            with: .systemDefined,
-            location: .zero,
-            modifierFlags: [],
-            timestamp: ProcessInfo.processInfo.systemUptime,
-            windowNumber: 0,
-            context: nil,
-            subtype: 8,
-            data1: (16 << 16) | 0x0000,  // NX_KEYTYPE_PLAY, key-down flag clear
-            data2: -1
-        )
-        keyDown?.cgEvent?.post(tap: .cghidEventTap)
-
-        let keyUp = NSEvent.otherEvent(
-            with: .systemDefined,
-            location: .zero,
-            modifierFlags: [],
-            timestamp: ProcessInfo.processInfo.systemUptime,
-            windowNumber: 0,
-            context: nil,
-            subtype: 8,
-            data1: (16 << 16) | 0x0100,  // NX_KEYTYPE_PLAY, key-up flag set
-            data2: -1
-        )
-        keyUp?.cgEvent?.post(tap: .cghidEventTap)
-    }
-
-    // MARK: - NSWorkspace notification
-
-    private func observeApplicationTerminations() {
-        NSWorkspace.shared.notificationCenter.addObserver(
-            self,
-            selector: #selector(applicationTerminated(_:)),
-            name: NSWorkspace.didTerminateApplicationNotification,
-            object: nil
-        )
-    }
-
-    @objc private func applicationTerminated(_ note: Notification) {
-        guard popupController.isShowing else { return }
-        NowPlayingService.shared.fetchApps { [weak self] apps in
-            guard let self else { return }
-            if apps.count <= 1 {
-                self.popupController.dismiss()
-            } else {
-                self.popupController.refresh(apps: apps)
-            }
+    /// Sends the appropriate command for a key to a specific app.
+    private func dispatch(_ event: MediaKeyEvent, to bundleID: String) {
+        switch event {
+        case .playPause:
+            NowPlayingService.shared.sendPlayPause(to: bundleID)
+        case .next:
+            NowPlayingService.shared.sendTrackCommand(.next, to: bundleID)
+        case .previous:
+            NowPlayingService.shared.sendTrackCommand(.previous, to: bundleID)
+        case .other:
+            break  // canary keys never route to an app
         }
     }
 
-    // MARK: - Accessibility alert
+    /// Re-injects a media key event so the system handles it normally.
+    private func reinjectKey(_ event: MediaKeyEvent) {
+        let keyCode: Int
+        switch event {
+        case .playPause: keyCode = 16
+        case .next: keyCode = 17
+        case .previous: keyCode = 18
+        case .other(let code): keyCode = Int(code)
+        }
+        func post(_ data1: Int) {
+            let ev = NSEvent.otherEvent(
+                with: .systemDefined, location: .zero, modifierFlags: [],
+                timestamp: ProcessInfo.processInfo.systemUptime,
+                windowNumber: 0, context: nil, subtype: 8,
+                data1: data1, data2: -1)
+            ev?.cgEvent?.post(tap: .cghidEventTap)
+        }
+        post((keyCode << 16) | 0x0000)  // key down
+        post((keyCode << 16) | 0x0100)  // key up
+    }
 
-    // MARK: - Menu bar setup
+    // MARK: - Menu bar
 
-    /// Updates the status bar icon to indicate whether Accessibility is granted.
-    /// Trusted → normal icon. Untrusted → strikethrough / warning variant.
-    private func updateMenuBarIcon(trusted: Bool) {
+    private func updateIcon(trusted: Bool) {
         guard let button = statusItem?.button else { return }
-        let symbolName = trusted ? "3.circle.fill" : "3.circle"
-        if let img = NSImage(systemSymbolName: symbolName, accessibilityDescription: "Threek") {
+        let name = trusted ? "3.circle.fill" : "3.circle"
+        if let img = NSImage(systemSymbolName: name, accessibilityDescription: "Threek") {
             img.isTemplate = true
             button.image = img
         }
-        button.toolTip = trusted ? nil : "Threek: tap menu → Grant Accessibility Access"
-        // Refresh the menu so the Accessibility item title/action updates.
         buildMenu()
-        statusItem?.menu = menu
     }
 
-    func setupMenuBar() {
+    private func setupMenuBar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        guard let button = statusItem?.button else { return }
+        updateIcon(trusted: AXIsProcessTrusted())
+    }
 
-        // SF Symbol "3.circle.fill" — minimal, evocative of "Threek"
-        if let image = NSImage(systemSymbolName: "3.circle.fill", accessibilityDescription: "Threek") {
-            image.isTemplate = true  // Adapts to light/dark menu bar
-            button.image = image
-        } else {
-            button.title = "3▶"
+    private func buildMenu() {
+        let menu = NSMenu(title: "Threek")
+
+        if interceptor.isRunning && !tapVerified {
+            let warn = NSMenuItem(
+                title: "Media keys not working — re-grant Accessibility",
+                action: #selector(regrantAccessibility), keyEquivalent: "")
+            warn.target = self
+            menu.addItem(warn)
+            menu.addItem(.separator())
         }
 
-        buildMenu()
+        let enabled = NSMenuItem(title: "Enabled", action: #selector(toggleEnabled(_:)), keyEquivalent: "")
+        enabled.target = self
+        enabled.state = isEnabled ? .on : .off
+        menu.addItem(enabled)
+
+        menu.addItem(.separator())
+
+        if !interceptor.isRunning {
+            let ax = NSMenuItem(title: "Grant Accessibility Access…",
+                                action: #selector(promptAccessibility), keyEquivalent: "")
+            ax.target = self
+            menu.addItem(ax)
+        }
+
+        let login = NSMenuItem(title: "Launch at Login", action: #selector(toggleLogin(_:)), keyEquivalent: "")
+        login.target = self
+        login.state = LaunchAtLogin.isEnabled ? .on : .off
+        menu.addItem(login)
+
+        menu.addItem(.separator())
+
+        let quit = NSMenuItem(title: "Quit Threek",
+                              action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(quit)
+
         statusItem?.menu = menu
-    }
-
-    // MARK: - Menu construction
-
-    func buildMenu() {
-        let m = NSMenu(title: "Threek")
-
-        // Enabled toggle
-        let enabledItem = NSMenuItem(
-            title: "Enabled",
-            action: #selector(toggleEnabled(_:)),
-            keyEquivalent: ""
-        )
-        enabledItem.target = self
-        enabledItem.state = isEnabled ? .on : .off
-        enabledItem.tag = 1
-        m.addItem(enabledItem)
-
-        m.addItem(.separator())
-
-        // Currently Playing submenu (built lazily when user opens menu)
-        let nowPlayingItem = NSMenuItem(title: "Currently Playing", action: nil, keyEquivalent: "")
-        let nowPlayingSubmenu = NSMenu(title: "Currently Playing")
-        nowPlayingSubmenu.addItem(NSMenuItem(title: "Loading…", action: nil, keyEquivalent: ""))
-        nowPlayingItem.submenu = nowPlayingSubmenu
-        m.addItem(nowPlayingItem)
-
-        m.addItem(.separator())
-
-        // Accessibility status / re-grant item (shown when tap is not running)
-        let axItem = NSMenuItem(
-            title: interceptor.isRunning ? "Accessibility: ✓ Active" : "Grant Accessibility Access…",
-            action: interceptor.isRunning ? nil : #selector(resetAndPromptAccessibility),
-            keyEquivalent: ""
-        )
-        axItem.target = self
-        axItem.tag = 3
-        m.addItem(axItem)
-
-        m.addItem(.separator())
-
-        // Launch at Login
-        let loginItem = NSMenuItem(
-            title: "Launch at Login",
-            action: #selector(toggleLaunchAtLogin(_:)),
-            keyEquivalent: ""
-        )
-        loginItem.target = self
-        loginItem.state = LaunchAtLogin.isEnabled ? .on : .off
-        loginItem.tag = 2
-        m.addItem(loginItem)
-
-        m.addItem(.separator())
-
-        // About
-        let aboutItem = NSMenuItem(title: "About Threek", action: #selector(showAbout), keyEquivalent: "")
-        aboutItem.target = self
-        m.addItem(aboutItem)
-
-        // Quit
-        let quitItem = NSMenuItem(title: "Quit Threek", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        m.addItem(quitItem)
-
-        menu = m
-        m.delegate = self
-    }
-
-    // MARK: - Menu actions
-
-    @objc private func resetAndPromptAccessibility() {
-        // Reset the stale TCC entry for this bundle so macOS will prompt fresh.
-        // This is needed when Xcode rebuilds the binary (new hash) but the old
-        // grant is still showing in System Settings.
-        let proc = Process()
-        proc.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
-        proc.arguments = ["reset", "Accessibility", "com.lpfchan.Threek"]
-        try? proc.run()
-        proc.waitUntilExit()
-
-        // Now re-trigger the system TCC prompt.
-        let options: NSDictionary = [
-            kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true
-        ]
-        AXIsProcessTrustedWithOptions(options)
-        pollForAccessibility()
     }
 
     @objc private func toggleEnabled(_ item: NSMenuItem) {
         isEnabled.toggle()
         item.state = isEnabled ? .on : .off
-        if !isEnabled { popupController.dismiss() }
+        if !isEnabled { popup.dismiss() }
     }
 
-    @objc private func toggleLaunchAtLogin(_ item: NSMenuItem) {
+    @objc private func toggleLogin(_ item: NSMenuItem) {
         LaunchAtLogin.toggle()
         item.state = LaunchAtLogin.isEnabled ? .on : .off
     }
 
-    @objc private func showAbout() {
-        let alert = NSAlert()
-        alert.messageText = "Threek 1.0"
-        alert.informativeText = "Because it's funny.\n\nA macOS menu bar app that intercepts media keys and lets you choose which app receives them.\n\n© 2026 LPFchan"
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
+    @objc private func promptAccessibility() {
+        let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
+        AXIsProcessTrustedWithOptions(options)
+        startPolling()
     }
-}
 
-// MARK: - NSMenuDelegate (lazy Now Playing submenu)
-extension AppDelegate: NSMenuDelegate {
-    func menuWillOpen(_ menu: NSMenu) {
-        guard let nowPlayingItem = menu.item(withTitle: "Currently Playing"),
-              let submenu = nowPlayingItem.submenu else { return }
-
-        submenu.removeAllItems()
-        submenu.addItem(NSMenuItem(title: "Loading…", action: nil, keyEquivalent: ""))
-
-        NowPlayingService.shared.fetchApps { apps in
-            submenu.removeAllItems()
-            if apps.isEmpty {
-                submenu.addItem(NSMenuItem(title: "Nothing playing", action: nil, keyEquivalent: ""))
-            } else {
-                for app in apps {
-                    let title = app.bundleID.components(separatedBy: ".").last ?? app.bundleID
-                    let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
-                    if let icon = app.icon {
-                        let img = icon.copy() as! NSImage
-                        img.size = NSSize(width: 16, height: 16)
-                        item.image = img
-                    }
-                    submenu.addItem(item)
-                }
-            }
+    /// Opens System Settings at the Accessibility pane so the user can toggle
+    /// Threek off and on, which revives a stale (blind) event tap. After a
+    /// rebuild macOS reports the app as trusted but delivers no events until
+    /// the entry is re-toggled.
+    @objc private func regrantAccessibility() {
+        let url = URL(string:
+            "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+        NSWorkspace.shared.open(url)
+        // Keep checking: once events flow again the canary will verify the tap.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            self?.verifyTapHealth()
         }
     }
 }

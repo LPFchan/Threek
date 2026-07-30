@@ -27,3 +27,7 @@ Package.resolved
 # Misc
 *.log
 *.tmp
+
+# Adapter build output (built from source by Scripts/build-adapter.sh)
+Build/
+Vendor/mediaremote-adapter/build/
