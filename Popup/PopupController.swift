@@ -566,7 +566,7 @@ private struct SelectorPopup: View {
     var body: some View {
         VStack(spacing: 10) {
             iconRow
-            transportRow
+            keyRow
         }
         .padding(.horizontal, contentInset)
         .padding(.top, contentInset)
@@ -576,59 +576,53 @@ private struct SelectorPopup: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
     }
 
-    /// Which icon index each transport key maps to, for the direct-mapping
-    /// (2–3 app) states. Returns nil in the 4+ selection state.
-    private var keyMap: (previous: Int?, playPause: Int?, next: Int?) {
-        switch viewModel.state {
-        case .showing(let apps):
-            if apps.count == 2 { return (0, nil, 1) }
-            return (0, 1, 2)
-        default:
-            return (nil, nil, nil)
-        }
-    }
-
     @ViewBuilder
     private var iconRow: some View {
         switch viewModel.state {
         case .idle:
             EmptyView()
         case .showing(let apps):
-            HStack(spacing: 10) {
-                ForEach(apps) { app in AppIconView(app: app) }
+            // One icon per function key, badge aligned directly under it.
+            // With two apps the columns spread a full key slot apart so the
+            // F7/F9 badges land under the physical keys they name; with
+            // three they're adjacent like the reference HUD.
+            HStack(spacing: apps.count == 2 ? 84 : 10) {
+                ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
+                    VStack(spacing: 10) {
+                        AppIconView(app: app)
+                        KeyBadge(label: keyLabel(for: index),
+                                 inverted: glyphInverted)
+                    }
+                }
             }
         case .selecting:
             CarouselRow(viewModel: viewModel)
         }
     }
 
-    /// ← ⏸ → hints aligned under the icons their keys would trigger.
     @ViewBuilder
-    private var transportRow: some View {
-        let map = keyMap
-        HStack(spacing: 22) {
-            TransportGlyph(systemName: "arrow.left",
-                           active: map.previous != nil)
-            TransportGlyph(systemName: viewModel.state.isSelecting ? "playpause" : "pause",
-                           active: viewModel.state.isSelecting || map.playPause != nil)
-            TransportGlyph(systemName: "arrow.right",
-                           active: map.next != nil)
+    private var keyRow: some View {
+        switch viewModel.state {
+        case .showing:
+            // The badges live in the icon columns above (2–3 app layout).
+            EmptyView()
+        case .selecting:
+            TransportRow(viewModel: viewModel, inverted: glyphInverted)
+        case .idle:
+            EmptyView()
         }
-        .font(.system(size: 30, weight: .semibold))
-        // Background-adaptive appearance, home-bar style: the glyph color is
-        // a flat monochrome chosen from the backdrop's averaged luminance —
-        // white when the backdrop is dark, near-black when it's light. We set
-        // the color directly rather than using a .blendMode(.difference),
-        // because the difference blend forces SwiftUI to rasterize the row
-        // into an offscreen group that then gets softened against the
-        // separate AppKit backdrop layer — blurring the glyphs.
-        .foregroundStyle(glyphInverted ? Color.black : Color.white)
-        .animation(.easeInOut(duration: 0.25), value: glyphInverted)
     }
 
-    /// True when the blurred backdrop is light enough that the glyphs should
-    /// read dark. Drives the base color for the difference blend. Hysteresis
-    /// keeps it from flickering when the backdrop hovers near the midpoint.
+    /// Function-key label for the app at `index` in the 2–3 app direct
+    /// mapping. F7 is the first slot; F8 is skipped entirely with two apps
+    /// because ⏯ is unreachable there (it dispatches to slot one).
+    private func keyLabel(for index: Int) -> String {
+        let number = 7 + index + (viewModel.state.apps.count == 2 && index > 0 ? 1 : 0)
+        return "F\(number)"
+    }
+
+    /// True when the blurred backdrop is light enough that on-HUD text
+    /// should read dark instead of white.
     private var glyphInverted: Bool {
         viewModel.backdropLuminance > 0.5
     }
@@ -674,6 +668,53 @@ private struct AppIconView: View {
         }
         .frame(width: 84, height: 84)
         .help(app.trackTitle.map { "\(app.displayName) — \($0)" } ?? app.displayName)
+    }
+}
+
+/// Rounded-rect function-key badge (F7/F8/F9) shown under each icon in the
+/// 2–3 app direct-mapping layout. Just a label with a 2pt border — no fill
+/// — matching the reference HUD. Background-adaptive like the transport
+/// glyphs: white on a dark backdrop, near-black on a light one.
+private struct KeyBadge: View {
+    let label: String
+    let inverted: Bool
+
+    var body: some View {
+        Text(label)
+            .font(.system(size: 17, weight: .medium))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(inverted ? Color.black : Color.white,
+                            lineWidth: 2)
+            )
+            .foregroundStyle(inverted ? Color.black : Color.white)
+            .animation(.easeInOut(duration: 0.25), value: inverted)
+    }
+}
+
+/// ← ⏸ → transport hints for the 4+ carousel state.
+private struct TransportRow: View {
+    @ObservedObject var viewModel: SelectorViewModel
+    let inverted: Bool
+
+    var body: some View {
+        HStack(spacing: 22) {
+            TransportGlyph(systemName: "arrow.left", active: true)
+            TransportGlyph(systemName: "playpause", active: true)
+            TransportGlyph(systemName: "arrow.right", active: true)
+        }
+        .font(.system(size: 30, weight: .semibold))
+        // Background-adaptive appearance, home-bar style: the glyph color is
+        // a flat monochrome chosen from the backdrop's averaged luminance —
+        // white when the backdrop is dark, near-black when it's light. We set
+        // the color directly rather than using a .blendMode(.difference),
+        // because the difference blend forces SwiftUI to rasterize the row
+        // into an offscreen group that then gets softened against the
+        // separate AppKit backdrop layer — blurring the glyphs.
+        .foregroundStyle(inverted ? Color.black : Color.white)
+        .animation(.easeInOut(duration: 0.25), value: inverted)
     }
 }
 

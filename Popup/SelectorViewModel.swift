@@ -92,7 +92,10 @@ final class SelectorViewModel: ObservableObject {
             switch event {
             case .previous: dispatch(apps[0])
             case .next: dispatch(apps[apps.count == 2 ? 1 : 2])
-            case .playPause: dispatch(apps[apps.count == 3 ? 1 : 0])
+            // ⏯ only maps to the middle app with three apps; with two it has
+            // no badge on screen, so it dismisses instead of acting.
+            case .playPause:
+                if apps.count == 3 { dispatch(apps[1]) } else { dismiss() }
             case .escape: dismiss()
             case .other: break
             }
