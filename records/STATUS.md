@@ -26,17 +26,18 @@ is an OS ceiling. The repo has just adopted the repo-template operating model
 ### Per-app album artwork in the HUD
 
 - Goal: show each Now Playing app's current album artwork in the picker.
-- Status: `not started`
+- Status: `in progress`
 - Why this matters now: it is the operator's requested next feature.
-- Current work: research complete; implementation not begun.
+- Current work: research complete and de-risked — per-app metadata + artwork
+  confirmed fetchable one-shot (RSH-20260731-002). Implementation not begun.
 - Exit criteria: picker rows show each app's artwork (falling back to the app
-  icon when no artwork), sourced from a subscription-based adapter command and
-  cached between keypresses.
-- Dependencies: a new subscription-based adapter command; Threek-side artwork
-  cache.
-- Risks: the richer MediaRemote API is private and could change; the adapter's
-  stateless spawn model must be adapted to receive pushed player state.
-- Related ids: RSH-20260731-001
+  icon when no artwork), sourced from a one-shot per-player adapter command.
+- Dependencies: a new per-player adapter command; Threek-side JSON decode +
+  icon fallback.
+- Risks: the richer MediaRemote API is private and could change; artwork
+  presence varies per app (Spotify/web media may omit bytes), so the icon
+  fallback is required.
+- Related ids: RSH-20260731-001, RSH-20260731-002
 
 ## Recent Changes To Project Reality
 
@@ -51,6 +52,13 @@ is an OS ceiling. The repo has just adopted the repo-template operating model
     control is not.
   - Why it matters: scopes the artwork feature and closes the control debate.
   - Related ids: RSH-20260731-001
+
+- Date: 2026-07-31
+  - Change: confirmed per-app metadata + artwork is fetchable one-shot, no
+    persistent subscription needed.
+  - Why it matters: removes the artwork feature's main architectural risk and
+    simplifies it to a bounded adapter command.
+  - Related ids: RSH-20260731-002
 
 ## Active Blockers And Risks
 
@@ -67,4 +75,4 @@ is an OS ceiling. The repo has just adopted the repo-template operating model
   artwork.
   - Owner: orchestrator/worker
   - Trigger: operator approval to start the artwork feature
-  - Related ids: RSH-20260731-001
+  - Related ids: RSH-20260731-001, RSH-20260731-002

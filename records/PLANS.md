@@ -11,29 +11,29 @@ Do not put raw brainstorms or untriaged intake here.
   the app icon as fallback, so the HUD reads like the operator's reference
   mockup (artwork + app icon pairing).
 - Why this is accepted: the operator requested it; research confirmed it is
-  achievable via the richer MediaRemote per-player API.
+  achievable via the richer MediaRemote per-player API, fetchable one-shot.
 - Expected value: a richer, more legible picker that identifies apps by what
   they are playing, not just their icon.
-- Preconditions: a subscription-based adapter command that returns all
-  players' content items + artwork as JSON; a Threek-side artwork cache so the
-  popup is not empty on first open.
+- Preconditions: a per-player adapter command that returns each app's
+  now-playing metadata + base64 artwork as JSON (one-shot, no persistent
+  subscription); Threek-side JSON decode + app-icon fallback.
 - Earliest likely start: immediate.
-- Related ids: RSH-20260731-001
+- Related ids: RSH-20260731-001, RSH-20260731-002
 
 ## Sequencing
 
 ### Near Term
 
-- Initiative: subscription-based adapter metadata command.
-  - Why now: it is the prerequisite for artwork and the riskiest unknown
-    (adapting the stateless shim to receive pushed state).
+- Initiative: per-player adapter metadata/artwork command.
+  - Why now: it is the prerequisite for artwork, now known to be a bounded
+    one-shot addition (RSH-20260731-002).
   - Dependencies: none beyond the existing vendored adapter.
-  - Related ids: RSH-20260731-001
+  - Related ids: RSH-20260731-001, RSH-20260731-002
 
-- Initiative: Threek artwork cache + popup rendering.
+- Initiative: Threek popup artwork rendering + icon fallback.
   - Why now: follows directly once the adapter can supply artwork.
   - Dependencies: the adapter metadata command.
-  - Related ids: RSH-20260731-001
+  - Related ids: RSH-20260731-001, RSH-20260731-002
 
 ### Deferred But Accepted
 
