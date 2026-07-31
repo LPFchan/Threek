@@ -21,6 +21,25 @@ final class SelectorViewModel: ObservableObject {
             }
         }
         var isIdle: Bool { self == .idle }
+        var isSelecting: Bool {
+            if case .selecting = self { return true }
+            return false
+        }
+
+        /// The selection index when in the 4+ state, else nil.
+        var selectedIndex: Int? {
+            if case .selecting(_, let i) = self { return i }
+            return nil
+        }
+
+        /// Three slots shown in the HUD, carousel-style: the selected app is
+        /// always the center slot, flanked by its neighbors with wraparound.
+        /// For ≤3 apps, all of them in order.
+        var windowedApps: [NowPlayingApp] {
+            let apps = self.apps
+            guard apps.count > 3, let sel = selectedIndex else { return apps }
+            return [-1, 0, 1].map { apps[(sel + $0 + apps.count) % apps.count] }
+        }
     }
 
     @Published private(set) var state: State = .idle
@@ -61,6 +80,7 @@ final class SelectorViewModel: ObservableObject {
             case .previous: dispatchIfControllable(apps[0])
             case .next: dispatchIfControllable(apps[apps.count == 2 ? 1 : 2])
             case .playPause: dispatchIfControllable(apps[apps.count == 3 ? 1 : 0])
+            case .escape: dismiss()
             case .other: break
             }
             return true
@@ -74,6 +94,8 @@ final class SelectorViewModel: ObservableObject {
                 resetTimeout()
             case .playPause:
                 dispatchIfControllable(apps[index])
+            case .escape:
+                dismiss()
             case .other:
                 break
             }

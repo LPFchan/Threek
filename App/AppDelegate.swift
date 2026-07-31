@@ -28,6 +28,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         checkAccessibilityAndStart()
         NowPlayingService.shared.warmCache()
         verifyTapHealth()
+
+        // `--preview-hud` auto-opens the picker shortly after launch so the
+        // visual state can be verified headlessly (media-key tap may be
+        // blind under a stale TCC grant).
+        if CommandLine.arguments.contains("--preview-hud") {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+                self?.previewHUD()
+            }
+        }
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -127,11 +136,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Returns true to consume, false to pass through.
     @discardableResult
     private func handleMediaKey(_ event: MediaKeyEvent) -> Bool {
+        // Esc only exists to dismiss the HUD; never consume it otherwise.
+        if case .escape = event {
+            guard popup.isShowing else { return false }
+            popup.handleKey(event)
+            return true
+        }
+
         // Swallow our own health-check canary without routing it anywhere.
         if event.rawKeyCode == selfTestKeyCode {
             tapVerified = true
             return true
         }
+
+        // Keys Threek doesn't act on (volume, brightness, etc.) pass through
+        // untouched — never query Now Playing, never pop the HUD for them.
+        if case .other = event { return false }
+
         guard isEnabled else { return false }
 
         if popup.isShowing {
@@ -165,6 +186,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             NowPlayingService.shared.sendTrackCommand(.next, to: bundleID)
         case .previous:
             NowPlayingService.shared.sendTrackCommand(.previous, to: bundleID)
+        case .escape:
+            break  // dismiss-only key, never routed to an app
         case .other:
             break  // canary keys never route to an app
         }
@@ -177,6 +200,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .playPause: keyCode = 16
         case .next: keyCode = 17
         case .previous: keyCode = 18
+        case .escape: return  // never re-injected
         case .other(let code): keyCode = Int(code)
         }
         func post(_ data1: Int) {
@@ -225,6 +249,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         enabled.state = isEnabled ? .on : .off
         menu.addItem(enabled)
 
+        let preview = NSMenuItem(title: "Preview HUD", action: #selector(previewHUD), keyEquivalent: "p")
+        preview.target = self
+        menu.addItem(preview)
+
         menu.addItem(.separator())
 
         if !interceptor.isRunning {
@@ -246,6 +274,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(quit)
 
         statusItem?.menu = menu
+    }
+
+    @objc private func previewHUD() {
+        NowPlayingService.shared.fetchAppsFast { [weak self] apps in
+            guard let self else { return }
+            // Guarantee at least 4 entries so the carousel state is exercisable
+            // even when fewer players are registered right now.
+            var shown = apps
+            let fillers = ["com.apple.Music", "com.spotify.client", "org.videolan.vlc", "com.apple.TV"]
+            for id in fillers where shown.count < 4 {
+                if !shown.contains(where: { $0.effectiveBundleID == id }) {
+                    shown.append(NowPlayingApp(bundleID: id, displayName: id,
+                                               processIdentifier: nil, parentBundleID: nil))
+                }
+            }
+            self.popup.show(apps: shown, triggering: .playPause)
+        }
     }
 
     @objc private func toggleEnabled(_ item: NSMenuItem) {

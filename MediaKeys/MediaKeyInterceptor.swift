@@ -32,6 +32,7 @@ final class MediaKeyInterceptor {
     private let kVK_F17: Int64 = 64
     private let kVK_F18: Int64 = 79
     private let kVK_F19: Int64 = 80
+    private let kVK_Escape: Int64 = 53
 
     func start() {
         guard !isRunning else { return }
@@ -144,6 +145,7 @@ final class MediaKeyInterceptor {
         case kVK_F17: mediaEvent = .previous
         case kVK_F18: mediaEvent = .playPause
         case kVK_F19: mediaEvent = .next
+        case kVK_Escape: mediaEvent = .escape
         default: return Unmanaged.passUnretained(event)
         }
         hasSeenEvent = true
