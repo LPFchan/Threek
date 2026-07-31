@@ -46,6 +46,14 @@ final class SelectorViewModel: ObservableObject {
     /// The media key that opened the picker; sent to whichever app is chosen.
     private(set) var pendingCommand: MediaKeyEvent = .playPause
 
+    /// Unbounded carousel position. The centered app is always
+    /// `apps[cursor % count]`; because the cursor is never wrapped, moving
+    /// past either end keeps animating in the same direction instead of
+    /// snapping back — the loop point is invisible. `sessionID` changes on
+    /// every present so icon identities from a previous HUD never collide.
+    @Published private(set) var carouselCursor: Int = 0
+    @Published private(set) var sessionID: UUID = UUID()
+
     /// Called with (bundleID, key) when the user confirms an app.
     var onDispatch: ((String, MediaKeyEvent) -> Void)?
     var onDismiss: (() -> Void)?
@@ -57,18 +65,19 @@ final class SelectorViewModel: ObservableObject {
     func present(apps: [NowPlayingApp], triggering: MediaKeyEvent = .playPause) {
         pendingCommand = triggering
         cancelTimeout()
+        sessionID = UUID()
+        // Uncontrollable apps never enter the picker: they can't receive a
+        // command, so showing them greyed out only invites a selection that
+        // silently does nothing. Filtering can drop the count below the
+        // carousel threshold — fall back to the direct-mapping view.
+        let apps = apps.filter(\.isControllable)
         if apps.count >= 4 {
-            state = .selecting(apps: apps,
-                               selectedIndex: Self.firstControllableIndex(in: apps) ?? 0)
+            carouselCursor = 0
+            state = .selecting(apps: apps, selectedIndex: 0)
         } else {
             state = .showing(apps: apps)
         }
         scheduleTimeout()
-    }
-
-    /// Index of the first app that can actually receive a command.
-    private static func firstControllableIndex(in apps: [NowPlayingApp]) -> Int? {
-        apps.firstIndex(where: { $0.isControllable })
     }
 
     @MainActor
@@ -77,9 +86,9 @@ final class SelectorViewModel: ObservableObject {
         switch state {
         case .showing(let apps):
             switch event {
-            case .previous: dispatchIfControllable(apps[0])
-            case .next: dispatchIfControllable(apps[apps.count == 2 ? 1 : 2])
-            case .playPause: dispatchIfControllable(apps[apps.count == 3 ? 1 : 0])
+            case .previous: dispatch(apps[0])
+            case .next: dispatch(apps[apps.count == 2 ? 1 : 2])
+            case .playPause: dispatch(apps[apps.count == 3 ? 1 : 0])
             case .escape: dismiss()
             case .other: break
             }
@@ -87,13 +96,17 @@ final class SelectorViewModel: ObservableObject {
         case .selecting(let apps, let index):
             switch event {
             case .previous:
-                state = .selecting(apps: apps, selectedIndex: move(from: index, by: -1, in: apps))
+                let moved = (index - 1 + apps.count) % apps.count
+                carouselCursor -= 1
+                state = .selecting(apps: apps, selectedIndex: moved)
                 resetTimeout()
             case .next:
-                state = .selecting(apps: apps, selectedIndex: move(from: index, by: 1, in: apps))
+                let moved = (index + 1) % apps.count
+                carouselCursor += 1
+                state = .selecting(apps: apps, selectedIndex: moved)
                 resetTimeout()
             case .playPause:
-                dispatchIfControllable(apps[index])
+                dispatch(apps[index])
             case .escape:
                 dismiss()
             case .other:
@@ -117,25 +130,6 @@ final class SelectorViewModel: ObservableObject {
         cancelTimeout()
         state = .idle
         onDispatch?(app.effectiveBundleID, pendingCommand)
-    }
-
-    /// Dispatches only if the app can actually be controlled; greyed-out apps
-    /// are inert so a pick never silently lands on the wrong target.
-    @MainActor
-    private func dispatchIfControllable(_ app: NowPlayingApp) {
-        guard app.isControllable else { return }
-        dispatch(app)
-    }
-
-    /// Moves the selection ring, skipping apps that can't be controlled. If
-    /// every app is greyed out, returns the current index unchanged.
-    private func move(from index: Int, by delta: Int, in apps: [NowPlayingApp]) -> Int {
-        guard apps.contains(where: { $0.isControllable }) else { return index }
-        var next = index
-        repeat {
-            next = (next + delta + apps.count) % apps.count
-        } while !apps[next].isControllable && next != index
-        return next
     }
 
     private func scheduleTimeout() {

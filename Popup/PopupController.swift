@@ -248,16 +248,7 @@ private struct SelectorPopup: View {
                 ForEach(apps) { app in AppIconView(app: app) }
             }
         case .selecting:
-            // Carousel: the selected app always occupies the center slot
-            // under the stationary ring; neighbors wrap around.
-            let selected = viewModel.state.selectedIndex ?? 0
-            HStack(spacing: 10) {
-                ForEach(Array(viewModel.state.windowedApps.enumerated()),
-                        id: \.element.id) { slot, app in
-                    AppIconView(app: app, isSelected: slot == 1)
-                }
-            }
-            .animation(.easeOut(duration: 0.12), value: selected)
+            CarouselRow(viewModel: viewModel)
         }
     }
 
@@ -300,11 +291,7 @@ private struct AppIconView: View {
             }
         }
         .frame(width: 84, height: 84)
-        .opacity(app.isControllable ? 1 : 0.35)
-        .saturation(app.isControllable ? 1 : 0)
-        .opacity(app.isControllable ? 1 : 0.6)
-        .help(app.isControllable ? app.displayName
-              : "\(app.displayName) — can't be controlled right now")
+        .help(app.displayName)
     }
 }
 
@@ -316,6 +303,112 @@ private struct TransportGlyph: View {
         Image(systemName: systemName)
             .frame(width: 84, height: 34)
             .opacity(active ? 0.95 : 0.2)
+    }
+}
+
+/// Infinite carousel for the 4+ selection state.
+///
+/// Renders the five carousel positions around the view model's unbounded
+/// cursor as an HStack. The ForEach's identity IS the position, so a move
+/// diffs as a reorder: the four surviving icons slide one slot over while
+/// the one crossing the wrap point leaves at the far edge (offscreen, fully
+/// faded) and its next-repetition copy enters from the other edge. Because
+/// the cursor never wraps, the slide direction never reverses — the loop
+/// point is invisible. The selection ring is stationary; icons slide and
+/// grow into it.
+private struct CarouselRow: View {
+    @ObservedObject var viewModel: SelectorViewModel
+
+    /// Slot geometry: 84-wide slots with 10 of spacing.
+    private let slotWidth: CGFloat = 84
+    private let slotSpacing: CGFloat = 10
+
+    /// Only the inner three slots are visible. The outer two live entirely
+    /// past the midpoint of the edge icons, so wrap-related enter/leave
+    /// transitions happen in the fully-faded zone.
+    private var clipWidth: CGFloat { slotWidth * 3 + slotSpacing * 2 }
+
+    var body: some View {
+        let apps = viewModel.state.apps
+        let count = apps.count
+        let cursor = viewModel.carouselCursor
+        // Distinct integers even when the ring wraps (same app in two
+        // repetitions gets two positions), so identity is always unique.
+        let positions = Array((cursor - 2)...(cursor + 2))
+
+        ZStack {
+            HStack(spacing: slotSpacing) {
+                ForEach(positions, id: \.self) { position in
+                    let wrapped = ((position % count) + count) % count
+                    CarouselIconView(app: apps[wrapped],
+                                     distance: position - cursor)
+                        .transition(.opacity)
+                }
+            }
+            .animation(.interpolatingSpring(stiffness: 420, damping: 34),
+                       value: cursor)
+
+            // Stationary selection ring — the centered icon grows into it.
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white, lineWidth: 2.5)
+                .frame(width: slotWidth, height: slotWidth)
+        }
+        .frame(width: clipWidth, height: slotWidth)
+        .clipped()
+    }
+}
+
+/// One carousel slot. The center slot sits under the stationary ring at
+/// full size; neighbors are scaled down with an animated spring. Anything
+/// past the visible three slots is fully transparent. Icons exiting the
+/// view blur and fade directionally — the blur rides the slide, and the
+/// fade uses an asymmetric linear timing so an entering icon appears early
+/// in the move while a leaving icon vanishes just as it crosses the view
+/// boundary.
+private struct CarouselIconView: View {
+    let app: NowPlayingApp
+    /// Signed slot distance from the cursor: 0 center, ±1 visible neighbors,
+    /// ±2 parked just outside the view.
+    let distance: Int
+
+    var body: some View {
+        AppIconView(app: app)
+            .scaleEffect(scale)
+            .blur(radius: blur)
+            .opacity(fade)
+            .animation(.interpolatingSpring(stiffness: 480, damping: 36),
+                       value: scale)
+            .animation(.linear(duration: 0.08).delay(leaving ? 0.05 : 0),
+                       value: fade)
+            .animation(.easeOut(duration: 0.14), value: blur)
+    }
+
+    /// True for the icon instance currently sliding out of the three-slot
+    /// view (±1 → ±2). Entering icons (±2 → ±1) fade in immediately instead.
+    private var leaving: Bool { abs(distance) == 2 }
+
+    private var scale: CGFloat {
+        switch distance {
+        case 0: return 1
+        case -1, 1: return 0.8
+        default: return 0.66
+        }
+    }
+
+    private var blur: CGFloat {
+        switch distance {
+        case 0: return 0
+        case -1, 1: return 0
+        default: return 10
+        }
+    }
+
+    private var fade: CGFloat {
+        switch distance {
+        case 0: return 1
+        case -1, 1: return 1
+        default: return 0
+        }
     }
 }
 
