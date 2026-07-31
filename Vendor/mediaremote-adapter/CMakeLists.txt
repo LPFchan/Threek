@@ -18,6 +18,7 @@ set(ADAPTER_SOURCES
     src/adapter/env.m
     src/adapter/get.m
     src/adapter/clients.m
+    src/adapter/metadata.m
     src/adapter/globals.m
     src/adapter/keys.m
     src/adapter/now_playing.m

@@ -122,6 +122,7 @@ fail "Invalid function name: '$function_name'"
   || $function_name eq "repeat"
   || $function_name eq "speed"
   || $function_name eq "clients"
+  || $function_name eq "metadata"
   || $function_name eq "test";
 
 sub parse_options {
@@ -266,6 +267,9 @@ elsif ($function_name eq "test") {
 }
 elsif ($function_name eq "clients") {
   $symbol_name = "adapter_clients";
+}
+elsif ($function_name eq "metadata") {
+  $symbol_name = "adapter_metadata";
 }
 
 if (defined shift @ARGV) {
