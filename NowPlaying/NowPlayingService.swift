@@ -207,6 +207,48 @@ final class NowPlayingService {
         let clients: [AdapterClient]
     }
 
+    // MARK: - Per-app metadata (artwork) via the adapter's `metadata` command
+
+    private struct AdapterMetadata: Decodable {
+        let title: String?
+        let artworkData: String?      // base64-encoded image bytes
+    }
+    private struct AdapterMetadataApp: Decodable {
+        let bundleIdentifier: String?
+        let parentApplicationBundleIdentifier: String?
+        let metadata: AdapterMetadata?
+        var effectiveBundleID: String? {
+            parentApplicationBundleIdentifier ?? bundleIdentifier
+        }
+    }
+    private struct AdapterMetadataResponse: Decodable {
+        let count: Int
+        let apps: [AdapterMetadataApp]
+    }
+
+    /// Fetches every registered app's now-playing metadata + artwork via the
+    /// adapter's `metadata` command, keyed by effective bundle ID. One-shot;
+    /// returns an empty dict on any failure so discovery is never blocked by
+    /// artwork availability.
+    private func fetchArtworkByBundleID() -> [String: (title: String?, artwork: NSImage?)] {
+        guard let script = perlScriptURL, let framework = frameworkURL,
+              let data = runAdapter(arguments: [script.path, framework.path, "metadata"]),
+              let response = try? JSONDecoder().decode(AdapterMetadataResponse.self, from: data)
+        else { return [:] }
+
+        var result: [String: (String?, NSImage?)] = [:]
+        for app in response.apps {
+            guard let id = app.effectiveBundleID else { continue }
+            var image: NSImage? = nil
+            if let b64 = app.metadata?.artworkData,
+               let bytes = Data(base64Encoded: b64) {
+                image = NSImage(data: bytes)
+            }
+            result[id] = (app.metadata?.title, image)
+        }
+        return result
+    }
+
     private func discoverApps() -> [NowPlayingApp] {
         guard let script = perlScriptURL, let framework = frameworkURL else {
             Log.write("[NowPlayingService] adapter resources missing from bundle")
@@ -221,6 +263,11 @@ final class NowPlayingService {
             Log.write("[NowPlayingService] could not decode clients payload")
             return []
         }
+
+        // Enrich with per-app artwork + track titles. This is a second perl
+        // spawn, so it runs after membership is established; on any failure it
+        // yields an empty map and apps keep their icon-only form.
+        let artwork = fetchArtworkByBundleID()
 
         // Collapse helper processes (WebKit GPU, etc.) into their parent app,
         // keyed by the effective bundle ID so each real app appears once.
@@ -240,6 +287,10 @@ final class NowPlayingService {
             // via the adapter). Non-scriptable background apps get greyed out.
             app.isControllable = Self.scriptableBundleIDs.contains(app.effectiveBundleID)
                 || app.effectiveBundleID == nowPlaying
+            if let meta = artwork[app.effectiveBundleID] {
+                app.artwork = meta.artwork
+                app.trackTitle = meta.title
+            }
             if byBundleID[app.effectiveBundleID] == nil {
                 order.append(app.effectiveBundleID)
             }

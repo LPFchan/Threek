@@ -15,6 +15,13 @@ struct NowPlayingApp: Identifiable, Equatable, Hashable {
     /// now-playing app, where the adapter can reach them. Non-controllable apps
     /// are shown greyed-out and can't be picked.
     var isControllable: Bool = true
+    /// The app's current album artwork, when the Now Playing registry has it.
+    /// Nil for apps that publish no artwork (web media, squatters); the picker
+    /// falls back to the app icon in that case.
+    var artwork: NSImage?
+    /// The current track title, when available. Shown as the picker's tooltip
+    /// alongside the app name so artwork-bearing rows stay identifiable.
+    var trackTitle: String?
 
     var id: String { effectiveBundleID }
 
@@ -35,7 +42,10 @@ struct NowPlayingApp: Identifiable, Equatable, Hashable {
     }
 
     static func == (lhs: NowPlayingApp, rhs: NowPlayingApp) -> Bool {
-        lhs.id == rhs.id
+        lhs.id == rhs.id && lhs.artwork == rhs.artwork && lhs.trackTitle == rhs.trackTitle
     }
-    func hash(into hasher: inout Hasher) { hasher.combine(id) }
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(trackTitle)
+    }
 }

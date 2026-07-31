@@ -280,7 +280,24 @@ private struct AppIconView: View {
                     .stroke(Color.white, lineWidth: 2.5)
                     .frame(width: 84, height: 84)
             }
-            if let icon = app.icon {
+            if let artwork = app.artwork {
+                // Album artwork leads, with the app icon badged in the corner —
+                // the reference mockup's pairing. Falls back to the plain icon
+                // below when the app publishes no artwork.
+                ZStack(alignment: .bottomTrailing) {
+                    Image(nsImage: artwork).resizable()
+                        .frame(width: 68, height: 68)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    if let icon = app.icon {
+                        Image(nsImage: icon).resizable()
+                            .frame(width: 26, height: 26)
+                            .clipShape(RoundedRectangle(cornerRadius: 7))
+                            .overlay(RoundedRectangle(cornerRadius: 7)
+                                .stroke(Color.black.opacity(0.35), lineWidth: 1))
+                            .offset(x: 5, y: 5)
+                    }
+                }
+            } else if let icon = app.icon {
                 Image(nsImage: icon).resizable()
                     .frame(width: 68, height: 68)
                     .clipShape(RoundedRectangle(cornerRadius: 15))
@@ -291,7 +308,7 @@ private struct AppIconView: View {
             }
         }
         .frame(width: 84, height: 84)
-        .help(app.displayName)
+        .help(app.trackTitle.map { "\(app.displayName) — \($0)" } ?? app.displayName)
     }
 }
 
