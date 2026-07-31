@@ -31,3 +31,6 @@ Package.resolved
 # Adapter build output (built from source by Scripts/build-adapter.sh)
 Build/
 Vendor/mediaremote-adapter/build/
+
+# repo-template commit-generator temp files
+.tmp_commit_msg_*
