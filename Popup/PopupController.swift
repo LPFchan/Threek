@@ -1,6 +1,21 @@
 import AppKit
 import CoreGraphics
+import Metal
+import ScreenCaptureKit
 import SwiftUI
+
+/// GPU-backed CIContext shared by the backdrop blur and the content shadow,
+/// so both are hardware-accelerated via Metal. Falls back to a default
+/// context if no Metal device is available.
+private enum SharedGPUContext {
+    static let context: CIContext = {
+        if let device = MTLCreateSystemDefaultDevice() {
+            return CIContext(mtlDevice: device,
+                             options: [.cacheIntermediates: false])
+        }
+        return CIContext()
+    }()
+}
 
 /// Physical sizing for the HUD: converts millimeters to points using the
 /// display's real panel size (EDID) so the popup renders at a true physical
@@ -28,6 +43,22 @@ enum PhysicalMetrics {
     /// Content inset from the panel edge; the blur feathers out across this
     /// margin so the visible content sits inside the fully-blurred core.
     static let contentMarginMM: CGFloat = 10
+    /// Horizontal distance over which the screen blur dissolves into the
+    /// desktop at the left and right ends of the panel.
+    static let sideFeatherMM: CGFloat = 14
+    /// Vertical distance over which the screen blur dissolves upward past
+    /// the icon row into the desktop.
+    static let topFeatherMM: CGFloat = 12
+    /// Extra width added purely so the carousel's neighbor slots aren't
+    /// clipped by the feathered edges — the frosted area extends past the
+    /// three-slot core so the neighbors read as whole icons. This is
+    /// non-physical (purely cosmetic), so it's expressed in points.
+    static let hudWidthPaddingPt: CGFloat = 20
+    /// Extra margin added on EVERY side so the blur's feather fully fades to
+    /// transparent before reaching the window edge — otherwise the fade is
+    /// clipped mid-ramp and the blur shows a hard boundary. Pure padding; the
+    /// content stays anchored by its insets, so only the blurred field grows.
+    static let blurMarginPt: CGFloat = 89
 
     /// Points per physical millimeter for the screen the HUD is shown on.
     /// Falls back to 72 pt/inch (≈2.835 pt/mm) if the display doesn't
@@ -49,8 +80,9 @@ enum PhysicalMetrics {
     /// rather than the screen.
     static func hudFrame(on screen: NSScreen) -> (frame: NSRect, ppm: CGFloat) {
         let ppm = pointsPerMM(for: screen)
-        let size = NSSize(width: hudWidthMM * ppm,
-                          height: (hudHeightMM + featherHeadroomMM + featherFootroomMM) * ppm)
+        let size = NSSize(width: hudWidthMM * ppm + hudWidthPaddingPt + blurMarginPt * 2,
+                          height: (hudHeightMM + featherHeadroomMM + featherFootroomMM) * ppm
+                                  + blurMarginPt * 2)
         let frame = NSRect(x: screen.frame.midX + horizontalOffsetMM * ppm - size.width / 2,
                            y: screen.frame.minY + bottomLiftMM * ppm,
                            width: size.width, height: size.height)
@@ -69,6 +101,9 @@ final class PopupController {
     private lazy var viewModel = SelectorViewModel()
     private var contentInset: CGFloat = 0
     private var bottomLift: CGFloat = 0
+    private var backdrop: BackdropView?
+    private var shadowLayer: ShadowCastingView?
+    private weak var contentView: NSView?
 
     init() {
         viewModel.onDispatch = { [weak self] bundleID, key in
@@ -82,9 +117,13 @@ final class PopupController {
         if let screen = NSScreen.main {
             let (frame, ppm) = PhysicalMetrics.hudFrame(on: screen)
             contentInset = PhysicalMetrics.contentMarginMM * ppm
+                + PhysicalMetrics.blurMarginPt
             bottomLift = PhysicalMetrics.featherFootroomMM * ppm
-            if panel == nil { buildPanel() }
+            if panel == nil { buildPanel(size: frame.size, ppm: ppm) }
             panel?.setFrame(frame, display: false)
+            // Capture what's actually behind the panel BEFORE it orders
+            // front, so the backdrop shows the real content, not the HUD.
+            backdrop?.capture(behind: frame, excluding: panel)
         }
         viewModel.present(apps: apps, triggering: triggering)
         guard let panel else { return }
@@ -94,10 +133,17 @@ final class PopupController {
             ctx.duration = 0.15
             panel.animator().alphaValue = 1
         }
+        // Sample the content's silhouettes for the shadow once SwiftUI has
+        // laid out the new icon set. Deferred so the hosting view has pixels.
+        DispatchQueue.main.async { [weak self] in
+            guard let self, let content = self.contentView else { return }
+            self.shadowLayer?.update(from: content)
+        }
     }
 
     func dismiss() {
         guard let panel, panel.isVisible else { return }
+        backdrop?.stop()
         NSAnimationContext.runAnimationGroup({ ctx in
             ctx.duration = 0.12
             panel.animator().alphaValue = 0
@@ -108,9 +154,9 @@ final class PopupController {
         viewModel.handleKey(event)
     }
 
-    private func buildPanel() {
+    private func buildPanel(size: NSSize, ppm: CGFloat) {
         let p = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 120, height: 40),
+            contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered, defer: false
         )
@@ -121,45 +167,304 @@ final class PopupController {
         p.collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
         p.hidesOnDeactivate = false
 
-        // A plain container we fully control. Its CALayer mask feathers the
-        // LIVE vibrancy blur (a sibling under the SwiftUI content) out to
-        // transparent at every edge. Masking the container — not the effect
-        // view's private sublayers — is what makes the feather actually apply.
+        // A CUSTOM backdrop, not NSVisualEffectView: the system vibrancy
+        // materials either flatten the content behind the HUD to a dead grey
+        // wash (light materials) or a muddy dark scrim (.hudWindow), and none
+        // preserve the backdrop's color the way the reference HUD does. So we
+        // capture the screen region behind the panel ourselves, blur it with
+        // a controlled radius, brighten it slightly, and feather the result
+        // to transparent at every edge — full control over blur and tint.
+        //
+        // The feather mask goes on the CONTAINER's layer so it clips the
+        // whole composite (backdrop + content). The container is a fixed size
+        // (matching the panel) and both subviews use explicit frames, so the
+        // hosting view never resizes the panel — the panel owns its frame.
         let container = FeatheredContainerView()
-        let blur = NSVisualEffectView()
-        blur.material = .hudWindow
-        blur.blendingMode = .behindWindow
-        blur.state = .active
-        blur.translatesAutoresizingMaskIntoConstraints = false
-        container.addSubview(blur)
+        let backdrop = BackdropView()
+        backdrop.onLuminance = { [weak viewModel] lum in
+            viewModel?.backdropLuminance = lum
+        }
+        container.addSubview(backdrop)
 
-        let content = NSHostingView(rootView: SelectorPopup(viewModel: viewModel,
-                                                            contentInset: contentInset,
-                                                            bottomLift: bottomLift))
-        content.translatesAutoresizingMaskIntoConstraints = false
+        // A dedicated shadow layer sandwiched BETWEEN the blur backdrop and
+        // the SwiftUI content. It renders the content's silhouettes (icons +
+        // glyphs) as a soft, blurred black shadow, so the content appears to
+        // lift off the frosted glass. It samples the content view's pixels
+        // each time the HUD is shown.
+        let shadow = ShadowCastingView()
+        container.addSubview(shadow)
+
+        let content = NSHostingView(rootView: SelectorPopup(
+            viewModel: viewModel,
+            contentInset: contentInset,
+            bottomLift: bottomLift))
         container.addSubview(content)
 
-        NSLayoutConstraint.activate([
-            blur.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            blur.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            blur.topAnchor.constraint(equalTo: container.topAnchor),
-            blur.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-            content.leadingAnchor.constraint(equalTo: container.leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: container.trailingAnchor),
-            content.topAnchor.constraint(equalTo: container.topAnchor),
-            content.bottomAnchor.constraint(equalTo: container.bottomAnchor),
-        ])
+        container.frame = NSRect(origin: .zero, size: size)
+        backdrop.frame = NSRect(origin: .zero, size: size)
+        backdrop.autoresizingMask = [.width, .height, .minYMargin]
+        shadow.frame = NSRect(origin: .zero, size: size)
+        shadow.autoresizingMask = [.width, .height]
+        content.frame = NSRect(origin: .zero, size: size)
+        content.autoresizingMask = [.width, .height]
+
+        self.backdrop = backdrop
+        self.shadowLayer = shadow
+        self.contentView = content
+
+        // The feather starts exactly at the content's bounding box and runs
+        // the full gap to the frame's edge: alpha is 1 across the content,
+        // then a smoothstep ramp uses the entire margin for the fade. No
+        // fully-opaque plateau around the content, no clipped fade.
+        container.contentRect = CGRect(
+            x: contentInset,
+            y: bottomLift,
+            width: size.width - contentInset * 2,
+            height: size.height - bottomLift - contentInset)
 
         p.contentView = container
         panel = p
     }
 }
 
-/// An NSView whose CALayer mask is a two-axis smoothstep feather, so the
-/// vibrancy blur inside dissolves to fully transparent at all four edges
-/// with no hard boundary. Regenerates the mask whenever its bounds change.
+/// Captures the screen region behind the panel and renders it blurred +
+/// brightened, so the HUD floats on a frosted version of whatever is actually
+/// behind it — the reference look that the system vibrancy materials can't
+/// reproduce (they flatten the backdrop to a grey wash or a dark scrim).
+///
+/// The image is a static snapshot taken when the HUD is shown, not a live
+/// feed. That's acceptable for a picker that appears for a few seconds, and
+/// it keeps us off the Screen Recording permission that a live capture would
+/// need. The blur radius and tint are tunable below.
+private final class BackdropView: NSView {
+    /// Gaussian blur radius in PIXELS of the captured image. Kept modest —
+    /// the blur should soften the backdrop, not obliterate it. Because the
+    /// capture is at display density (2×), this reads as roughly radius/2 in
+    /// points, which keeps the blur subtle.
+    var blurRadius: CGFloat = 5
+
+    private var stream: SCStream?
+    private let streamDelegate = StreamDelegate()
+    private let streamQueue = DispatchQueue(label: "threek.backdrop.stream")
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        layer?.contentsGravity = .resize
+        streamDelegate.onFrame = { [weak self] image in
+            self?.applyBlurred(image)
+        }
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    /// Starts a persistent SCStream over the screen region behind `frame`,
+    /// excluding our own panel, so the blur tracks the live background at the
+    /// display's own cadence (frames arrive only when the content changes).
+    func capture(behind frame: NSRect, excluding panel: NSWindow?) {
+        stop()
+        guard let screen = NSScreen.main, frame.width > 0 else { return }
+        let primaryH = NSScreen.screens.first?.frame.height ?? screen.frame.height
+        // SCContentFilter/sourceRect work in POINTS with a top-left origin;
+        // AppKit frames are points, bottom-left — flip Y only, don't scale.
+        let ptRect = CGRect(x: frame.minX,
+                            y: primaryH - frame.maxY,
+                            width: frame.width,
+                            height: frame.height)
+        let scale = screen.backingScaleFactor
+        let excludeID = panel?.windowNumber
+        Task { [weak self] in
+            guard let self else { return }
+            let built = await Self.makeStream(region: ptRect, scale: scale,
+                                              excludingWindowID: excludeID,
+                                              delegate: self.streamDelegate,
+                                              queue: self.streamQueue)
+            await MainActor.run {
+                guard let built else { return }
+                self.stream = built
+                Task { try? await built.startCapture() }
+            }
+        }
+    }
+
+    /// Stops the stream (called when the HUD dismisses).
+    func stop() {
+        let s = stream
+        stream = nil
+        if let s { Task { try? await s.stopCapture() } }
+    }
+
+    /// Builds a configured SCStream for the region. One window enumeration at
+    /// setup — after that, frames are pushed to the delegate as they change.
+    private static func makeStream(region: CGRect,
+                                   scale: CGFloat,
+                                   excludingWindowID: Int?,
+                                   delegate: StreamDelegate,
+                                   queue: DispatchQueue) async -> SCStream? {
+        guard #available(macOS 14.0, *) else { return nil }
+        do {
+            let content = try await SCShareableContent.excludingDesktopWindows(
+                false, onScreenWindowsOnly: true)
+            guard let display = content.displays.first else { return nil }
+            let excluded = content.windows.filter { win in
+                guard let ex = excludingWindowID else { return false }
+                return win.windowID == CGWindowID(ex)
+            }
+            let filter = SCContentFilter(display: display,
+                                         excludingWindows: excluded)
+            let config = SCStreamConfiguration()
+            config.sourceRect = region
+            config.width = Int(region.width * scale)
+            config.height = Int(region.height * scale)
+            config.pixelFormat = kCVPixelFormatType_32BGRA
+            config.showsCursor = false
+            // Deliver every frame the display produces.
+            config.minimumFrameInterval = .zero
+            config.queueDepth = 3
+            let stream = SCStream(filter: filter, configuration: config,
+                                  delegate: delegate)
+            // Route screen frames to the delegate on our dedicated queue.
+            try stream.addStreamOutput(delegate, type: .screen,
+                                       sampleHandlerQueue: queue)
+            return stream
+        } catch {
+            return nil
+        }
+    }
+
+    /// Pure gaussian blur of the captured frame, set as the layer content.
+    /// No tint, brightness, or saturation — just the blurred backdrop. Runs
+    /// off the main thread; the GPU-backed CIContext is thread-safe.
+    private func applyBlurred(_ image: CGImage) {
+        let ci = CIImage(cgImage: image)
+        let extent = ci.extent
+        guard let blur = CIFilter(name: "CIGaussianBlur") else { return }
+        blur.setValue(ci, forKey: kCIInputImageKey)
+        blur.setValue(blurRadius, forKey: kCIInputRadiusKey)
+        let cropped = blur.outputImage?.cropped(to: extent)
+        guard let out = cropped,
+              let cg = SharedGPUContext.context.createCGImage(out, from: extent)
+        else { return }
+        DispatchQueue.main.async { [weak self] in
+            self?.layer?.contents = cg
+            self?.onLuminance?(Self.averageLuminance(of: cg))
+        }
+    }
+
+    /// Called on the main thread with the backdrop's average luminance (0–1)
+    /// each time a new frame is blurred. Drives the adaptive glyph color.
+    var onLuminance: ((CGFloat) -> Void)?
+
+    /// Reduces the blurred backdrop to a single average luminance (0–1):
+    /// monochrome it, then area-average the whole frame down to one value.
+    private static func averageLuminance(of image: CGImage) -> CGFloat {
+        let ci = CIImage(cgImage: image)
+        let extent = ci.extent
+        // Monochrome: drop saturation to zero so color can't skew the read.
+        guard let mono = CIFilter(name: "CIColorControls"),
+              let avg = CIFilter(name: "CIAreaAverage") else { return 0 }
+        mono.setValue(ci, forKey: kCIInputImageKey)
+        mono.setValue(0.0, forKey: kCIInputSaturationKey)
+        avg.setValue(mono.outputImage, forKey: kCIInputImageKey)
+        avg.setValue(CIVector(cgRect: extent), forKey: "inputExtent")
+        guard let out = avg.outputImage else { return 0 }
+        var pixel = [UInt8](repeating: 0, count: 4)
+        SharedGPUContext.context.render(out,
+                                        toBitmap: &pixel,
+                                        rowBytes: 4,
+                                        bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                                        format: .RGBA8,
+                                        colorSpace: CGColorSpaceCreateDeviceRGB())
+        // Rec. 709 luma from the averaged RGB.
+        let r = CGFloat(pixel[0]) / 255, g = CGFloat(pixel[1]) / 255, b = CGFloat(pixel[2]) / 255
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+
+    /// GPU-backed CIContext so the gaussian blur is hardware-accelerated via
+    /// Metal rather than rendered on the CPU. Falls back to a default context
+    /// if no Metal device is available.
+    /// Receives SCStream frame callbacks, converts each video sample buffer
+    /// to a CGImage, and forwards it for blurring.
+    private final class StreamDelegate: NSObject, SCStreamDelegate, SCStreamOutput {
+        var onFrame: ((CGImage) -> Void)?
+
+        func stream(_ stream: SCStream,
+                    didOutputSampleBuffer sampleBuffer: CMSampleBuffer,
+                    of type: SCStreamOutputType) {
+            guard type == .screen,
+                  let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer)
+            else { return }
+            let ci = CIImage(cvPixelBuffer: imageBuffer)
+            if let cg = SharedGPUContext.context.createCGImage(ci, from: ci.extent) {
+                onFrame?(cg)
+            }
+        }
+    }
+}
+
+/// Renders the content's silhouettes as a single soft drop shadow. Lives as
+/// a subview BETWEEN the blur backdrop and the content, so the icons and
+/// glyphs read as floating just above the frosted glass.
+///
+/// It snapshots the content view, keeps only the alpha of each pixel (the
+/// silhouette), fills that shape black, and blurs it — a classic
+/// shadow-from-content technique. The blur softens it; the opacity and
+/// offset below set the shadow's weight and drop.
+private final class ShadowCastingView: NSView {
+    /// Gaussian blur radius of the shadow, in points — the softness.
+    var blurRadius: CGFloat = 7
+    /// Shadow opacity.
+    var opacity: CGFloat = 0.5
+    /// Downward offset of the shadow, in points.
+    var offsetY: CGFloat = 2
+
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        wantsLayer = true
+        layer?.contentsGravity = .resize
+    }
+    required init?(coder: NSCoder) { fatalError() }
+
+    /// Rebuilds the shadow from the content view's current pixels.
+    func update(from content: NSView) {
+        guard bounds.width > 0, bounds.height > 0,
+              let rep = content.bitmapImageRepForCachingDisplay(in: content.bounds)
+        else { return }
+        content.cacheDisplay(in: content.bounds, to: rep)
+        guard let cg = rep.cgImage else { return }
+
+        let ci = CIImage(cgImage: cg)
+        let extent = ci.extent
+        // 1) Black shape keyed to the content's alpha (its silhouette).
+        // 2) Blur it. 3) Drop opacity. 4) Nudge down.
+        guard let color = CIFilter(name: "CIColorMatrix"),
+              let blur = CIFilter(name: "CIGaussianBlur") else { return }
+        color.setValue(ci, forKey: kCIInputImageKey)
+        color.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputRVector")
+        color.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputGVector")
+        color.setValue(CIVector(x: 0, y: 0, z: 0, w: 0), forKey: "inputBVector")
+        color.setValue(CIVector(x: 0, y: 0, z: 0, w: opacity), forKey: "inputAVector")
+        blur.setValue(color.outputImage, forKey: kCIInputImageKey)
+        blur.setValue(blurRadius, forKey: kCIInputRadiusKey)
+        let shifted = blur.outputImage?
+            .transformed(by: CGAffineTransform(translationX: 0, y: offsetY))
+            .cropped(to: extent)
+        guard let out = shifted,
+              let rendered = SharedGPUContext.context.createCGImage(out, from: extent)
+        else { return }
+        layer?.contents = rendered
+    }
+}
+
+/// The panel's content view. Its CALayer mask is a two-axis smoothstep
+/// feather, so the vibrancy blur inside dissolves to fully transparent at
+/// all four edges with no hard boundary. The mask is regenerated whenever
+/// the bounds change. Because the icons sit in the opaque core, only the
+/// backdrop feathers — the content stays crisp.
 private final class FeatheredContainerView: NSView {
-    override var wantsUpdateLayer: Bool { true }
+    /// The content's bounding box in this view's coordinate space. The mask
+    /// stays fully opaque up to this rect's edges, then feathers out across
+    /// the gap to the frame's edge — the entire margin is used for the fade.
+    var contentRect: CGRect = .zero
 
     override init(frame frameRect: NSRect) {
         super.init(frame: frameRect)
@@ -170,42 +475,87 @@ private final class FeatheredContainerView: NSView {
     override func layout() {
         super.layout()
         guard bounds.width > 0, bounds.height > 0 else { return }
-        layer?.mask = Self.makeFeatherMask(bounds: bounds,
-                                           featherX: 0.30, featherY: 0.32)
+        let mask = FeatherMaskLayer(frame: bounds, contentRect: contentRect)
+        mask.frame = bounds
+        layer?.mask = mask
+    }
+}
+
+/// A unit-space alpha mask that fades smoothly to transparent at all four
+/// edges via a smoothstep ramp, so the masked blur dissolves into the
+/// desktop with no visible boundary. Built from two axis gradients blended
+/// with multiply, expressed in 0…1 unit space so it tracks the layer's size.
+private final class FeatherMaskLayer: CALayer {
+    /// Builds a rectangular feather: alpha is 1 everywhere inside
+    /// `contentRect`, then a smoothstep ramp runs from the content rect's edge
+    /// out to the frame's edge, reaching 0 exactly at the frame boundary. The
+    /// whole gap between the two rectangles is used for the fade.
+    init(frame: CGRect, contentRect: CGRect) {
+        super.init()
+        // Work in unit space (0…1 across the frame) so the mask tracks the
+        // layer's size. For each axis, alpha is 1 between the content rect's
+        // min and max, and ramps to 0 from there to both frame edges. The two
+        // axis ramps are blended with multiply so all four sides dissolve.
+        func axisRamp(minStart: CGFloat, maxEnd: CGFloat,
+                      count: Int) -> ([CGColor], [NSNumber]) {
+            var cols = [CGColor]()
+            var locs = [NSNumber]()
+            for i in 0..<count {
+                let t = CGFloat(i) / CGFloat(count - 1)
+                // Distance past the content boundary, normalized by the gap on
+                // whichever side t falls, so the ramp spans the full gap.
+                let u: CGFloat
+                if t < minStart {
+                    u = minStart > 0 ? max(0, 1 - (minStart - t) / minStart) : 1
+                } else if t > maxEnd {
+                    let gap = 1 - maxEnd
+                    u = gap > 0 ? max(0, 1 - (t - maxEnd) / gap) : 1
+                } else {
+                    u = 1
+                }
+                let alpha = u * u * (3 - 2 * u) // smoothstep
+                cols.append(NSColor(white: 1, alpha: alpha).cgColor)
+                locs.append(NSNumber(value: Double(t)))
+            }
+            return (cols, locs)
+        }
+        let fx = frame.width > 0 ? frame.width : 1
+        let fy = frame.height > 0 ? frame.height : 1
+        let x0 = contentRect.minX / fx
+        let x1 = contentRect.maxX / fx
+        let y0 = contentRect.minY / fy
+        let y1 = contentRect.maxY / fy
+        let samples = 64
+        let horizontal = CAGradientLayer()
+        let (hcols, hlocs) = axisRamp(minStart: x0, maxEnd: x1, count: samples)
+        horizontal.colors = hcols
+        horizontal.locations = hlocs
+        horizontal.startPoint = CGPoint(x: 0, y: 0.5)
+        horizontal.endPoint = CGPoint(x: 1, y: 0.5)
+        addSublayer(horizontal)
+
+        let vertical = CAGradientLayer()
+        let (vcols, vlocs) = axisRamp(minStart: y0, maxEnd: y1, count: samples)
+        vertical.colors = vcols
+        vertical.locations = vlocs
+        vertical.startPoint = CGPoint(x: 0.5, y: 0)
+        vertical.endPoint = CGPoint(x: 0.5, y: 1)
+        vertical.compositingFilter = "multiplyBlendMode"
+        addSublayer(vertical)
+
+        // Gradients use unit-space start/end points, so sizing each sublayer
+        // to the mask's bounds makes the ramps span the whole mask at any
+        // size — no re-rendering on resize.
+        anchorPoint = .zero
     }
 
-    /// Renders a grayscale ramp bitmap used as the layer's alpha mask:
-    /// opaque core, smoothstep fade on every edge.
-    private static func makeFeatherMask(bounds: CGRect,
-                                        featherX: CGFloat, featherY: CGFloat) -> CALayer {
-        let scale: CGFloat = 2
-        let w = Int(bounds.width * scale), h = Int(bounds.height * scale)
-        var pixels = [UInt8](repeating: 0, count: w * h)
-        let fx = max(1, Int(CGFloat(w) * featherX))
-        let fy = max(1, Int(CGFloat(h) * featherY))
-        func ramp(_ i: Int, _ edge: Int, _ max: Int) -> Double {
-            let d = min(i, max - 1 - i) // distance to nearest edge
-            if d >= edge { return 1 }
-            let t = Double(d) / Double(edge)
-            return t * t * (3 - 2 * t) // smoothstep
-        }
-        for y in 0..<h {
-            let ay = ramp(y, fy, h)
-            for x in 0..<w {
-                pixels[y * w + x] = UInt8(min(ay, ramp(x, fx, w)) * 255)
-            }
-        }
-        guard let ctx = CGContext(data: &pixels, width: w, height: h,
-                                  bitsPerComponent: 8, bytesPerRow: w,
-                                  space: CGColorSpaceCreateDeviceGray(),
-                                  bitmapInfo: 0),
-              let cgImage = ctx.makeImage()
-        else { return CALayer() }
-        let mask = CALayer()
-        mask.frame = bounds
-        mask.contents = cgImage
-        return mask
+    override func layoutSublayers() {
+        super.layoutSublayers()
+        let r = CGRect(origin: .zero, size: bounds.size)
+        sublayers?.forEach { $0.frame = r }
     }
+
+    required init?(coder: NSCoder) { fatalError() }
 }
 
 private struct SelectorPopup: View {
@@ -265,7 +615,22 @@ private struct SelectorPopup: View {
                            active: map.next != nil)
         }
         .font(.system(size: 30, weight: .semibold))
-        .foregroundStyle(.white)
+        // Background-adaptive appearance, home-bar style: the glyph color is
+        // a flat monochrome chosen from the backdrop's averaged luminance —
+        // white when the backdrop is dark, near-black when it's light. We set
+        // the color directly rather than using a .blendMode(.difference),
+        // because the difference blend forces SwiftUI to rasterize the row
+        // into an offscreen group that then gets softened against the
+        // separate AppKit backdrop layer — blurring the glyphs.
+        .foregroundStyle(glyphInverted ? Color.black : Color.white)
+        .animation(.easeInOut(duration: 0.25), value: glyphInverted)
+    }
+
+    /// True when the blurred backdrop is light enough that the glyphs should
+    /// read dark. Drives the base color for the difference blend. Hysteresis
+    /// keeps it from flickering when the backdrop hovers near the midpoint.
+    private var glyphInverted: Bool {
+        viewModel.backdropLuminance > 0.5
     }
 }
 
@@ -340,10 +705,11 @@ private struct CarouselRow: View {
     private let slotWidth: CGFloat = 84
     private let slotSpacing: CGFloat = 10
 
-    /// Only the inner three slots are visible. The outer two live entirely
-    /// past the midpoint of the edge icons, so wrap-related enter/leave
-    /// transitions happen in the fully-faded zone.
-    private var clipWidth: CGFloat { slotWidth * 3 + slotSpacing * 2 }
+    /// Only the inner three slots are fully visible. The clip window is a
+    /// bit wider than three slots so the neighbors aren't chopped by the
+    /// HUD's feathered edges; the outer two slots live past the edge icons
+    /// where wrap-related enter/leave transitions stay hidden.
+    private var clipWidth: CGFloat { slotWidth * 3 + slotSpacing * 2 + 44 }
 
     var body: some View {
         let apps = viewModel.state.apps
