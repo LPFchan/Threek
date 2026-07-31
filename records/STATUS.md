@@ -26,10 +26,11 @@ is an OS ceiling. The repo has just adopted the repo-template operating model
 ### Per-app album artwork in the HUD
 
 - Goal: show each Now Playing app's current album artwork in the picker.
-- Status: `in progress`
+- Status: `done`
 - Why this matters now: it is the operator's requested next feature.
-- Current work: research complete and de-risked — per-app metadata + artwork
-  confirmed fetchable one-shot (RSH-20260731-002). Implementation not begun.
+- Current work: implemented — new `metadata` adapter command returns per-app
+  metadata + base64 artwork one-shot; the picker renders artwork with the app
+  icon badged in the corner and falls back to the icon when absent.
 - Exit criteria: picker rows show each app's artwork (falling back to the app
   icon when no artwork), sourced from a one-shot per-player adapter command.
 - Dependencies: a new per-player adapter command; Threek-side JSON decode +
@@ -40,6 +41,13 @@ is an OS ceiling. The repo has just adopted the repo-template operating model
 - Related ids: RSH-20260731-001, RSH-20260731-002
 
 ## Recent Changes To Project Reality
+
+- Date: 2026-07-31
+  - Change: per-app album artwork is implemented end-to-end (adapter
+    `metadata` command + Swift rendering), committed in 20e3028 and 6d373c5.
+  - Why it matters: the accepted artwork feature is now in the picker.
+  - Related ids: RSH-20260731-001, RSH-20260731-002
+
 
 - Date: 2026-07-31
   - Change: adopted the LPFchan repo-template operating model (records/,
