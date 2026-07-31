@@ -22,6 +22,11 @@ struct NowPlayingApp: Identifiable, Equatable, Hashable {
     /// The current track title, when available. Shown as the picker's tooltip
     /// alongside the app name so artwork-bearing rows stay identifiable.
     var trackTitle: String?
+    /// Whether the metadata fetch actually returned this track's info. When
+    /// true and `artwork` is nil, the track genuinely has no artwork (so the
+    /// cache must not resurrect an older image). When false, artwork may just
+    /// not have arrived yet, so a cached image for the same track stays valid.
+    var metadataAvailable: Bool = false
 
     var id: String { effectiveBundleID }
 
@@ -42,7 +47,9 @@ struct NowPlayingApp: Identifiable, Equatable, Hashable {
     }
 
     static func == (lhs: NowPlayingApp, rhs: NowPlayingApp) -> Bool {
-        lhs.id == rhs.id && lhs.artwork == rhs.artwork && lhs.trackTitle == rhs.trackTitle
+        lhs.id == rhs.id && lhs.artwork == rhs.artwork
+            && lhs.trackTitle == rhs.trackTitle
+            && lhs.metadataAvailable == rhs.metadataAvailable
     }
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)

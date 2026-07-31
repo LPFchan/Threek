@@ -44,8 +44,8 @@ final class NowPlayingService {
     /// each app's play/pause state. Delivers on the main queue.
     func fetchApps(completion: @escaping ([NowPlayingApp]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
-            let apps = self.discoverApps()
-            DispatchQueue.main.async { completion(apps) }
+            let (apps, fresh) = self.discoverApps()
+            DispatchQueue.main.async { completion(self.finalize(apps, freshMetadata: fresh)) }
         }
     }
 
@@ -64,12 +64,12 @@ final class NowPlayingService {
         if !refreshInFlight {
             refreshInFlight = true
             DispatchQueue.global(qos: .userInitiated).async {
-                let apps = self.discoverApps()
+                let (apps, fresh) = self.discoverApps()
                 DispatchQueue.main.async {
-                    self.cachedApps = apps
+                    self.cachedApps = self.finalize(apps, freshMetadata: fresh)
                     self.cacheTime = Date()
                     self.refreshInFlight = false
-                    completion(apps)
+                    completion(self.cachedApps)
                 }
             }
         } else {
@@ -83,9 +83,9 @@ final class NowPlayingService {
     /// user presses a media key. Call at launch.
     func warmCache() {
         DispatchQueue.global(qos: .userInitiated).async {
-            let apps = self.discoverApps()
+            let (apps, fresh) = self.discoverApps()
             DispatchQueue.main.async {
-                self.cachedApps = apps
+                self.cachedApps = self.finalize(apps, freshMetadata: fresh)
                 self.cacheTime = Date()
             }
         }
@@ -226,17 +226,28 @@ final class NowPlayingService {
         let apps: [AdapterMetadataApp]
     }
 
+    /// One app's metadata fetch result: the track title (nil if the fetch
+    /// returned nothing for this app), and artwork (nil when the track has
+    /// none or none arrived).
+    private typealias MetadataResult = (title: String?, artwork: NSImage?)
+
+    /// Last-known artwork per app + track, so a paused app's cover survives a
+    /// cold-start fetch that returns metadata before the artwork bytes land.
+    /// Keyed by effective bundle ID; the track title guards against showing a
+    /// stale cover after the track changes.
+    private var artworkCache: [String: (trackTitle: String, artwork: NSImage)] = [:]
+
     /// Fetches every registered app's now-playing metadata + artwork via the
     /// adapter's `metadata` command, keyed by effective bundle ID. One-shot;
     /// returns an empty dict on any failure so discovery is never blocked by
     /// artwork availability.
-    private func fetchArtworkByBundleID() -> [String: (title: String?, artwork: NSImage?)] {
+    private func fetchArtworkByBundleID() -> [String: MetadataResult] {
         guard let script = perlScriptURL, let framework = frameworkURL,
               let data = runAdapter(arguments: [script.path, framework.path, "metadata"]),
               let response = try? JSONDecoder().decode(AdapterMetadataResponse.self, from: data)
         else { return [:] }
 
-        var result: [String: (String?, NSImage?)] = [:]
+        var result: [String: MetadataResult] = [:]
         for app in response.apps {
             guard let id = app.effectiveBundleID else { continue }
             var image: NSImage? = nil
@@ -249,25 +260,55 @@ final class NowPlayingService {
         return result
     }
 
-    private func discoverApps() -> [NowPlayingApp] {
+    /// Merges a fresh metadata fetch into the artwork cache and returns the
+    /// artwork to show for an app. Only a fetch that actually delivered artwork
+    /// updates the cache; an app whose track genuinely has no artwork (metadata
+    /// arrived, artwork nil) is recorded as such so an older cover isn't
+    /// resurrected. Must be called on the main queue.
+    private func resolvedArtwork(for bundleID: String,
+                                 fresh: MetadataResult?) -> (title: String?, artwork: NSImage?) {
+        guard let fresh else {
+            // No metadata for this app at all this fetch — keep whatever we had
+            // only if the track is unchanged (we can't tell, so drop it).
+            return (nil, nil)
+        }
+        if let image = fresh.artwork, let title = fresh.title {
+            artworkCache[bundleID] = (title, image)
+            return (title, image)
+        }
+        // Metadata arrived but no artwork bytes. If it's the same track we have
+        // cached, reuse the cached cover (cold-start race); otherwise this track
+        // has no artwork — clear any stale entry.
+        if let title = fresh.title, let cached = artworkCache[bundleID],
+           cached.trackTitle == title {
+            return (title, cached.artwork)
+        }
+        artworkCache.removeValue(forKey: bundleID)
+        return (fresh.title, nil)
+    }
+
+    /// Discovers registered apps and fetches fresh per-app metadata. Pure with
+    /// respect to the artwork cache (safe to call from a background queue); the
+    /// caller passes the raw result to `finalize` on the main queue, which is
+    /// where the cache is read and updated.
+    private func discoverApps() -> (apps: [NowPlayingApp], freshMetadata: [String: MetadataResult]) {
         guard let script = perlScriptURL, let framework = frameworkURL else {
             Log.write("[NowPlayingService] adapter resources missing from bundle")
-            return []
+            return ([], [:])
         }
         guard let data = runAdapter(arguments: [
             script.path, framework.path, "clients",
-        ]) else { return [] }
+        ]) else { return ([], [:]) }
 
         guard let response = try? JSONDecoder().decode(
             AdapterClientsResponse.self, from: data) else {
             Log.write("[NowPlayingService] could not decode clients payload")
-            return []
+            return ([], [:])
         }
 
-        // Enrich with per-app artwork + track titles. This is a second perl
-        // spawn, so it runs after membership is established; on any failure it
-        // yields an empty map and apps keep their icon-only form.
-        let artwork = fetchArtworkByBundleID()
+        // Fetch per-app artwork + track titles (a second perl spawn). On any
+        // failure this yields an empty map and apps keep their icon-only form.
+        let freshMetadata = fetchArtworkByBundleID()
 
         // Collapse helper processes (WebKit GPU, etc.) into their parent app,
         // keyed by the effective bundle ID so each real app appears once.
@@ -287,9 +328,9 @@ final class NowPlayingService {
             // via the adapter). Non-scriptable background apps get greyed out.
             app.isControllable = Self.scriptableBundleIDs.contains(app.effectiveBundleID)
                 || app.effectiveBundleID == nowPlaying
-            if let meta = artwork[app.effectiveBundleID] {
-                app.artwork = meta.artwork
+            if let meta = freshMetadata[app.effectiveBundleID] {
                 app.trackTitle = meta.title
+                app.metadataAvailable = true
             }
             if byBundleID[app.effectiveBundleID] == nil {
                 order.append(app.effectiveBundleID)
@@ -307,7 +348,22 @@ final class NowPlayingService {
             if aSq != bSq { return !aSq }
             return false  // stable: keep registry order within a group
         }
-        return sorted
+        return (sorted, freshMetadata)
+    }
+
+    /// Applies the artwork cache on the main queue: fills each app's artwork
+    /// from the fresh fetch or, when the fetch raced and returned no bytes, the
+    /// last-known cover for the same track. This is the only place the cache is
+    /// read or written.
+    private func finalize(_ apps: [NowPlayingApp],
+                          freshMetadata: [String: MetadataResult]) -> [NowPlayingApp] {
+        apps.map { app in
+            var app = app
+            let resolved = resolvedArtwork(for: app.effectiveBundleID,
+                                           fresh: freshMetadata[app.effectiveBundleID])
+            app.artwork = resolved.artwork
+            return app
+        }
     }
 
     /// Bundle IDs known to respond to `tell application id … to playpause`.
