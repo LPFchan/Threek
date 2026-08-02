@@ -22,6 +22,11 @@ struct NowPlayingApp: Identifiable, Equatable, Hashable {
     /// The current track title, when available. Shown as the picker's tooltip
     /// alongside the app name so artwork-bearing rows stay identifiable.
     var trackTitle: String?
+    /// Whether this app is actually playing right now, from the Now Playing
+    /// registry's per-app playback rate (> 0). Nil when the metadata fetch
+    /// didn't cover this app, in which case it's treated as not playing —
+    /// the direct-dispatch shortcut only fires on a confirmed playing app.
+    var isPlaying: Bool?
     /// Whether the metadata fetch actually returned this track's info. When
     /// true and `artwork` is nil, the track genuinely has no artwork (so the
     /// cache must not resurrect an older image). When false, artwork may just

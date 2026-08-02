@@ -211,6 +211,7 @@ final class NowPlayingService {
 
     private struct AdapterMetadata: Decodable {
         let title: String?
+        let playbackRate: Double?    // > 0 while the app is actually playing
         let artworkData: String?      // base64-encoded image bytes
     }
     private struct AdapterMetadataApp: Decodable {
@@ -229,7 +230,8 @@ final class NowPlayingService {
     /// One app's metadata fetch result: the track title (nil if the fetch
     /// returned nothing for this app), and artwork (nil when the track has
     /// none or none arrived).
-    private typealias MetadataResult = (title: String?, artwork: NSImage?)
+    private typealias MetadataResult = (title: String?, rate: Double?,
+                                        artwork: NSImage?)
 
     /// Last-known artwork per app + track, so a paused app's cover survives a
     /// cold-start fetch that returns metadata before the artwork bytes land.
@@ -255,7 +257,7 @@ final class NowPlayingService {
                let bytes = Data(base64Encoded: b64) {
                 image = NSImage(data: bytes)
             }
-            result[id] = (app.metadata?.title, image)
+            result[id] = (app.metadata?.title, app.metadata?.playbackRate, image)
         }
         return result
     }
@@ -330,6 +332,7 @@ final class NowPlayingService {
                 || app.effectiveBundleID == nowPlaying
             if let meta = freshMetadata[app.effectiveBundleID] {
                 app.trackTitle = meta.title
+                app.isPlaying = (meta.rate ?? 0) > 0
                 app.metadataAvailable = true
             }
             if byBundleID[app.effectiveBundleID] == nil {

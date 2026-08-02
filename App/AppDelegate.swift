@@ -162,13 +162,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         NowPlayingService.shared.fetchAppsFast { [weak self] apps in
             guard let self else { return }
-            switch apps.count {
+            let controllable = apps.filter(\.isControllable)
+            // When exactly one controllable app is confirmed playing, send
+            // the key straight to it — no picker. Metadata is fetched with
+            // the client list on every refresh, so the press costs no extra
+            // round-trip; an app with no rate data is treated as not playing
+            // and simply falls through to the normal paths.
+            let playing = controllable.filter { $0.isPlaying == true }
+            if playing.count == 1 {
+                self.dispatch(event, to: playing[0].effectiveBundleID)
+                return
+            }
+            switch controllable.count {
             case 0:
-                // Nothing registered — let the system handle the key normally.
-                self.reinjectKey(event)
+                // Nothing we can drive — let the system handle the key
+                // normally.
+                if apps.isEmpty {
+                    self.reinjectKey(event)
+                } else {
+                    // Registrants exist but none are controllable; the key
+                    // is already consumed, so route it to the current
+                    // now-playing app via the adapter rather than dead-key.
+                    self.dispatch(event, to: apps[0].effectiveBundleID)
+                }
             case 1:
                 // Exactly one app — send straight to it, no picker.
-                self.dispatch(event, to: apps[0].effectiveBundleID)
+                self.dispatch(event, to: controllable[0].effectiveBundleID)
             default:
                 // Multiple apps registered — intercept and let the user pick.
                 self.popup.show(apps: apps, triggering: event)
