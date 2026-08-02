@@ -53,9 +53,9 @@ final class SelectorViewModel: ObservableObject {
     /// every present so icon identities from a previous HUD never collide.
     @Published private(set) var carouselCursor: Int = 0
     @Published private(set) var sessionID: UUID = UUID()
-    /// Average luminance (0–1) of the blurred backdrop behind the HUD,
-    /// published on each live-capture frame. Drives the transport glyphs'
-    /// background-adaptive light/dark appearance.
+    /// Average luminance (0–1) of the screen region behind the HUD, sampled
+    /// once when the panel is shown. Drives the glyphs' background-adaptive
+    /// light/dark appearance.
     @Published var backdropLuminance: CGFloat = 0
 
     /// Called with (bundleID, key) when the user confirms an app.

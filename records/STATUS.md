@@ -5,9 +5,10 @@ Update it when the project's real state changes.
 
 ## Snapshot
 
-- Last updated: 2026-07-31
+- Last updated: 2026-08-02
 - Overall posture: `active`
-- Current focus: per-app album artwork in the picker HUD
+- Current focus: HUD simplification — direct dispatch to a single playing app,
+  chrome-less HUD
 - Highest-priority blocker: none
 - Next operator decision needed: none
 - Related decisions: none yet
@@ -15,7 +16,12 @@ Update it when the project's real state changes.
 ## Current State Summary
 
 Threek v2 is functional: it intercepts ⏯, enumerates all Now Playing apps via
-the perl-shim adapter, and dispatches to the chosen app. Research on
+the perl-shim adapter, and dispatches to the chosen app. When exactly one
+controllable app is actually playing, a media-key press routes straight to it
+without opening the picker. The HUD is now chrome-less — no realtime blurred
+backdrop; content separation comes from a drop shadow and background-adaptive
+glyph color (keyed off a one-shot screenshot of the screen behind the panel,
+no Screen Recording permission). Research on
 2026-07-31 (RSH-20260731-001) established that per-app artwork is reachable
 through a richer MediaRemote API, while targeted control of backgrounded apps
 is an OS ceiling. The repo has just adopted the repo-template operating model
@@ -41,6 +47,16 @@ is an OS ceiling. The repo has just adopted the repo-template operating model
 - Related ids: RSH-20260731-001, RSH-20260731-002
 
 ## Recent Changes To Project Reality
+
+- Date: 2026-08-02
+  - Change: media keys route directly to the single playing app (bypassing
+    the picker); the HUD's realtime blurred backdrop was removed in favor of
+    a chrome-less panel that keeps the drop shadow and adaptive glyph color
+    (now driven by a one-shot screenshot, dropping the Screen Recording
+    permission need).
+  - Why it matters: removes the picker step for the common single-player
+    case and simplifies the HUD rendering path.
+  - Related ids: none
 
 - Date: 2026-07-31
   - Change: per-app album artwork is implemented end-to-end (adapter
