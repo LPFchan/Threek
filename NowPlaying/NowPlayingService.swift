@@ -327,25 +327,33 @@ final class NowPlayingService {
             Log.write("[NowPlayingService] adapter resources missing from bundle")
             return ([], [:])
         }
-        guard let data = runAdapter(arguments: [
-            script.path, framework.path, "clients",
-        ]) else { return ([], [:]) }
+        // The client list, per-app metadata (artwork + track titles), and the
+        // current now-playing app are independent perl spawns that each wait
+        // on mediaremoted, so run them side by side instead of back to back.
+        // A metadata failure yields an empty map and apps keep their icon-only
+        // form.
+        var clientsData: Data?
+        var freshMetadata: [String: MetadataResult] = [:]
+        var nowPlaying: String?
+        DispatchQueue.concurrentPerform(iterations: 3) { i in
+            switch i {
+            case 0: clientsData = runAdapter(arguments: [script.path, framework.path, "clients"])
+            case 1: freshMetadata = fetchArtworkByBundleID()
+            default: nowPlaying = currentNowPlayingBundleID()
+            }
+        }
 
+        guard let data = clientsData else { return ([], [:]) }
         guard let response = try? JSONDecoder().decode(
             AdapterClientsResponse.self, from: data) else {
             Log.write("[NowPlayingService] could not decode clients payload")
             return ([], [:])
         }
 
-        // Fetch per-app artwork + track titles (a second perl spawn). On any
-        // failure this yields an empty map and apps keep their icon-only form.
-        let freshMetadata = fetchArtworkByBundleID()
-
         // Collapse helper processes (WebKit GPU, etc.) into their parent app,
         // keyed by the effective bundle ID so each real app appears once.
         var byBundleID: [String: NowPlayingApp] = [:]
         var order: [String] = []
-        let nowPlaying = self.currentNowPlayingBundleID()
         for client in response.clients {
             guard let bundleID = client.bundleIdentifier else { continue }
             var app = NowPlayingApp(
