@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import SwiftUI
 
 /// State machine for the HUD popup.
 ///
@@ -59,6 +60,15 @@ final class SelectorViewModel: ObservableObject {
     @Published var backdropLuminance: CGFloat = 0
     /// Points per HUD design unit (PhysicalMetrics.scale), set per show.
     @Published var scale: CGFloat = 1
+    /// Drives the entrance: false while the panel appears, then springs to
+    /// true so the columns rise into place; back to false on a dismiss.
+    @Published private(set) var appeared = false
+    /// The app just picked. Its column pops and its key badge lights up
+    /// while the others fade, before the panel goes away.
+    @Published private(set) var chosenID: String?
+    /// Set once the HUD is on its way out, so keys pressed during the exit
+    /// animation don't act again.
+    private var closing = false
 
     /// Called with (bundleID, key) when the user confirms an app.
     var onDispatch: ((String, MediaKeyEvent) -> Void)?
@@ -72,6 +82,12 @@ final class SelectorViewModel: ObservableObject {
         pendingCommand = triggering
         cancelTimeout()
         sessionID = UUID()
+        closing = false
+        chosenID = nil
+        appeared = false
+        DispatchQueue.main.async { [weak self] in
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.72)) { self?.appeared = true }
+        }
         // Uncontrollable apps never enter the picker: they can't receive a
         // command, so showing them greyed out only invites a selection that
         // silently does nothing. Filtering can drop the count below the
@@ -89,6 +105,7 @@ final class SelectorViewModel: ObservableObject {
     @MainActor
     @discardableResult
     func handleKey(_ event: MediaKeyEvent) -> Bool {
+        guard !closing else { return true }
         switch state {
         case .showing(let apps):
             switch event {
@@ -130,14 +147,16 @@ final class SelectorViewModel: ObservableObject {
     @MainActor
     func dismiss() {
         cancelTimeout()
-        state = .idle
+        closing = true
+        withAnimation(.easeIn(duration: 0.12)) { appeared = false }
         onDismiss?()
     }
 
     @MainActor
     private func dispatch(_ app: NowPlayingApp) {
         cancelTimeout()
-        state = .idle
+        closing = true
+        withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) { chosenID = app.id }
         onDispatch?(app.effectiveBundleID, pendingCommand)
     }
 

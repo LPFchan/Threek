@@ -240,11 +240,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func updateIcon(trusted: Bool) {
         guard let button = statusItem?.button else { return }
-        let name = trusted ? "3.circle.fill" : "3.circle"
-        if let img = NSImage(systemSymbolName: name, accessibilityDescription: "Threek") {
-            img.isTemplate = true
-            button.image = img
-        }
+        button.image = ForkGlyph.menuBarImage(dimmed: !trusted)
         buildMenu()
     }
 

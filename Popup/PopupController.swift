@@ -153,8 +153,10 @@ final class PopupController {
 
     init() {
         viewModel.onDispatch = { [weak self] bundleID, key in
-            self?.dismiss()
+            // Send right away; the HUD lingers just long enough to show
+            // which app was picked.
             self?.onDispatch?(bundleID, key)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) { self?.dismiss() }
         }
         viewModel.onDismiss = { [weak self] in self?.dismiss() }
     }
@@ -180,11 +182,16 @@ final class PopupController {
             ctx.duration = 0.15
             panel.animator().alphaValue = 1
         }
-        // Sample the content's silhouettes for the shadow once SwiftUI has
-        // laid out the new icon set. Deferred so the hosting view has pixels.
-        DispatchQueue.main.async { [weak self] in
-            guard let self, let content = self.contentView else { return }
-            self.shadowLayer?.update(from: content)
+        // Sample the content's silhouettes for the shadow once the entrance
+        // animation has settled (the snapshot is a still), then fade it in.
+        shadowLayer?.alphaValue = 0
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+            guard let self, let content = self.contentView, let shadow = self.shadowLayer else { return }
+            shadow.update(from: content)
+            NSAnimationContext.runAnimationGroup { ctx in
+                ctx.duration = 0.15
+                shadow.animator().alphaValue = 1
+            }
         }
     }
 
@@ -387,15 +394,20 @@ private struct SelectorPopup: View {
             let gap = PhysicalMetrics.designGap
             HStack(spacing: (apps.count == 2 ? gap * 2 + PhysicalMetrics.designKeycap : gap) * s) {
                 ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
+                    let chosen = viewModel.chosenID == app.id
                     VStack(spacing: 10 * s) {
                         AppIconView(app: app)
+                            .scaleEffect(chosen ? 1.1 : 1)
                         KeyBadge(label: keyLabel(for: index),
-                                 inverted: glyphInverted)
+                                 inverted: glyphInverted, pressed: chosen)
                     }
+                    .opacity(viewModel.chosenID == nil || chosen ? 1 : 0.3)
+                    .modifier(Entrance(appeared: viewModel.appeared, index: index))
                 }
             }
         case .selecting:
             CarouselRow(viewModel: viewModel)
+                .modifier(Entrance(appeared: viewModel.appeared, index: 0))
         }
     }
 
@@ -407,6 +419,7 @@ private struct SelectorPopup: View {
             EmptyView()
         case .selecting:
             TransportRow(viewModel: viewModel, inverted: glyphInverted)
+                .modifier(Entrance(appeared: viewModel.appeared, index: 1))
         case .idle:
             EmptyView()
         }
@@ -427,6 +440,23 @@ private struct SelectorPopup: View {
     }
 }
 
+/// Rises into place from slightly below and smaller, one column after the
+/// other (`index` staggers it), and sinks back out on dismiss.
+private struct Entrance: ViewModifier {
+    let appeared: Bool
+    let index: Int
+    @Environment(\.hudScale) private var s
+
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(appeared ? 1 : 0.86, anchor: .bottom)
+            .offset(y: appeared ? 0 : 12 * s)
+            .opacity(appeared ? 1 : 0)
+            .animation(.spring(response: 0.34, dampingFraction: 0.72)
+                .delay(appeared ? Double(index) * 0.04 : 0), value: appeared)
+    }
+}
+
 private struct AppIconView: View {
     let app: NowPlayingApp
     var isSelected: Bool = false
@@ -444,7 +474,10 @@ private struct AppIconView: View {
                 // the reference mockup's pairing. Falls back to the plain icon
                 // below when the app publishes no artwork.
                 ZStack(alignment: .bottomTrailing) {
+                    // Fill the square and crop, so non-square covers keep
+                    // their proportions instead of squashing.
                     Image(nsImage: artwork).resizable()
+                        .scaledToFill()
                         .frame(width: 68 * s, height: 68 * s)
                         .clipShape(RoundedRectangle(cornerRadius: 12 * s))
                     if let icon = app.icon {
@@ -478,19 +511,23 @@ private struct AppIconView: View {
 private struct KeyBadge: View {
     let label: String
     let inverted: Bool
+    /// Lit up like a pressed key when its app is picked.
+    var pressed = false
     @Environment(\.hudScale) private var s
 
     var body: some View {
+        let ink = inverted ? Color.black : Color.white
         Text(label)
             .font(.system(size: 17 * s, weight: .medium))
             .padding(.horizontal, 10 * s)
             .padding(.vertical, 5 * s)
+            .background(RoundedRectangle(cornerRadius: 8 * s).fill(pressed ? ink : .clear))
             .overlay(
                 RoundedRectangle(cornerRadius: 8 * s)
-                    .stroke(inverted ? Color.black : Color.white,
-                            lineWidth: 2 * s)
+                    .stroke(ink, lineWidth: 2 * s)
             )
-            .foregroundStyle(inverted ? Color.black : Color.white)
+            .foregroundStyle(pressed ? (inverted ? Color.white : Color.black) : ink)
+            .scaleEffect(pressed ? 0.92 : 1)
             .animation(.easeInOut(duration: 0.25), value: inverted)
     }
 }
@@ -566,8 +603,11 @@ private struct CarouselRow: View {
             HStack(spacing: slotSpacing) {
                 ForEach(positions, id: \.self) { position in
                     let wrapped = ((position % count) + count) % count
+                    let picked = viewModel.chosenID != nil
                     CarouselIconView(app: apps[wrapped],
                                      distance: position - cursor)
+                        .scaleEffect(picked && position == cursor ? 1.1 : 1)
+                        .opacity(picked && position != cursor ? 0.3 : 1)
                         .transition(.opacity)
                 }
             }

@@ -25,6 +25,7 @@ func squircle(in r: CGRect) -> CGPath {
 }
 
 // Drawn by hand: Apple's licence doesn't allow SF Symbols in app icons.
+// The menu bar glyph (App/ForkGlyph.swift) copies this outline; keep in step.
 // 1024-pt coordinates, y up: tines on top, handle at the bottom.
 func fork(cx: CGFloat) -> CGPath {
     let tineW: CGFloat = 46, gap: CGFloat = 30, headW = tineW * 3 + gap * 2
