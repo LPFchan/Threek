@@ -5,7 +5,7 @@ Update it when the project's real state changes.
 
 ## Snapshot
 
-- Last updated: 2026-08-02
+- Last updated: 2026-09-26
 - Overall posture: `active`
 - Current focus: HUD simplification — direct dispatch to a single playing app,
   chrome-less HUD
@@ -47,6 +47,17 @@ is an OS ceiling. The repo has just adopted the repo-template operating model
 - Related ids: RSH-20260731-001, RSH-20260731-002
 
 ## Recent Changes To Project Reality
+
+- Date: 2026-09-26
+  - Change: Threek now reliably intercepts the real F7–F9 media keys; the
+    Karabiner F17–F19 remap workaround and its code path are gone. Swallowed
+    keys are swallowed whole (key-down and key-up), the rewind/fast-forward
+    codes Apple keyboards send for F7/F9 map to ⏮/⏭, and the play-state
+    snapshot is updated on each toggle so rapid presses don't hit a stale
+    "X is playing".
+  - Why it matters: Threek works out of the box for anyone, without a
+    per-user Karabiner setup.
+  - Related ids: none
 
 - Date: 2026-08-02
   - Change: media keys route directly to the single playing app (bypassing

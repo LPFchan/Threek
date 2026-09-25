@@ -27,6 +27,12 @@ final class NowPlayingService {
     private let cacheTTL: TimeInterval = 3.0
     private var refreshInFlight = false
 
+    /// Snapshots started before this moment may predate the last play/pause
+    /// we sent (the target app hadn't reacted yet), so they're discarded.
+    /// Otherwise a stale "X is playing" would route the next press back to X.
+    private var acceptSnapshotsFrom: Date = .distantPast
+    private let toggleSettle: TimeInterval = 0.5
+
     // MARK: - Bundle resource paths
 
     private var perlScriptURL: URL? {
@@ -63,11 +69,11 @@ final class NowPlayingService {
         }
         if !refreshInFlight {
             refreshInFlight = true
+            let startedAt = Date()
             DispatchQueue.global(qos: .userInitiated).async {
                 let (apps, fresh) = self.discoverApps()
                 DispatchQueue.main.async {
-                    self.cachedApps = self.finalize(apps, freshMetadata: fresh)
-                    self.cacheTime = Date()
+                    self.store(apps, freshMetadata: fresh, startedAt: startedAt)
                     self.refreshInFlight = false
                     completion(self.cachedApps)
                 }
@@ -82,13 +88,35 @@ final class NowPlayingService {
     /// Kicks off a background refresh so the cache is warm by the time the
     /// user presses a media key. Call at launch.
     func warmCache() {
+        let startedAt = Date()
         DispatchQueue.global(qos: .userInitiated).async {
             let (apps, fresh) = self.discoverApps()
             DispatchQueue.main.async {
-                self.cachedApps = self.finalize(apps, freshMetadata: fresh)
-                self.cacheTime = Date()
+                self.store(apps, freshMetadata: fresh, startedAt: startedAt)
             }
         }
+    }
+
+    /// Writes a discovery result into the cache unless it was started before
+    /// the last play/pause settled. Main queue only.
+    private func store(_ apps: [NowPlayingApp],
+                       freshMetadata: [String: MetadataResult], startedAt: Date) {
+        guard startedAt >= acceptSnapshotsFrom else { return }
+        cachedApps = finalize(apps, freshMetadata: freshMetadata)
+        cacheTime = Date()
+    }
+
+    /// Flips the cached play state of the app we just toggled so an immediate
+    /// next press sees the new state, then re-checks once the app has had
+    /// time to react. Main queue only.
+    private func noteToggle(of bundleID: String) {
+        if let i = cachedApps.firstIndex(where: { $0.effectiveBundleID == bundleID }),
+           let playing = cachedApps[i].isPlaying {
+            cachedApps[i].isPlaying = !playing
+        }
+        cacheTime = Date()
+        acceptSnapshotsFrom = Date().addingTimeInterval(toggleSettle)
+        DispatchQueue.main.asyncAfter(deadline: .now() + toggleSettle) { self.warmCache() }
     }
 
     /// Sends a play/pause toggle to the current Now Playing app.
@@ -99,6 +127,7 @@ final class NowPlayingService {
     /// dictionary (browsers, Zen) — fall back to the consent-free MediaRemote
     /// adapter, which toggles the *current* now playing app.
     func sendPlayPause(to bundleID: String) {
+        noteToggle(of: bundleID)
         DispatchQueue.global(qos: .userInitiated).async {
             let ok = self.runTargetedAppleScript("playpause", to: bundleID, label: "playpause")
             if !ok { self.sendMediaRemoteCommandSync(.togglePlayPause, label: "playpause (fallback)") }
