@@ -364,7 +364,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
-extension AppDelegate: SPUStandardUserDriverDelegate {
+extension AppDelegate: @preconcurrency SPUStandardUserDriverDelegate {
     // A menu bar app is never the active app, so Sparkle would leave an update
     // it found waiting behind other windows. Bring it to the front instead.
     var supportsGentleScheduledUpdateReminders: Bool { true }

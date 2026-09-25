@@ -14,9 +14,11 @@ identities=$(security find-identity -p codesigning)
 identity=${SIGN_IDENTITY:-$(echo "$identities" | sed -n 's/.*"\(Developer ID Application: .*\)"/\1/p' | head -1)}
 if [ -z "$identity" ] && echo "$identities" | grep -q '"Threek Self-Signed"'; then identity="Threek Self-Signed"; fi
 
+# Build the adapter before generating the project: XcodeGen only lists the
+# files that exist in Build/Adapter at generation time, so a project generated
+# first would ship without them.
+sh "$root/scripts/build-adapter.sh"
 (cd "$root" && xcodegen generate --quiet)
-# The project's source list needs the adapter output directory to exist.
-mkdir -p "$root/Build/Adapter"
 xcodebuild -project "$root/Threek.xcodeproj" -scheme Threek -configuration Release \
     -derivedDataPath "$dd" -destination 'generic/platform=macOS' \
     MARKETING_VERSION="$version" CURRENT_PROJECT_VERSION="$build" \
@@ -24,6 +26,8 @@ xcodebuild -project "$root/Threek.xcodeproj" -scheme Threek -configuration Relea
 
 rm -rf "$app"
 ditto "$dd/Build/Products/Release/Threek.app" "$app"
+test -f "$app/Contents/Resources/mediaremote-adapter.pl"
+test -d "$app/Contents/Frameworks/MediaRemoteAdapter.framework"
 # License notices for Threek and the code built into it.
 licenses="$app/Contents/Resources/Licenses"
 mkdir -p "$licenses"
