@@ -17,23 +17,56 @@ private enum SharedGPUContext {
     }()
 }
 
+/// A MacBook keyboard's function-row geometry, measured off Apple's keycap
+/// maps (support.apple.com/101269). Each map was scaled by its letter-key
+/// pitch: both families' keyboards span exactly 14.36 pitches, and the 31 mm
+/// Caps Lock keycap puts that pitch at 19.35 mm.
+struct KeyboardLayout {
+    /// Width of one function keycap.
+    let keycapMM: CGFloat
+    /// Center-to-center distance between neighboring function keys.
+    let keyPitchMM: CGFloat
+    /// F8's center, right of the keyboard's centerline; nil when there are
+    /// no physical F-keys (Touch Bar), so the HUD centers on the screen.
+    let f8OffsetMM: CGFloat?
+
+    /// MacBook Air (M2, 2022) and later, MacBook Pro 14/16 (2021) and later:
+    /// full-height F-keys between a 1.5-wide Esc and a 1-wide Touch ID.
+    static let fullHeight = KeyboardLayout(keycapMM: 16.7, keyPitchMM: 19.35, f8OffsetMM: 33.8)
+    /// MacBook Air (Retina, 2020) and (M1, 2020): half-height F-keys, Esc as
+    /// wide as an F-key, and a narrow Touch ID.
+    static let halfHeight = KeyboardLayout(keycapMM: 17.9, keyPitchMM: 20.6, f8OffsetMM: 35.4)
+    /// Touch Bar MacBook Pros: no F-keys; size like the letter keys.
+    static let touchBar = KeyboardLayout(keycapMM: 16.7, keyPitchMM: 19.35, f8OffsetMM: nil)
+
+    /// This Mac's layout, from its model identifier. Anything not listed is
+    /// assumed to be a current (full-height) keyboard.
+    static let current: KeyboardLayout = {
+        var size = 0
+        sysctlbyname("hw.model", nil, &size, nil, 0)
+        var bytes = [CChar](repeating: 0, count: max(size, 1))
+        sysctlbyname("hw.model", &bytes, &size, nil, 0)
+        return layout(forModel: String(cString: bytes))
+    }()
+
+    static func layout(forModel model: String) -> KeyboardLayout {
+        if ["MacBookAir9,1", "MacBookAir10,1"].contains(model) { return .halfHeight }
+        // MacBookPro15–17: every 2018–2020 MacBook Pro has a Touch Bar;
+        // Mac14,7 is the 13-inch M2.
+        if model == "Mac14,7" || ["MacBookPro15,", "MacBookPro16,", "MacBookPro17,"]
+            .contains(where: model.hasPrefix) { return .touchBar }
+        return .fullHeight
+    }
+}
+
 /// Physical sizing for the HUD. On a MacBook's built-in display the HUD is
 /// drawn at true physical size: each icon is exactly as wide as a function
 /// keycap, icons sit one key pitch apart, and the middle one is centered over
-/// F8 — whatever the display's resolution or scaling setting.
-///
-/// Key geometry comes from Apple's keycap map for MacBook Air (M2, 2022) and
-/// later and MacBook Pro 14/16 (2021) and later, which share one keyboard
-/// (support.apple.com/101269), scaled by the 31 mm Caps Lock keycap. The
-/// keyboard and the display are both centered on the chassis, so keyboard
-/// center = screen center.
+/// F8, whatever the display's resolution or scaling setting. The keyboard and
+/// the display are both centered on the chassis, so keyboard center = screen
+/// center.
 enum PhysicalMetrics {
-    /// Width of one function keycap (F1–F12 are all 1u).
-    static let keycapMM: CGFloat = 16.7
-    /// Center-to-center distance between neighboring function keys.
-    static let keyPitchMM: CGFloat = 19.35
-    /// F8's center, right of the keyboard's (and screen's) centerline.
-    static let f8OffsetMM: CGFloat = 33.8
+    static let layout = KeyboardLayout.current
     /// Gap between the screen's bottom edge and the panel's bottom edge.
     static let bottomLiftMM: CGFloat = 4
 
@@ -41,7 +74,7 @@ enum PhysicalMetrics {
     /// 84 wide; `scale(for:)` maps those units to points.
     static let designKeycap: CGFloat = 84
     /// Gap between icons, in design units: pitch minus keycap.
-    static let designGap: CGFloat = designKeycap * (keyPitchMM / keycapMM - 1)
+    static let designGap: CGFloat = designKeycap * (layout.keyPitchMM / layout.keycapMM - 1)
     /// Empty margin around the content, in design units, so the drop
     /// shadow fades out before the panel edge.
     static let designMargin: CGFloat = 28
@@ -74,18 +107,20 @@ enum PhysicalMetrics {
     /// up with, so one design unit is one point.
     static func scale(for screen: NSScreen) -> CGFloat {
         guard let ppm = pointsPerMM(for: screen) else { return 1 }
-        return keycapMM * ppm / designKeycap
+        return layout.keycapMM * ppm / designKeycap
     }
 
     /// Panel frame: centered over F8 on the built-in display (screen center
-    /// elsewhere), just above the screen's bottom edge.
+    /// on other displays and Touch Bar Macs), just above the bottom edge.
     static func hudFrame(on screen: NSScreen) -> (frame: NSRect, scale: CGFloat) {
         let s = scale(for: screen)
         let ppm = pointsPerMM(for: screen)
         let size = NSSize(width: (designContentWidth + designMargin * 2) * s,
                           height: (designContentHeight + designMargin * 2) * s)
-        let centerX = screen.frame.midX + (ppm.map { f8OffsetMM * $0 } ?? 0)
-        let lift = ppm.map { bottomLiftMM * $0 } ?? bottomLiftMM * designKeycap / keycapMM
+        var offset: CGFloat = 0
+        if let ppm, let f8 = layout.f8OffsetMM { offset = f8 * ppm }
+        let centerX = screen.frame.midX + offset
+        let lift = (ppm ?? designKeycap / layout.keycapMM) * bottomLiftMM
         let frame = NSRect(x: centerX - size.width / 2, y: screen.frame.minY + lift,
                            width: size.width, height: size.height)
         return (frame, s)
