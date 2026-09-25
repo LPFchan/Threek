@@ -1,0 +1,25 @@
+# Threek
+
+> A macOS menu bar app for the ⏮ ⏯ ⏭ media keys. When several apps are registered with macOS Now Playing (Spotify, Music, a browser tab, all playing or paused), pressing a media key normally goes to whichever claimed Now Playing last. Threek intercepts the key and shows a small HUD above the F7–F9 keys so you pick which app gets it; if exactly one app is playing, the key goes straight to it. Free and open source (MIT), for macOS 15 or later, Apple silicon and Intel.
+
+- Download: https://github.com/LPFchan/Threek/releases/latest/download/Threek.dmg
+- Source, README and build instructions: https://github.com/LPFchan/Threek
+- Release notes: https://github.com/LPFchan/Threek/releases
+
+## Using it
+
+- Press ⏯ with two or three apps registered: a HUD shows each app above the F-key that picks it (F7, F8, F9). Press that key to send play/pause to that app.
+- With four or more apps, ⏮/⏭ move a selection ring and ⏯ confirms.
+- With exactly one app playing, any media key goes straight to it, no HUD. Esc or a 3-second timeout dismisses the HUD.
+- The menu bar icon has Enabled, Open at Login, Check for Updates and About. Updates install through Sparkle.
+
+## First launch
+
+Threek isn't notarized by Apple, so the first launch needs System Settings → Privacy & Security → Open Anyway. It then asks for Accessibility access (to intercept the media keys) and, the first time it controls each media app, for Automation access.
+
+## How it works
+
+- A HID-level event tap intercepts the hardware media keys (key-down and key-up, so macOS never also acts on them).
+- Since macOS 15.4 only entitled processes can read Now Playing data, so Threek runs the bundled MediaRemote Adapter (https://github.com/ungive/mediaremote-adapter) through /usr/bin/perl, which is entitled, to list every registered app, playing or paused.
+- Commands go to the chosen app through AppleScript where the app supports it, else through MediaRemote to the current Now Playing app.
+- No analytics or telemetry. The only network request is the daily update check against threek.lost.plus.

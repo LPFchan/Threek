@@ -7,8 +7,8 @@ Update it when the project's real state changes.
 
 - Last updated: 2026-09-26
 - Overall posture: `active`
-- Current focus: HUD simplification — direct dispatch to a single playing app,
-  chrome-less HUD
+- Current focus: general availability — first public release (DMG, Sparkle
+  updates, threek.lost.plus, 28 UI languages)
 - Highest-priority blocker: none
 - Next operator decision needed: none
 - Related decisions: none yet
@@ -47,6 +47,16 @@ is an OS ceiling. The repo has just adopted the repo-template operating model
 - Related ids: RSH-20260731-001, RSH-20260731-002
 
 ## Recent Changes To Project Reality
+
+- Date: 2026-09-26
+  - Change: Threek is set up for public release: fork app icon, 28 UI
+    languages, Sparkle auto-updates, a "Threek Self-Signed" release
+    certificate (keeps the Accessibility grant across updates), a tag-driven
+    GitHub Actions release that builds the DMG with DMGMaker, and a homepage
+    plus update feed at threek.lost.plus. Now Playing discovery runs its
+    three adapter calls concurrently (~0.4 s instead of ~0.7 s).
+  - Why it matters: anyone can install and update Threek without building it.
+  - Related ids: none
 
 - Date: 2026-09-26
   - Change: Threek now reliably intercepts the real F7–F9 media keys; the

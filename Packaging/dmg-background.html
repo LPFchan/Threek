@@ -1,0 +1,27 @@
+<!doctype html>
+<!-- The DMG window background (600×600, rendered at 2×). DMGMaker draws the
+     glass panel, arrow and "To install Threek" text on top, roughly the
+     middle band (y 170–470), so decoration stays out of it.
+     Render: scripts/make-dmg-background.sh -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 600px; height: 600px; overflow: hidden; }
+  body {
+    position: relative;
+    background:
+      radial-gradient(circle at 18% 12%, rgba(200, 202, 208, 0.55), transparent 55%),
+      radial-gradient(circle at 88% 92%, rgba(60, 62, 70, 0.45), transparent 50%),
+      linear-gradient(165deg, #a4a6ad 0%, #85878f 45%, #5e6068 100%);
+  }
+  /* A soft fork outline in the top corner, the icon's shape. */
+  svg { position: absolute; top: 28px; right: 44px; }
+</style>
+</head>
+<body>
+  <svg width="60" height="110" viewBox="0 0 60 110" fill="none" stroke="rgba(255,255,255,0.14)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M10 4 V34 M30 4 V34 M50 4 V34 M10 34 C10 48 22 52 25 56 V100 A5 5 0 0 0 35 100 V56 C38 52 50 48 50 34"/>
+  </svg>
+</body>
+</html>

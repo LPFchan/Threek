@@ -35,7 +35,8 @@ Playing registry, and pops up a HUD so you pick the target.
 - A swallowed media key is swallowed whole: key-down, autorepeat, and key-up.
   A lone key-up reaching macOS toggles the system Now Playing app or launches
   Music.
-- No network access, analytics, or telemetry. Now Playing metadata stays
+- No analytics or telemetry; the only network request is Sparkle's update
+  check against `threek.lost.plus`. Now Playing metadata stays
   in-process.
 - `LSUIElement = true` (menu bar app, no dock icon).
 - The adapter is built from source at build time; no committed binaries.
