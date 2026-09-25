@@ -17,61 +17,90 @@ private enum SharedGPUContext {
     }()
 }
 
-/// Physical sizing for the HUD: converts millimeters to points using the
-/// display's real panel size (EDID) so the popup renders at a true physical
-/// size that lines up with the built-in keyboard's function row.
+/// Physical sizing for the HUD. On a MacBook's built-in display the HUD is
+/// drawn at true physical size: each icon is exactly as wide as a function
+/// keycap, icons sit one key pitch apart, and the middle one is centered over
+/// F8 — whatever the display's resolution or scaling setting.
+///
+/// Key geometry comes from Apple's keycap map for MacBook Air (M2, 2022) and
+/// later and MacBook Pro 14/16 (2021) and later, which share one keyboard
+/// (support.apple.com/101269), scaled by the 31 mm Caps Lock keycap. The
+/// keyboard and the display are both centered on the chassis, so keyboard
+/// center = screen center.
 enum PhysicalMetrics {
-    /// The F7–F9 cluster sits right of the keyboard's centerline: F8's
-    /// center is ~27mm right of it. The HUD anchors to the keys, not the
-    /// screen, so its horizontal center is offset by the same amount.
-    static let horizontalOffsetMM: CGFloat = 27
-    /// HUD block dimensions. Fixed regardless of app count — always three
-    /// icon slots visible, the selector never moves or grows. Width spans
-    /// five function keys (F6→F10).
-    static let hudWidthMM: CGFloat = 83.5
-    static let hudHeightMM: CGFloat = 40
-    /// Gap between the HUD's bottom edge and the screen's bottom edge, so
-    /// the transport row clears the bezel and floats above the F-keys.
-    static let bottomLiftMM: CGFloat = 6
-    /// Content inset from the panel edge.
-    static let contentMarginMM: CGFloat = 10
-    /// Extra width added purely so the carousel's neighbor slots aren't
-    /// clipped at the panel's edges — the HUD area extends past the
-    /// three-slot core so the neighbors read as whole icons. This is
-    /// non-physical (purely cosmetic), so it's expressed in points.
-    static let hudWidthPaddingPt: CGFloat = 20
+    /// Width of one function keycap (F1–F12 are all 1u).
+    static let keycapMM: CGFloat = 16.7
+    /// Center-to-center distance between neighboring function keys.
+    static let keyPitchMM: CGFloat = 19.35
+    /// F8's center, right of the keyboard's (and screen's) centerline.
+    static let f8OffsetMM: CGFloat = 33.8
+    /// Gap between the screen's bottom edge and the panel's bottom edge.
+    static let bottomLiftMM: CGFloat = 4
 
-    /// Vertical margin on every side so the content shadow has room to fade
-    /// out fully before the panel edge. Pure padding; the content stays
-    /// anchored by its inset, so only the panel grows.
-    static let hudMarginPt: CGFloat = 24
+    /// The SwiftUI views are laid out in design units where one keycap is
+    /// 84 wide; `scale(for:)` maps those units to points.
+    static let designKeycap: CGFloat = 84
+    /// Gap between icons, in design units: pitch minus keycap.
+    static let designGap: CGFloat = designKeycap * (keyPitchMM / keycapMM - 1)
+    /// Empty margin around the content, in design units, so the drop
+    /// shadow fades out before the panel edge.
+    static let designMargin: CGFloat = 28
+    /// Content size in design units: three slots plus the carousel's
+    /// neighbor overhang; icon + spacing + badge/transport row.
+    static let designContentWidth: CGFloat = designKeycap * 3 + designGap * 2 + 44
+    static let designContentHeight: CGFloat = designKeycap + 10 + 34
 
-    /// Points per physical millimeter for the screen the HUD is shown on.
-    /// Falls back to 72 pt/inch (≈2.835 pt/mm) if the display doesn't
-    /// report a physical size (some external monitors do this).
-    static func pointsPerMM(for screen: NSScreen) -> CGFloat {
-        let fallback: CGFloat = 72 / 25.4
-        guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber else {
-            return fallback
-        }
+    /// Points per millimeter of the built-in display, or nil for any other
+    /// display. Uses the screen's width in points (which already includes the
+    /// "scaled" resolution) over the panel's physical width, so it holds at
+    /// every scaling setting.
+    static func pointsPerMM(for screen: NSScreen) -> CGFloat? {
+        guard let number = screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber
+        else { return nil }
         let displayID = CGDirectDisplayID(number.uint32Value)
+        guard CGDisplayIsBuiltin(displayID) != 0 else { return nil }
         let sizeMM = CGDisplayScreenSize(displayID)
-        guard sizeMM.width > 0 else { return fallback }
-        let pxPerMM = CGFloat(CGDisplayPixelsWide(displayID)) / sizeMM.width
-        return pxPerMM / screen.backingScaleFactor
+        guard sizeMM.width > 0 else { return nil }
+        return screen.frame.width / sizeMM.width
     }
 
-    /// HUD frame flush with the bottom edge of the screen — directly above
-    /// the physical function row — horizontally centered on the F7–F9 keys
-    /// rather than the screen.
-    static func hudFrame(on screen: NSScreen) -> (frame: NSRect, ppm: CGFloat) {
+    /// The screen above the keys being pressed: the built-in display when
+    /// it's on, otherwise the main screen.
+    static var hudScreen: NSScreen? {
+        NSScreen.screens.first { pointsPerMM(for: $0) != nil } ?? NSScreen.main
+    }
+
+    /// Points per design unit. On other displays there are no keys to line
+    /// up with, so one design unit is one point.
+    static func scale(for screen: NSScreen) -> CGFloat {
+        guard let ppm = pointsPerMM(for: screen) else { return 1 }
+        return keycapMM * ppm / designKeycap
+    }
+
+    /// Panel frame: centered over F8 on the built-in display (screen center
+    /// elsewhere), just above the screen's bottom edge.
+    static func hudFrame(on screen: NSScreen) -> (frame: NSRect, scale: CGFloat) {
+        let s = scale(for: screen)
         let ppm = pointsPerMM(for: screen)
-        let size = NSSize(width: hudWidthMM * ppm + hudWidthPaddingPt,
-                          height: hudHeightMM * ppm + hudMarginPt * 2)
-        let frame = NSRect(x: screen.frame.midX + horizontalOffsetMM * ppm - size.width / 2,
-                           y: screen.frame.minY + bottomLiftMM * ppm,
+        let size = NSSize(width: (designContentWidth + designMargin * 2) * s,
+                          height: (designContentHeight + designMargin * 2) * s)
+        let centerX = screen.frame.midX + (ppm.map { f8OffsetMM * $0 } ?? 0)
+        let lift = ppm.map { bottomLiftMM * $0 } ?? bottomLiftMM * designKeycap / keycapMM
+        let frame = NSRect(x: centerX - size.width / 2, y: screen.frame.minY + lift,
                            width: size.width, height: size.height)
-        return (frame, ppm)
+        return (frame, s)
+    }
+}
+
+/// Points per design unit for the HUD's SwiftUI views (see PhysicalMetrics).
+private struct HUDScaleKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 1
+}
+
+private extension EnvironmentValues {
+    var hudScale: CGFloat {
+        get { self[HUDScaleKey.self] }
+        set { self[HUDScaleKey.self] = newValue }
     }
 }
 
@@ -84,7 +113,6 @@ final class PopupController {
 
     private var panel: NSPanel?
     private lazy var viewModel = SelectorViewModel()
-    private var contentInset: CGFloat = 0
     private var shadowLayer: ShadowCastingView?
     private weak var contentView: NSView?
 
@@ -97,15 +125,17 @@ final class PopupController {
     }
 
     func show(apps: [NowPlayingApp], triggering: MediaKeyEvent = .playPause) {
-        if let screen = NSScreen.main {
-            let (frame, ppm) = PhysicalMetrics.hudFrame(on: screen)
-            contentInset = PhysicalMetrics.contentMarginMM * ppm
-            if panel == nil { buildPanel(size: frame.size, ppm: ppm) }
+        if let screen = PhysicalMetrics.hudScreen {
+            let (frame, scale) = PhysicalMetrics.hudFrame(on: screen)
+            viewModel.scale = scale
+            if panel == nil { buildPanel(size: frame.size) }
+            shadowLayer?.blurRadius = 7 * scale
+            shadowLayer?.offsetY = 2 * scale
             panel?.setFrame(frame, display: false)
             // Sample what's actually behind the panel BEFORE it orders
             // front, so the glyphs adapt to the real background, not the
             // HUD itself.
-            updateGlyphColor(for: frame)
+            updateGlyphColor(for: frame, on: screen)
         }
         viewModel.present(apps: apps, triggering: triggering)
         guard let panel else { return }
@@ -135,7 +165,7 @@ final class PopupController {
         viewModel.handleKey(event)
     }
 
-    private func buildPanel(size: NSSize, ppm: CGFloat) {
+    private func buildPanel(size: NSSize) {
         let p = NSPanel(
             contentRect: NSRect(origin: .zero, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
@@ -161,9 +191,7 @@ final class PopupController {
         let shadow = ShadowCastingView()
         container.addSubview(shadow)
 
-        let content = NSHostingView(rootView: SelectorPopup(
-            viewModel: viewModel,
-            contentInset: contentInset))
+        let content = NSHostingView(rootView: SelectorPopup(viewModel: viewModel))
         container.addSubview(content)
 
         container.frame = NSRect(origin: .zero, size: size)
@@ -184,8 +212,7 @@ final class PopupController {
     /// one-shot SCScreenshotManager capture taken before the panel orders
     /// front, so the HUD itself never pollutes the sample; no persistent
     /// stream, and the one-shot API needs no Screen Recording permission.
-    private func updateGlyphColor(for frame: NSRect) {
-        guard let screen = NSScreen.main else { return }
+    private func updateGlyphColor(for frame: NSRect, on screen: NSScreen) {
         let primaryH = NSScreen.screens.first?.frame.height ?? screen.frame.height
         // SCStreamConfiguration/sourceRect work in points with a top-left
         // origin; AppKit frames are points, bottom-left — flip Y only.
@@ -194,11 +221,13 @@ final class PopupController {
                           width: frame.width,
                           height: frame.height)
         let scale = screen.backingScaleFactor
+        let displayID = (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
         let excludeID = panel.map { CGWindowID($0.windowNumber) }
         Task {
             guard let content = try? await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: true),
-                let display = content.displays.first else { return }
+                let display = content.displays.first(where: { $0.displayID == displayID })
+                    ?? content.displays.first else { return }
             let excluded = content.windows.filter { $0.windowID == excludeID }
             let filter = SCContentFilter(display: display, excludingWindows: excluded)
             let config = SCStreamConfiguration()
@@ -298,17 +327,16 @@ private final class ShadowCastingView: NSView {
 
 private struct SelectorPopup: View {
     @ObservedObject var viewModel: SelectorViewModel
-    var contentInset: CGFloat = 0
 
     var body: some View {
-        VStack(spacing: 10) {
+        let s = viewModel.scale
+        VStack(spacing: 10 * s) {
             iconRow
             keyRow
         }
-        .padding(.horizontal, contentInset)
-        .padding(.top, contentInset)
-        .padding(.bottom, contentInset)
+        .padding(PhysicalMetrics.designMargin * s)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+        .environment(\.hudScale, s)
     }
 
     @ViewBuilder
@@ -318,12 +346,13 @@ private struct SelectorPopup: View {
             EmptyView()
         case .showing(let apps):
             // One icon per function key, badge aligned directly under it.
-            // With two apps the columns spread a full key slot apart so the
-            // F7/F9 badges land under the physical keys they name; with
-            // three they're adjacent like the reference HUD.
-            HStack(spacing: apps.count == 2 ? 84 : 10) {
+            // Icons sit one key pitch apart; with two apps they skip F8's
+            // slot so each lands over the key it names (F7, F9).
+            let s = viewModel.scale
+            let gap = PhysicalMetrics.designGap
+            HStack(spacing: (apps.count == 2 ? gap * 2 + PhysicalMetrics.designKeycap : gap) * s) {
                 ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
-                    VStack(spacing: 10) {
+                    VStack(spacing: 10 * s) {
                         AppIconView(app: app)
                         KeyBadge(label: keyLabel(for: index),
                                  inverted: glyphInverted)
@@ -366,13 +395,14 @@ private struct SelectorPopup: View {
 private struct AppIconView: View {
     let app: NowPlayingApp
     var isSelected: Bool = false
+    @Environment(\.hudScale) private var s
 
     var body: some View {
         ZStack {
             if isSelected {
-                RoundedRectangle(cornerRadius: 20)
-                    .stroke(Color.white, lineWidth: 2.5)
-                    .frame(width: 84, height: 84)
+                RoundedRectangle(cornerRadius: 20 * s)
+                    .stroke(Color.white, lineWidth: 2.5 * s)
+                    .frame(width: 84 * s, height: 84 * s)
             }
             if let artwork = app.artwork {
                 // Album artwork leads, with the app icon badged in the corner —
@@ -380,28 +410,28 @@ private struct AppIconView: View {
                 // below when the app publishes no artwork.
                 ZStack(alignment: .bottomTrailing) {
                     Image(nsImage: artwork).resizable()
-                        .frame(width: 68, height: 68)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .frame(width: 68 * s, height: 68 * s)
+                        .clipShape(RoundedRectangle(cornerRadius: 12 * s))
                     if let icon = app.icon {
                         Image(nsImage: icon).resizable()
-                            .frame(width: 26, height: 26)
-                            .clipShape(RoundedRectangle(cornerRadius: 7))
-                            .overlay(RoundedRectangle(cornerRadius: 7)
-                                .stroke(Color.black.opacity(0.35), lineWidth: 1))
-                            .offset(x: 5, y: 5)
+                            .frame(width: 26 * s, height: 26 * s)
+                            .clipShape(RoundedRectangle(cornerRadius: 7 * s))
+                            .overlay(RoundedRectangle(cornerRadius: 7 * s)
+                                .stroke(Color.black.opacity(0.35), lineWidth: s))
+                            .offset(x: 5 * s, y: 5 * s)
                     }
                 }
             } else if let icon = app.icon {
                 Image(nsImage: icon).resizable()
-                    .frame(width: 68, height: 68)
-                    .clipShape(RoundedRectangle(cornerRadius: 15))
+                    .frame(width: 68 * s, height: 68 * s)
+                    .clipShape(RoundedRectangle(cornerRadius: 15 * s))
             } else {
                 Image(systemName: "app.fill").resizable()
-                    .frame(width: 68, height: 68)
+                    .frame(width: 68 * s, height: 68 * s)
                     .foregroundStyle(.secondary)
             }
         }
-        .frame(width: 84, height: 84)
+        .frame(width: 84 * s, height: 84 * s)
         .help(app.trackTitle.map { "\(app.displayName) — \($0)" } ?? app.displayName)
     }
 }
@@ -413,16 +443,17 @@ private struct AppIconView: View {
 private struct KeyBadge: View {
     let label: String
     let inverted: Bool
+    @Environment(\.hudScale) private var s
 
     var body: some View {
         Text(label)
-            .font(.system(size: 17, weight: .medium))
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
+            .font(.system(size: 17 * s, weight: .medium))
+            .padding(.horizontal, 10 * s)
+            .padding(.vertical, 5 * s)
             .overlay(
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 8 * s)
                     .stroke(inverted ? Color.black : Color.white,
-                            lineWidth: 2)
+                            lineWidth: 2 * s)
             )
             .foregroundStyle(inverted ? Color.black : Color.white)
             .animation(.easeInOut(duration: 0.25), value: inverted)
@@ -433,14 +464,17 @@ private struct KeyBadge: View {
 private struct TransportRow: View {
     @ObservedObject var viewModel: SelectorViewModel
     let inverted: Bool
+    @Environment(\.hudScale) private var s
 
     var body: some View {
-        HStack(spacing: 22) {
+        // Each glyph is one keycap wide and one pitch from the next, so it
+        // sits over the key it stands for (F7 / F8 / F9).
+        HStack(spacing: PhysicalMetrics.designGap * s) {
             TransportGlyph(systemName: "arrow.left", active: true)
             TransportGlyph(systemName: "playpause", active: true)
             TransportGlyph(systemName: "arrow.right", active: true)
         }
-        .font(.system(size: 30, weight: .semibold))
+        .font(.system(size: 30 * s, weight: .semibold))
         // Background-adaptive appearance, home-bar style: the glyph color is
         // a flat monochrome chosen from the averaged luminance of the screen
         // behind the HUD — white when it's dark, near-black when it's light.
@@ -452,10 +486,11 @@ private struct TransportRow: View {
 private struct TransportGlyph: View {
     let systemName: String
     let active: Bool
+    @Environment(\.hudScale) private var s
 
     var body: some View {
         Image(systemName: systemName)
-            .frame(width: 84, height: 34)
+            .frame(width: 84 * s, height: 34 * s)
             .opacity(active ? 0.95 : 0.2)
     }
 }
@@ -472,16 +507,17 @@ private struct TransportGlyph: View {
 /// grow into it.
 private struct CarouselRow: View {
     @ObservedObject var viewModel: SelectorViewModel
+    @Environment(\.hudScale) private var s
 
-    /// Slot geometry: 84-wide slots with 10 of spacing.
-    private let slotWidth: CGFloat = 84
-    private let slotSpacing: CGFloat = 10
+    /// Slot geometry: keycap-wide slots, one key pitch apart.
+    private var slotWidth: CGFloat { PhysicalMetrics.designKeycap * s }
+    private var slotSpacing: CGFloat { PhysicalMetrics.designGap * s }
 
     /// Only the inner three slots are fully visible. The clip window is a
     /// bit wider than three slots so the neighbors aren't chopped by the
     /// panel's edges; the outer two slots live past the edge icons
     /// where wrap-related enter/leave transitions stay hidden.
-    private var clipWidth: CGFloat { slotWidth * 3 + slotSpacing * 2 + 44 }
+    private var clipWidth: CGFloat { PhysicalMetrics.designContentWidth * s }
 
     var body: some View {
         let apps = viewModel.state.apps
@@ -504,8 +540,8 @@ private struct CarouselRow: View {
                        value: cursor)
 
             // Stationary selection ring — the centered icon grows into it.
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white, lineWidth: 2.5)
+            RoundedRectangle(cornerRadius: 20 * s)
+                .stroke(Color.white, lineWidth: 2.5 * s)
                 .frame(width: slotWidth, height: slotWidth)
         }
         .frame(width: clipWidth, height: slotWidth)
@@ -525,11 +561,12 @@ private struct CarouselIconView: View {
     /// Signed slot distance from the cursor: 0 center, ±1 visible neighbors,
     /// ±2 parked just outside the view.
     let distance: Int
+    @Environment(\.hudScale) private var s
 
     var body: some View {
         AppIconView(app: app)
             .scaleEffect(scale)
-            .blur(radius: blur)
+            .blur(radius: blur * s)
             .opacity(fade)
             .animation(.interpolatingSpring(stiffness: 480, damping: 36),
                        value: scale)

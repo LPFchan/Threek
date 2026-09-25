@@ -57,6 +57,8 @@ final class SelectorViewModel: ObservableObject {
     /// once when the panel is shown. Drives the glyphs' background-adaptive
     /// light/dark appearance.
     @Published var backdropLuminance: CGFloat = 0
+    /// Points per HUD design unit (PhysicalMetrics.scale), set per show.
+    @Published var scale: CGFloat = 1
 
     /// Called with (bundleID, key) when the user confirms an app.
     var onDispatch: ((String, MediaKeyEvent) -> Void)?
