@@ -1,0 +1,352 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSAccessibilityUsageDescription": {
+      "comment": "Threek needs Accessibility access to intercept media keys and let you choose which app receives them.",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يحتاج Threek إلى إذن تسهيلات الاستخدام لاعتراض مفاتيح الوسائط وتتيح لك اختيار التطبيق الذي يستقبلها."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek се нуждае от достъп до Достъпност, за да прихваща медийните клавиши и да ви позволи да изберете кое приложение да ги получава."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek potřebuje přístup k Zpřístupnění, aby mohl zachytávat mediální klávesy a nechat vás vybrat, která aplikace je dostane."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek skal have adgang til Tilgængelighed for at opfange medietasterne og lade dig vælge, hvilken app der modtager dem."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek benötigt Zugriff auf die Bedienungshilfen, um Medientasten abzufangen und dich wählen zu lassen, welche App sie erhält."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek necesita acceso a Accesibilidad para interceptar las teclas multimedia y dejarte elegir qué app las recibe."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek vajab hõlbustusfunktsioonide luba, et püüda kinni meediaklahvid ja lasta sul valida, milline rakendus need saab."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek tarvitsee Käyttöapu-oikeuden siepatakseen mediapainikkeet ja antaakseen sinun valita, mikä appi ne saa."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek a besoin de l’accès à l’Accessibilité pour intercepter les touches multimédias et vous laisser choisir l’app qui les reçoit."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek को मीडिया कुंजियाँ पकड़ने और यह चुनने देने के लिए कि कौन-सा ऐप उन्हें पाए, एक्सेसिबिलिटी की अनुमति चाहिए।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek treba pristup pristupačnosti kako bi presretao medijske tipke i omogućio vam da odaberete koja ih aplikacija prima."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Threeknek hozzáférés kell a Kisegítő lehetőségekhez, hogy elfoghassa a médiabillentyűket, és kiválaszthassa, melyik app kapja meg őket."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek ha bisogno dell’accesso ad Accessibilità per intercettare i tasti multimediali e farti scegliere quale app li riceve."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threekはメディアキーを捕捉し、どのアプリに送るかを選べるようにするため、アクセシビリティへのアクセスが必要です。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek이 미디어 키를 가로채고 어떤 앱이 받을지 고를 수 있게 하려면 손쉬운 사용 접근 권한이 필요합니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek trenger tilgang til Tilgjengelighet for å fange opp medietastene og la deg velge hvilken app som får dem."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek heeft toegang tot Toegankelijkheid nodig om mediatoetsen te onderscheppen en je te laten kiezen welke app ze ontvangt."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek potrzebuje dostępu do Dostępności, aby przechwytywać klawisze multimedialne i pozwolić Ci wybrać, która aplikacja je otrzyma."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek precisa de acesso à Acessibilidade para interceptar as teclas de mídia e deixar você escolher qual app as recebe."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek precisa de acesso à Acessibilidade para intercetar as teclas multimédia e permitir que escolha que app as recebe."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek are nevoie de acces la Accesibilitate pentru a intercepta tastele media și a te lăsa să alegi ce aplicație le primește."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek нужен доступ к Универсальному доступу, чтобы перехватывать медиаклавиши и позволять выбирать, какое приложение их получит."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek potrebuje prístup k Prístupnosti, aby mohol zachytávať mediálne klávesy a nechať vás vybrať, ktorá aplikácia ich dostane."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek behöver åtkomst till Hjälpmedel för att fånga upp medietangenterna och låta dig välja vilken app som tar emot dem."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek, medya tuşlarını yakalamak ve hangi uygulamanın alacağını seçmenizi sağlamak için Erişilebilirlik iznine ihtiyaç duyar."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek потрібен доступ до Параметрів доступності, щоб перехоплювати медіаклавіші й дати вам вибрати, яка програма їх отримає."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek cần quyền Trợ năng để chặn các phím phương tiện và cho bạn chọn ứng dụng nào nhận chúng."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek 需要辅助功能权限来截获媒体键，并让你选择由哪个 App 接收。"
+          }
+        }
+      }
+    },
+    "NSAppleEventsUsageDescription": {
+      "comment": "Threek needs to send play/pause to the media apps you choose.",
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يحتاج Threek إلى إرسال أمر التشغيل/الإيقاف المؤقت إلى تطبيقات الوسائط التي تختارها."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek трябва да изпраща пускане/пауза до медийните приложения, които изберете."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek potřebuje posílat přehrát/pozastavit mediálním aplikacím, které vyberete."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek skal kunne sende afspil/pause til de medieapps, du vælger."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek muss Wiedergabe/Pause an die Medien-Apps senden, die du auswählst."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek necesita enviar reproducir/pausar a las apps multimedia que elijas."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek peab saatma esita/peata käsu sinu valitud meediarakendustele."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threekin täytyy lähettää toista/keskeytä valitsemillesi media-apeille."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek doit envoyer lecture/pause aux apps multimédias que vous choisissez."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek को आपके चुने हुए मीडिया ऐप्स को चलाएँ/रोकें भेजना होता है।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek mora slati reprodukciju/pauzu medijskim aplikacijama koje odaberete."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Threeknek lejátszás/szünet parancsot kell küldenie a kiválasztott médiaappoknak."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek deve inviare riproduci/pausa alle app multimediali che scegli."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threekは、選択したメディアアプリに再生/一時停止を送信する必要があります。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek이 선택한 미디어 앱에 재생/일시 정지를 보내야 합니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek må sende spill av/pause til medieappene du velger."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek moet afspelen/pauzeren naar de media-apps sturen die je kiest."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek musi wysyłać odtwórz/wstrzymaj do wybranych przez Ciebie aplikacji multimedialnych."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek precisa enviar reproduzir/pausar para os apps de mídia que você escolher."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek precisa de enviar reproduzir/pausa para as apps multimédia que escolher."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek trebuie să trimită redare/pauză aplicațiilor media pe care le alegi."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek нужно отправлять команду воспроизведения/паузы выбранным медиаприложениям."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek potrebuje posielať prehrať/pozastaviť mediálnym aplikáciám, ktoré vyberiete."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek behöver skicka spela/pausa till de medieappar du väljer."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek'in seçtiğiniz medya uygulamalarına oynat/duraklat göndermesi gerekir."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek має надсилати відтворення/паузу вибраним медіапрограмам."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek cần gửi lệnh phát/tạm dừng tới các ứng dụng phương tiện bạn chọn."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek 需要向你选择的媒体 App 发送播放/暂停命令。"
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

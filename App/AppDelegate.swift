@@ -1,4 +1,5 @@
 import AppKit
+import Sparkle
 import SwiftUI
 
 @MainActor
@@ -6,6 +7,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let interceptor = MediaKeyInterceptor()
     private let popup = PopupController()
+    private lazy var updater = SPUStandardUpdaterController(
+        startingUpdater: true, updaterDelegate: nil, userDriverDelegate: self)
 
     private var statusItem: NSStatusItem?
     private var isEnabled = true
@@ -17,6 +20,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        // Sparkle's own schedule checks at most daily and skips the first
+        // launch; also check on every launch, as Sparkle advises.
+        if updater.updater.automaticallyChecksForUpdates {
+            updater.updater.checkForUpdatesInBackground()
+        }
 
         popup.onDispatch = { [weak self] bundleID, key in
             DispatchQueue.main.async {
@@ -250,43 +258,61 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if interceptor.isRunning && !tapVerified {
             let warn = NSMenuItem(
-                title: "Media keys not working — re-grant Accessibility",
+                title: String(localized: "Media keys not working — re-grant Accessibility"),
                 action: #selector(regrantAccessibility), keyEquivalent: "")
             warn.target = self
             menu.addItem(warn)
             menu.addItem(.separator())
         }
 
-        let enabled = NSMenuItem(title: "Enabled", action: #selector(toggleEnabled(_:)), keyEquivalent: "")
+        let enabled = NSMenuItem(title: String(localized: "Enabled"), action: #selector(toggleEnabled(_:)), keyEquivalent: "")
         enabled.target = self
         enabled.state = isEnabled ? .on : .off
         menu.addItem(enabled)
 
+        #if DEBUG
         let preview = NSMenuItem(title: "Preview HUD", action: #selector(previewHUD), keyEquivalent: "p")
         preview.target = self
         menu.addItem(preview)
+        #endif
 
         menu.addItem(.separator())
 
         if !interceptor.isRunning {
-            let ax = NSMenuItem(title: "Grant Accessibility Access…",
+            let ax = NSMenuItem(title: String(localized: "Grant Accessibility Access…"),
                                 action: #selector(promptAccessibility), keyEquivalent: "")
             ax.target = self
             menu.addItem(ax)
         }
 
-        let login = NSMenuItem(title: "Launch at Login", action: #selector(toggleLogin(_:)), keyEquivalent: "")
+        let login = NSMenuItem(title: String(localized: "Open at Login"), action: #selector(toggleLogin(_:)), keyEquivalent: "")
         login.target = self
         login.state = LaunchAtLogin.isEnabled ? .on : .off
         menu.addItem(login)
 
+        let update = NSMenuItem(title: String(localized: "Check for Updates…"),
+                                action: #selector(SPUStandardUpdaterController.checkForUpdates(_:)),
+                                keyEquivalent: "")
+        update.target = updater
+        menu.addItem(update)
+
+        let about = NSMenuItem(title: String(localized: "About Threek"),
+                               action: #selector(showAbout), keyEquivalent: "")
+        about.target = self
+        menu.addItem(about)
+
         menu.addItem(.separator())
 
-        let quit = NSMenuItem(title: "Quit Threek",
+        let quit = NSMenuItem(title: String(localized: "Quit Threek"),
                               action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(quit)
 
         statusItem?.menu = menu
+    }
+
+    @objc private func showAbout() {
+        NSApp.activate()
+        NSApp.orderFrontStandardAboutPanel(nil)
     }
 
     @objc private func previewHUD() {
@@ -334,6 +360,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Keep checking: once events flow again the canary will verify the tap.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.verifyTapHealth()
+        }
+    }
+}
+
+extension AppDelegate: SPUStandardUserDriverDelegate {
+    // A menu bar app is never the active app, so Sparkle would leave an update
+    // it found waiting behind other windows. Bring it to the front instead.
+    var supportsGentleScheduledUpdateReminders: Bool { true }
+
+    func standardUserDriverShouldHandleShowingScheduledUpdate(
+        _ update: SUAppcastItem, andInImmediateFocus immediateFocus: Bool) -> Bool {
+        immediateFocus
+    }
+
+    func standardUserDriverWillHandleShowingUpdate(
+        _ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState) {
+        guard !handleShowingUpdate else { return }
+        DispatchQueue.main.async { [self] in
+            NSApp.activate()
+            updater.checkForUpdates(nil)
         }
     }
 }

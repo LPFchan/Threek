@@ -4,11 +4,21 @@ options:
   deploymentTarget:
     macOS: "15.0"
   createIntermediateGroups: true
+  developmentLanguage: en
   generateEmptyDirectories: true
+
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.10.0
 
 settings:
   base:
     PRODUCT_NAME: Threek
+    # Release builds override both from the tag and commit count
+    # (scripts/build-app.sh).
+    MARKETING_VERSION: "2.0.0"
+    CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.9"
     MACOSX_DEPLOYMENT_TARGET: "15.0"
     CODE_SIGN_STYLE: Automatic
@@ -54,8 +64,16 @@ targets:
       properties:
         CFBundleName: Threek
         CFBundleIdentifier: com.lpfchan.Threek
-        CFBundleVersion: "1"
-        CFBundleShortVersionString: "2.0.0"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleDevelopmentRegion: en
+        # English is the source language and has no .lproj of its own, so
+        # list every language or macOS won't count English as supported.
+        CFBundleLocalizations: [en, ar, bg, cs, da, de, es, et, fi, fr, hi, hr, hu, it, ja, ko, nb, nl, pl, pt-BR, pt-PT, ro, ru, sk, sv, tr, uk, vi, zh-Hans]
+        LSApplicationCategoryType: public.app-category.utilities
+        SUFeedURL: https://threek.lost.plus/appcast.xml
+        SUPublicEDKey: d1fcPAhipBIr+iJrmheYLpcXQ4003VNO/B1J+hotx8Q=
+        SUEnableAutomaticChecks: true
         CFBundleIconName: AppIcon
         LSUIElement: true
         NSHighResolutionCapable: true
@@ -71,6 +89,7 @@ targets:
 
     dependencies:
       - sdk: CoreAudio.framework
+      - package: Sparkle
 
     scheme:
       buildAction:
