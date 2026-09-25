@@ -19,7 +19,9 @@ Playing registry, and pops up a HUD so you pick the target.
 
 ## Core capabilities
 
-- Intercept the hardware ⏯ key via a `CGEvent` tap (Accessibility permission).
+- Intercept the hardware ⏮/⏯/⏭ keys via a HID-level `CGEvent` tap
+  (Accessibility permission), including the rewind/fast-forward codes Apple
+  keyboards send for F7/F9.
 - Discover **all** Now Playing registrants (playing and paused) through the
   vendored `mediaremote-adapter` perl shim, which is entitled where the host
   app is not (macOS 15.4+ restriction).
@@ -30,7 +32,9 @@ Playing registry, and pops up a HUD so you pick the target.
 
 ## Invariants
 
-- ⏮/⏭ always pass through; only ⏯ is intercepted.
+- A swallowed media key is swallowed whole: key-down, autorepeat, and key-up.
+  A lone key-up reaching macOS toggles the system Now Playing app or launches
+  Music.
 - No network access, analytics, or telemetry. Now Playing metadata stays
   in-process.
 - `LSUIElement = true` (menu bar app, no dock icon).

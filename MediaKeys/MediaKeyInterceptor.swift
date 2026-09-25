@@ -21,17 +21,25 @@ final class MediaKeyInterceptor {
     /// tap silently receives nothing (stale TCC grant after a rebuild).
     private(set) var hasSeenEvent = false
 
+    /// Tags events Threek posts itself (re-injected keys) so the tap lets
+    /// them through instead of catching them again in a loop.
+    static let selfPostedMarker: Int64 = 0x7468_7265_656B  // "threek"
+
+    /// Media key codes whose key-down we swallowed. Their key-up (and any
+    /// autorepeat) must be swallowed too: a lone key-up that reaches the
+    /// system still toggles the current Now Playing app or launches Music.
+    private var swallowedKeyCodes = Set<Int32>()
+
     // NX_KEYTYPE constants from IOKit/hidsystem/ev_keymap.h
     private let NX_KEYTYPE_PLAY: Int32 = 16
     private let NX_KEYTYPE_NEXT: Int32 = 17
     private let NX_KEYTYPE_PREVIOUS: Int32 = 18
+    // Apple keyboards (and Karabiner's default F7/F9 mapping) send
+    // fast-forward/rewind rather than next/previous for the ⏭/⏮ keys.
+    private let NX_KEYTYPE_FAST: Int32 = 19
+    private let NX_KEYTYPE_REWIND: Int32 = 20
 
-    // Ordinary keyboard key codes for the F-keys the user may remap their
-    // media keys to (e.g. via Karabiner). These arrive as normal keyDown
-    // events, not systemDefined media events, so we watch for them too.
-    private let kVK_F17: Int64 = 64
-    private let kVK_F18: Int64 = 79
-    private let kVK_F19: Int64 = 80
+    // Esc arrives as an ordinary keyDown, not a systemDefined media event.
     private let kVK_Escape: Int64 = 53
 
     func start() {
@@ -40,8 +48,7 @@ final class MediaKeyInterceptor {
 
         // Watch two event classes:
         //  - CGEventType 14 (NSSystemDefined): the native hardware media keys.
-        //  - CGEventType 10 (.keyDown): F17/18/19 when the user has remapped
-        //    their media keys to plain F-keys (Karabiner).
+        //  - CGEventType 10 (.keyDown): Esc, to dismiss the HUD.
         let eventMask: CGEventMask = (1 << 14) | (1 << CGEventType.keyDown.rawValue)
 
         guard let tap = CGEvent.tapCreate(
@@ -90,13 +97,17 @@ final class MediaKeyInterceptor {
             if let tap = eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
             }
-            DispatchQueue.main.async { [weak self] in
-                self?.onTapInvalidated?()   // still notify, but tap stays alive
+            Log.write("[MediaKeyInterceptor] tap disabled (\(type == .tapDisabledByTimeout ? "timeout" : "user input")), re-enabled")
+            // Only a lost Accessibility grant needs the full stop/poll/restart
+            // cycle; tearing the tap down for a mere hiccup would let keys
+            // leak through to the system until it comes back.
+            if !AXIsProcessTrusted() {
+                DispatchQueue.main.async { [weak self] in self?.onTapInvalidated?() }
             }
             return Unmanaged.passUnretained(event)
         }
 
-        // Ordinary key events (F17/18/19 remaps).
+        // Ordinary key events (Esc).
         if type == .keyDown {
             return handleOrdinaryKey(event)
         }
@@ -110,16 +121,27 @@ final class MediaKeyInterceptor {
         }
         hasSeenEvent = true
 
+        if event.getIntegerValueField(.eventSourceUserData) == Self.selfPostedMarker {
+            return Unmanaged.passUnretained(event)
+        }
+
         let keyCode = Int32((nsEvent.data1 & 0xFFFF0000) >> 16)
         let keyFlags = nsEvent.data1 & 0x0000FFFF
         let isKeyDown = (keyFlags & 0x0100) == 0
-        guard isKeyDown else { return Unmanaged.passUnretained(event) }
+        let isRepeat = (keyFlags & 0x0001) != 0
+
+        // Key-up / autorepeat: follow whatever we decided on the key-down.
+        if !isKeyDown || isRepeat {
+            let swallow = swallowedKeyCodes.contains(keyCode)
+            if !isKeyDown { swallowedKeyCodes.remove(keyCode) }
+            return swallow ? nil : Unmanaged.passUnretained(event)
+        }
 
         let mediaEvent: MediaKeyEvent
         switch keyCode {
         case NX_KEYTYPE_PLAY: mediaEvent = .playPause
-        case NX_KEYTYPE_NEXT: mediaEvent = .next
-        case NX_KEYTYPE_PREVIOUS: mediaEvent = .previous
+        case NX_KEYTYPE_NEXT, NX_KEYTYPE_FAST: mediaEvent = .next
+        case NX_KEYTYPE_PREVIOUS, NX_KEYTYPE_REWIND: mediaEvent = .previous
         default: mediaEvent = .other(keyCode)
         }
 
@@ -129,26 +151,21 @@ final class MediaKeyInterceptor {
         } else {
             DispatchQueue.main.sync { consume = self.onKeyDown?(mediaEvent) ?? false }
         }
+        if consume { swallowedKeyCodes.insert(keyCode) } else { swallowedKeyCodes.remove(keyCode) }
         return consume ? nil : Unmanaged.passUnretained(event)
     }
 
-    /// Handles a plain keyDown event. Returns nil to consume F17/18/19 (so
-    /// they don't leak through to other apps), or passes everything else on.
+    /// Handles a plain keyDown event. Returns nil to consume Esc while the
+    /// HUD is up, or passes everything else on.
     private func handleOrdinaryKey(_ event: CGEvent) -> Unmanaged<CGEvent>? {
         // Ignore autorepeat so holding the key doesn't spam play/pause.
         let isRepeat = event.getIntegerValueField(.keyboardEventAutorepeat) != 0
         guard !isRepeat else { return Unmanaged.passUnretained(event) }
 
-        let code = event.getIntegerValueField(.keyboardEventKeycode)
-        let mediaEvent: MediaKeyEvent
-        switch code {
-        case kVK_F17: mediaEvent = .previous
-        case kVK_F18: mediaEvent = .playPause
-        case kVK_F19: mediaEvent = .next
-        case kVK_Escape: mediaEvent = .escape
-        default: return Unmanaged.passUnretained(event)
+        guard event.getIntegerValueField(.keyboardEventKeycode) == kVK_Escape else {
+            return Unmanaged.passUnretained(event)
         }
-        hasSeenEvent = true
+        let mediaEvent = MediaKeyEvent.escape
 
         var consume = false
         if Thread.isMainThread {

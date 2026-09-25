@@ -121,14 +121,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     /// Posts a raw system-defined (media-key) event at the HID tap.
-    static func postSystemDefined(keyCode: Int32, down: Bool) {
+    /// `bypassTap` marks it so our own tap lets it through untouched.
+    static func postSystemDefined(keyCode: Int32, down: Bool, bypassTap: Bool = false) {
         let data1 = (Int(keyCode) << 16) | (down ? 0x0a00 : 0x0b00)
         let ev = NSEvent.otherEvent(
             with: .systemDefined, location: .zero, modifierFlags: [],
             timestamp: ProcessInfo.processInfo.systemUptime,
             windowNumber: 0, context: nil, subtype: 8,
             data1: data1, data2: -1)
-        ev?.cgEvent?.post(tap: .cghidEventTap)
+        guard let cg = ev?.cgEvent else { return }
+        if bypassTap {
+            cg.setIntegerValueField(.eventSourceUserData,
+                                    value: MediaKeyInterceptor.selfPostedMarker)
+        }
+        cg.post(tap: .cghidEventTap)
     }
 
     // MARK: - Media key routing
@@ -163,6 +169,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NowPlayingService.shared.fetchAppsFast { [weak self] apps in
             guard let self else { return }
             let controllable = apps.filter(\.isControllable)
+            Log.write("[AppDelegate] route \(event): " + apps.map {
+                "\($0.effectiveBundleID)(ctl=\($0.isControllable) playing=\($0.isPlaying.map(String.init) ?? "?"))"
+            }.joined(separator: ", "))
             // When exactly one controllable app is confirmed playing, send
             // the key straight to it — no picker. Metadata is fetched with
             // the client list on every refresh, so the press costs no extra
@@ -214,24 +223,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// Re-injects a media key event so the system handles it normally.
     private func reinjectKey(_ event: MediaKeyEvent) {
-        let keyCode: Int
-        switch event {
-        case .playPause: keyCode = 16
-        case .next: keyCode = 17
-        case .previous: keyCode = 18
-        case .escape: return  // never re-injected
-        case .other(let code): keyCode = Int(code)
-        }
-        func post(_ data1: Int) {
-            let ev = NSEvent.otherEvent(
-                with: .systemDefined, location: .zero, modifierFlags: [],
-                timestamp: ProcessInfo.processInfo.systemUptime,
-                windowNumber: 0, context: nil, subtype: 8,
-                data1: data1, data2: -1)
-            ev?.cgEvent?.post(tap: .cghidEventTap)
-        }
-        post((keyCode << 16) | 0x0000)  // key down
-        post((keyCode << 16) | 0x0100)  // key up
+        if case .escape = event { return }  // never re-injected
+        Self.postSystemDefined(keyCode: event.rawKeyCode, down: true, bypassTap: true)
+        Self.postSystemDefined(keyCode: event.rawKeyCode, down: false, bypassTap: true)
     }
 
     // MARK: - Menu bar

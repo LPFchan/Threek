@@ -18,12 +18,14 @@ Playing registry, and pops up a HUD so you pick the target.
 | # of apps | Behavior |
 |---|---|
 | 0 | Re-injects the key so the system handles it normally. |
-| 1 | Sends play/pause directly to that app. |
+| 1 | Sends the key directly to that app. |
 | 2 | HUD shows two icons. ⏮ sends left, ⏭ sends right. |
 | 3 | HUD shows three icons. ⏮ / ⏯ / ⏭ map to the three apps. |
 | 4+ | HUD shows a scrollable row. ⏮/⏭ move a selection ring, ⏯ confirms. |
 
-⏮/⏭ (Previous/Next) always pass through — only ⏯ is intercepted.
+If exactly one app is actually playing, any media key goes straight to it,
+no HUD. ⏮/⏭ follow the same routing as ⏯. Threek reads the real F7–F9 media
+keys, so no Karabiner remapping is needed.
 
 ---
 
