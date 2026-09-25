@@ -104,7 +104,7 @@ the app icon.
 
 ## Releasing
 
-Push a version tag: `git tag v2.0.0 && git push origin v2.0.0`.
+Push a version tag: `git tag v1.0.0 && git push origin v1.0.0`.
 `.github/workflows/release.yml` then builds and signs the app, packs the DMG,
 publishes a GitHub release, and adds it to `docs/appcast.xml`, the Sparkle
 update feed. GitHub Pages serves `docs/` at `threek.lost.plus` (a DNS-only

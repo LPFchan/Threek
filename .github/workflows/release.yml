@@ -1,6 +1,6 @@
 name: Release
 
-# Trigger: push a version tag, e.g. `git tag v2.0.0 && git push origin v2.0.0`
+# Trigger: push a version tag, e.g. `git tag v1.0.0 && git push origin v1.0.0`
 on:
   push:
     tags: ["v*"]

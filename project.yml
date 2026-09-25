@@ -17,7 +17,7 @@ settings:
     PRODUCT_NAME: Threek
     # Release builds override both from the tag and commit count
     # (scripts/build-app.sh).
-    MARKETING_VERSION: "2.0.0"
+    MARKETING_VERSION: "1.0.0"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.9"
     MACOSX_DEPLOYMENT_TARGET: "15.0"
