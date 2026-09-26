@@ -1,0 +1,12 @@
+{
+  "$schema": "https://schemas.agentskills.io/discovery/0.2.0/schema.json",
+  "skills": [
+    {
+      "name": "install-threek",
+      "type": "skill-md",
+      "description": "Install Threek on a Mac and get it working. Use when a user wants to choose which app their media keys (⏯ ⏮ ⏭) control, or asks to install or set up Threek.",
+      "url": "/.well-known/agent-skills/install-threek/SKILL.md",
+      "digest": "sha256:8aed16e6b9f447f8bc5fa30cc1857ad3f8082307d2801c7e4a620f49d45eb7d7"
+    }
+  ]
+}
