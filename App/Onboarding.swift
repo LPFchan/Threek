@@ -1,19 +1,76 @@
 import AppKit
 import SwiftUI
 
-/// First-launch wizard: what Threek does, the Accessibility permission, and
-/// where to find it afterwards.
+/// First-launch wizard: what Threek does, every permission it needs (one
+/// step each, all up front), and where to find it afterwards. Reopened at
+/// the first missing step when a permission is revoked.
 @Observable
 final class Onboarding {
-    enum Step: Int, CaseIterable { case welcome, permission, done }
+    enum Step: Int, CaseIterable { case welcome, accessibility, screenRecording, automation, done }
 
-    var step = Step.welcome
-    var trusted = AXIsProcessTrusted()
+    var step: Step
+    // Checked by the step views off the main thread (see PermissionCheck).
+    var trusted = false
+    var screenGranted = false
+    /// Automation answer per installed player.
+    var automation: [String: PermissionStatus.Automation] = [:]
+    var asking = false
     var openAtLogin = true
-    /// The system Accessibility prompt only shows once; after that the
-    /// button opens System Settings instead.
-    @ObservationIgnored var prompted = false
     @ObservationIgnored var onFinish: () -> Void = {}
+    /// The running Allow Media Control pass, cancelled if the window closes.
+    @ObservationIgnored private var askTask: Task<Void, Never>?
+
+    init(step: Step = .welcome) { self.step = step }
+
+    @MainActor func startAsking() {
+        askTask?.cancel()
+        askTask = Task { await askAutomation() }
+    }
+
+    /// Stops asking: no further players are opened or prompted.
+    func cancel() { askTask?.cancel() }
+
+    var players: [String] { PermissionStatus.installedPlayers }
+    var automationDone: Bool { players.allSatisfy { automation[$0] == .allowed } }
+    var automationUnasked: Bool {
+        players.contains { automation[$0] == nil || automation[$0] == .notAsked || automation[$0] == .notRunning }
+    }
+
+    /// Re-reads each player's answer: live if it's running, else the last
+    /// one seen.
+    @MainActor func refreshAutomation() async {
+        for id in players {
+            automation[id] = await Task.detached { PermissionStatus.bestKnown(id) }.value
+        }
+    }
+
+    /// Asks macOS for every player not yet answered. One that isn't running
+    /// is opened hidden just long enough to ask (macOS can only ask about a
+    /// running app), then quit again.
+    @MainActor func askAutomation() async {
+        asking = true
+        defer { asking = false }
+        for id in players where automation[id] != .allowed && automation[id] != .denied {
+            if Task.isCancelled { return }
+            var launched: NSRunningApplication?
+            defer { launched?.terminate() }
+            if NSRunningApplication.runningApplications(withBundleIdentifier: id).isEmpty,
+               let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
+                let config = NSWorkspace.OpenConfiguration()
+                config.activates = false
+                config.hides = true
+                config.addsToRecentItems = false
+                launched = try? await NSWorkspace.shared.openApplication(at: url, configuration: config)
+                for _ in 0..<40 where launched?.isFinishedLaunching == false {
+                    try? await Task.sleep(for: .milliseconds(250))
+                }
+                // Finished launching isn't quite ready for Apple events.
+                try? await Task.sleep(for: .seconds(1))
+            }
+            if Task.isCancelled { return }
+            automation[id] = await Task.detached { PermissionStatus.automation(id, ask: true) }.value
+        }
+    }
 }
 
 final class OnboardingWindow: NSWindow, NSWindowDelegate {
@@ -31,9 +88,12 @@ final class OnboardingWindow: NSWindow, NSWindowDelegate {
         center()
     }
 
-    // Closing it early counts as done: it won't show again, and the menu bar
-    // still offers the Accessibility grant.
-    func windowWillClose(_ notification: Notification) { onboarding.onFinish() }
+    // Closing it early counts as done: it won't show again until a
+    // permission is revoked, and the menu bar still offers the grant.
+    func windowWillClose(_ notification: Notification) {
+        onboarding.cancel()
+        onboarding.onFinish()
+    }
 }
 
 /// The app icon's darker and lighter greys.
@@ -48,7 +108,9 @@ private struct OnboardingView: View {
             Group {
                 switch onboarding.step {
                 case .welcome: WelcomeStep()
-                case .permission: PermissionStep(onboarding: onboarding)
+                case .accessibility: AccessibilityStep(onboarding: onboarding)
+                case .screenRecording: ScreenRecordingStep(onboarding: onboarding)
+                case .automation: AutomationStep(onboarding: onboarding)
                 case .done: DoneStep(openAtLogin: $onboarding.openAtLogin)
                 }
             }
@@ -76,7 +138,14 @@ private struct OnboardingView: View {
         .animation(.spring(duration: 0.45), value: onboarding.step)
         // Granting happens in System Settings; move on when it lands.
         .onChange(of: onboarding.trusted) { _, trusted in
-            guard trusted, onboarding.step == .permission else { return }
+            guard trusted, onboarding.step == .accessibility else { return }
+            Permissions.controller.closePanel()
+            NSApp.activate()
+            next()
+        }
+        .onChange(of: onboarding.screenGranted) { _, granted in
+            guard granted, onboarding.step == .screenRecording else { return }
+            Permissions.controller.closePanel()
             NSApp.activate()
             next()
         }
@@ -86,11 +155,27 @@ private struct OnboardingView: View {
         switch onboarding.step {
         case .welcome:
             PrimaryButton("Get Started") { next() }
-        case .permission:
+        case .accessibility:
             if onboarding.trusted {
                 PrimaryButton("Continue") { next() }
             } else {
-                PrimaryButton("Allow Accessibility Access") { requestAccess() }
+                PrimaryButton("Allow Accessibility Access") { Permissions.openAccessibility() }
+            }
+        case .screenRecording:
+            if onboarding.screenGranted {
+                PrimaryButton("Continue") { next() }
+            } else {
+                PrimaryButton("Allow Screen Recording") { Permissions.openScreenRecording() }
+            }
+        case .automation:
+            if onboarding.asking {
+                PrimaryButton("Asking…") {}.disabled(true)
+            } else if onboarding.automationDone {
+                PrimaryButton("Continue") { next() }
+            } else if onboarding.automationUnasked {
+                PrimaryButton("Allow Media Control") { onboarding.startAsking() }
+            } else {
+                PrimaryButton("Open System Settings") { Permissions.openAutomation() }
             }
         case .done:
             PrimaryButton("Done") { onboarding.onFinish() }
@@ -101,17 +186,7 @@ private struct OnboardingView: View {
         onboarding.step = Onboarding.Step(rawValue: onboarding.step.rawValue + 1) ?? .done
     }
 
-    private func requestAccess() {
-        if onboarding.prompted {
-            // The system prompt only shows once; after that, open the pane
-            // with PermissionFlow's floating drag-the-app panel.
-            Permissions.openAccessibility()
-        } else {
-            onboarding.prompted = true
-            let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
-            AXIsProcessTrustedWithOptions(options)
-        }
-    }
+
 }
 
 private struct PrimaryButton: View {
@@ -227,7 +302,7 @@ private struct Note: View {
     }
 }
 
-private struct PermissionStep: View {
+private struct AccessibilityStep: View {
     let onboarding: Onboarding
 
     var body: some View {
@@ -245,14 +320,101 @@ private struct PermissionStep: View {
             .font(.system(size: 14, weight: .medium))
             .multilineTextAlignment(.center)
             .frame(maxWidth: 420)
-            Note("The first time Threek controls an app, macOS will ask you to allow that too.")
         }
         // macOS posts nothing when the grant changes, so check while here.
         .task {
             while !Task.isCancelled && !onboarding.trusted {
+                onboarding.trusted = await Task.detached { MediaKeyInterceptor.hasAccessibility() }.value
+                if onboarding.trusted { break }
                 try? await Task.sleep(for: .seconds(0.5))
-                onboarding.trusted = AXIsProcessTrusted()
             }
+        }
+    }
+}
+
+private struct ScreenRecordingStep: View {
+    let onboarding: Onboarding
+
+    var body: some View {
+        VStack(spacing: 26) {
+            Symbol("rectangle.dashed.badge.record")
+            Header(title: "Let Threek see behind the HUD",
+                   subtitle: "Threek looks at the part of the screen behind its HUD to pick white or black text you can read. Nothing is recorded or saved.")
+            Group {
+                if onboarding.screenGranted {
+                    Label("Screen Recording allowed", systemImage: "checkmark.circle.fill").foregroundStyle(accent)
+                } else {
+                    Text("Turn on Threek in the list. If macOS asks to quit and reopen Threek, go ahead; setup picks up where it left off.")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .font(.system(size: 14, weight: .medium))
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: 420)
+        }
+        .task {
+            while !Task.isCancelled && !onboarding.screenGranted {
+                onboarding.screenGranted = await Task.detached { PermissionStatus.screenRecording }.value
+                if onboarding.screenGranted { break }
+                try? await Task.sleep(for: .seconds(0.5))
+            }
+        }
+    }
+}
+
+private struct AutomationStep: View {
+    let onboarding: Onboarding
+
+    var body: some View {
+        VStack(spacing: 26) {
+            Symbol("play.rectangle.on.rectangle.fill")
+            Header(title: "Let Threek control your media apps",
+                   subtitle: "Threek sends play and pause to the app you pick. macOS asks once for each app; Threek opens any that aren't running in the background just long enough to ask.")
+            if onboarding.players.isEmpty {
+                Note("No supported media apps found. macOS will ask when Threek first controls one.")
+            } else {
+                HStack(spacing: 18) {
+                    ForEach(onboarding.players, id: \.self) { id in
+                        PlayerStatus(bundleID: id, state: onboarding.automation[id])
+                    }
+                }
+                if !onboarding.asking && !onboarding.automationDone && !onboarding.automationUnasked {
+                    Note("Turn on the apps you want Threek to control under Automation, then come back here.")
+                    Button("Continue") { onboarding.step = .done }
+                        .buttonStyle(.link)
+                }
+            }
+        }
+        // Answers change in System Settings too; keep them current here.
+        .task {
+            while !Task.isCancelled {
+                if !onboarding.asking { await onboarding.refreshAutomation() }
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
+    }
+}
+
+private struct PlayerStatus: View {
+    let bundleID: String
+    let state: PermissionStatus.Automation?
+
+    var body: some View {
+        VStack(spacing: 6) {
+            if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) {
+                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path)).resizable().frame(width: 44, height: 44)
+            }
+            Image(systemName: symbol)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(state == .allowed ? accent : .secondary)
+        }
+    }
+
+    private var symbol: String {
+        switch state {
+        case .allowed: return "checkmark.circle.fill"
+        case .denied: return "xmark.circle.fill"
+        default: return "circle.dashed"
         }
     }
 }

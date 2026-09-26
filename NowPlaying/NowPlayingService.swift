@@ -521,7 +521,7 @@ final class NowPlayingService {
     /// Bundle IDs known to respond to `tell application id … to playpause`.
     /// Anything not listed here is treated as non-scriptable (browsers, Zen)
     /// and is only controllable while it is the active now-playing app.
-    private static let scriptableBundleIDs: Set<String> = [
+    static let scriptableBundleIDs: Set<String> = [
         "com.apple.Music",
         "com.spotify.client",
         "org.videolan.vlc",

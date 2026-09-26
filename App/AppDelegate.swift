@@ -10,12 +10,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var refreshingWhileShowing = false
     /// Set while the first-launch window is open.
     private var onboardingWindow: OnboardingWindow?
+    private var onboarding: Onboarding?
+    /// What Threek had at the last check, so a grant that disappears
+    /// (revoked, reset) brings the onboarding back at that step.
+    private var lastGranted = Set<String>()
+    /// The first onboarding step still missing a permission, from the last
+    /// check (checks call into other processes, so the menu reads this).
+    private var missingStep: Onboarding.Step?
+    private var permissionWatch: Timer?
     /// Armed while ⏯ is held: fires pause-all unless the key comes back up
     /// first (then it's a normal press, routed on release).
     private var playPauseHold: PlayPauseHold?
     private let longPressDelay: TimeInterval = 0.5
+    // Debug builds report version 1.0.0, so a running updater would find the
+    // release, and with automatic installs on, swap the build out on quit.
+    #if DEBUG
+    private let updatesEnabled = false
+    #else
+    private let updatesEnabled = true
+    #endif
     private lazy var updater = SPUStandardUpdaterController(
-        startingUpdater: true, updaterDelegate: nil, userDriverDelegate: self)
+        startingUpdater: updatesEnabled, updaterDelegate: nil, userDriverDelegate: self)
 
     private var statusItem: NSStatusItem?
     private var isEnabled = true
@@ -23,14 +38,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// True once we've confirmed the event tap actually receives events. A
     /// stale TCC grant leaves AXIsProcessTrusted()==true but the tap blind.
     private var tapVerified = false
-    private var accessWatch: Timer?
     private var selfTestKeyCode: Int32 = -1
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         // Sparkle's own schedule checks at most daily and skips the first
         // launch; also check on every launch, as Sparkle advises.
-        if updater.updater.automaticallyChecksForUpdates {
+        if updatesEnabled, updater.updater.automaticallyChecksForUpdates {
             updater.updater.checkForUpdatesInBackground()
         }
 
@@ -42,12 +56,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupMenuBar()
         // `--onboarding` shows the first-launch window again, for testing.
-        let onboard = CommandLine.arguments.contains("--onboarding")
+        // Someone who has onboarded but is missing a permission (revoked,
+        // reset, a new media app) gets it back at that step.
+        let firstRun = CommandLine.arguments.contains("--onboarding")
             || !UserDefaults.standard.bool(forKey: "onboarded")
-        // The onboarding asks for Accessibility itself, with an explanation
-        // first, rather than the bare system prompt at launch.
+        let snapshot = PermissionStatus.snapshot()
+        missingStep = snapshot.missing
+        lastGranted = snapshot.granted
+        let unanswered = snapshot.unanswered
+        let onboard = firstRun || unanswered != nil
+        Log.write("[AppDelegate] launch: firstRun=\(firstRun) unanswered=\(unanswered.map { "\($0)" } ?? "none") onboard=\(onboard)")
+        // The onboarding asks for each permission itself, with an
+        // explanation first, rather than the bare system prompt at launch.
         checkAccessibilityAndStart(prompt: !onboard)
-        if onboard { showOnboarding() }
+        if onboard { showOnboarding(from: firstRun ? .welcome : unanswered ?? .welcome) }
+        watchPermissions()
         NowPlayingService.shared.warmCache()
 
         // `--preview-hud` auto-opens the picker shortly after launch so the
@@ -81,8 +104,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Onboarding
 
-    private func showOnboarding() {
-        let onboarding = Onboarding()
+    private func showOnboarding(from step: Onboarding.Step = .welcome) {
+        if let window = onboardingWindow, let open = onboarding {
+            // Already open: if a permission was just lost at an earlier
+            // step, go back to it rather than letting setup finish without it.
+            // Stop any Allow Media Control pass first; it restarts from the
+            // Automation step.
+            if step != .welcome, step.rawValue < open.step.rawValue {
+                open.cancel()
+                // The step's view re-checks while its flag is false; clear
+                // the flags it may have set before the grant went away.
+                open.trusted = false
+                open.screenGranted = false
+                open.step = step
+            }
+            NSApp.activate()
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+        let onboarding = Onboarding(step: step)
+        self.onboarding = onboarding
+        // Default the switch on only for a first-time setup; a recovery
+        // (revoked permission) keeps whatever the user chose before.
+        if step != .welcome { onboarding.openAtLogin = LaunchAtLogin.isEnabled }
         let window = OnboardingWindow(onboarding)
         onboarding.onFinish = { [weak self, weak onboarding] in
             guard let self, let onboarding else { return }
@@ -100,13 +144,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func finishOnboarding(openAtLogin: Bool?) {
         guard let window = onboardingWindow else { return }
         onboardingWindow = nil
+        onboarding = nil
         UserDefaults.standard.set(true, forKey: "onboarded")
         if let openAtLogin, openAtLogin != LaunchAtLogin.isEnabled {
             LaunchAtLogin.toggle()
-            // The menu was built before this choice; its Open at Login
-            // check would show the old state.
-            buildMenu()
         }
+        // The menu was built before this: Open at Login and Open Threek
+        // would show the old state.
+        buildMenu()
         window.close()
     }
 
@@ -154,28 +199,54 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         tapVerified = false
         interceptor.resetSeenEvent()
         verifyTapHealth()
-        // macOS sends nothing when the grant is removed, and a tap without
-        // it stalls all input; check for real every couple of seconds so
-        // the tap comes out of the event path quickly.
-        accessWatch?.invalidate()
-        accessWatch = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            DispatchQueue.global(qos: .utility).async {
-                guard !MediaKeyInterceptor.hasAccessibility() else { return }
-                DispatchQueue.main.async { self?.accessibilityLost() }
-            }
-        }
+        // watchPermissions checks the grant every 2 s and takes the tap out
+        // when it's gone (macOS sends nothing when it's removed).
     }
 
     /// The Accessibility grant is gone: take the tap out of the event path
     /// and wait for the grant to come back.
     private func accessibilityLost() {
-        accessWatch?.invalidate()
-        accessWatch = nil
         guard interceptor.isRunning else { return }
         interceptor.stop()
         updateIcon(trusted: false)
         Log.write("[AppDelegate] Accessibility lost; tap stopped, waiting for the grant")
+        missingStep = .accessibility
+        buildMenu()
         startPolling()
+        showOnboarding(from: .accessibility)
+    }
+
+    /// Every few seconds, compares what Threek is granted with the last
+    /// check; if anything was taken away, reopens the onboarding at the
+    /// first missing step. Only a loss triggers it, so an app the user chose
+    /// not to allow doesn't bring the window back again and again.
+    private func watchPermissions() {
+        let check = { [weak self] in
+            DispatchQueue.global(qos: .utility).async {
+                let snapshot = PermissionStatus.snapshot()
+                let now = snapshot.granted
+                let missing = snapshot.missing
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    // This watch also covers the tap: a tap without its
+                    // grant stalls input, so take it out right away.
+                    if !snapshot.accessibility && self.interceptor.isRunning {
+                        self.accessibilityLost()
+                    }
+                    let lost = self.lastGranted.subtracting(now)
+                    self.lastGranted = now
+                    if missing != self.missingStep {
+                        self.missingStep = missing
+                        self.buildMenu()
+                    }
+                    if !lost.isEmpty, let missing {
+                        Log.write("[AppDelegate] permission revoked: \(lost.sorted())")
+                        self.showOnboarding(from: missing)
+                    }
+                }
+            }
+        }
+        permissionWatch = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in check() }
     }
 
     // MARK: - Tap health
@@ -396,6 +467,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(.separator())
         }
 
+        // Say what's missing, above everything else; Open Threek fixes it.
+        if let notice = missingNotice {
+            menu.addItem(NSMenuItem(title: notice, action: nil, keyEquivalent: ""))
+            menu.addItem(.separator())
+        }
+
         let enabled = NSMenuItem(title: String(localized: "Enabled"), action: #selector(toggleEnabled(_:)), keyEquivalent: "")
         enabled.target = self
         enabled.state = isEnabled ? .on : .off
@@ -409,11 +486,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(.separator())
 
-        if !interceptor.isRunning {
-            let ax = NSMenuItem(title: String(localized: "Grant Accessibility Access…"),
-                                action: #selector(promptAccessibility), keyEquivalent: "")
-            ax.target = self
-            menu.addItem(ax)
+        // Setup isn't finished (a permission is missing, or the onboarding
+        // was closed early): offer to pick it up where it stopped.
+        if missingStep != nil || !UserDefaults.standard.bool(forKey: "onboarded") {
+            let open = NSMenuItem(title: String(localized: "Open Threek"),
+                                  action: #selector(openOnboarding), keyEquivalent: "")
+            open.target = self
+            menu.addItem(open)
         }
 
         let artwork = NSMenuItem(title: String(localized: "Show Album Artwork"),
@@ -506,11 +585,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.state = LaunchAtLogin.isEnabled ? .on : .off
     }
 
-    @objc private func promptAccessibility() {
-        // PermissionFlow fires the system prompt (promptForAccessibilityTrust)
-        // and opens the pane with its floating drag-the-app panel.
-        Permissions.openAccessibility()
-        startPolling()
+    private var missingNotice: String? {
+        switch missingStep {
+        case .accessibility: return String(localized: "Accessibility is off — media keys aren’t caught")
+        case .screenRecording: return String(localized: "Screen Recording is off")
+        case .automation: return String(localized: "Media Control is off for some apps")
+        default: return nil
+        }
+    }
+
+    @objc private func openOnboarding() {
+        showOnboarding(from: missingStep ?? .welcome)
     }
 
     /// Opens System Settings at the Accessibility pane so the user can toggle

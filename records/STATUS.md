@@ -21,7 +21,8 @@ controllable app is actually playing, a media-key press routes straight to it
 without opening the picker; the HUD only flashes that app over the pressed key. The HUD is now chrome-less — no realtime blurred
 backdrop; content separation comes from a drop shadow and background-adaptive
 glyph color (keyed off one-shot screenshots of the screen behind the panel,
-re-taken every 250 ms while the HUD is up; no Screen Recording permission). Research on
+re-taken every 250 ms while the HUD is up; this needs Screen Recording, which
+the onboarding asks for up front along with Accessibility and Automation). Research on
 2026-07-31 (RSH-20260731-001) established that per-app artwork is reachable
 through a richer MediaRemote API, while targeted control of backgrounded apps
 is an OS ceiling. The repo has just adopted the repo-template operating model
@@ -73,8 +74,9 @@ is an OS ceiling. The repo has just adopted the repo-template operating model
   - Change: media keys route directly to the single playing app (bypassing
     the picker); the HUD's realtime blurred backdrop was removed in favor of
     a chrome-less panel that keeps the drop shadow and adaptive glyph color
-    (now driven by a one-shot screenshot, dropping the Screen Recording
-    permission need).
+    (now driven by a one-shot screenshot, which was expected to drop the
+    Screen Recording permission need; superseded 2026-09-26: macOS still asks
+    for Screen Recording, so the onboarding requests it).
   - Why it matters: removes the picker step for the common single-player
     case and simplifies the HUD rendering path.
   - Related ids: none
