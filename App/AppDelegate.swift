@@ -112,6 +112,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // Automation step.
             if step != .welcome, step.rawValue < open.step.rawValue {
                 open.cancel()
+                // The step's view re-checks while its flag is false; clear
+                // the flags it may have set before the grant went away.
+                open.trusted = false
+                open.screenGranted = false
                 open.step = step
             }
             NSApp.activate()
