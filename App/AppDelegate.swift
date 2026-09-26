@@ -108,7 +108,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let window = onboardingWindow, let open = onboarding {
             // Already open: if a permission was just lost at an earlier
             // step, go back to it rather than letting setup finish without it.
-            if step != .welcome, step.rawValue < open.step.rawValue { open.step = step }
+            // Stop any Allow Media Control pass first; it restarts from the
+            // Automation step.
+            if step != .welcome, step.rawValue < open.step.rawValue {
+                open.cancel()
+                open.step = step
+            }
             NSApp.activate()
             window.makeKeyAndOrderFront(nil)
             return
