@@ -28,7 +28,8 @@ Playing registry, and pops up a HUD so you pick the target.
 - Present a fixed-size selector HUD anchored above the F7–F9 keys; 2–3 apps
   map directly to ⏮/⏯/⏭, 4+ apps use a carousel with a selection ring.
 - Dispatch play/pause to the chosen app: AppleScript for scriptable apps,
-  MediaRemote fallback for the active app.
+  MediaRemote fallback for the active app. QuickTime Player is listed once per
+  open document and each document is toggled on its own; ⏮/⏭ are no-ops for it.
 
 ## Invariants
 

@@ -111,8 +111,8 @@ final class NowPlayingService {
     /// Flips the cached play state of the app we just toggled so an immediate
     /// next press sees the new state, then re-checks once the app has had
     /// time to react. Main queue only.
-    private func noteToggle(of bundleID: String) {
-        if let i = cachedApps.firstIndex(where: { $0.effectiveBundleID == bundleID }),
+    private func noteToggle(of appID: String) {
+        if let i = cachedApps.firstIndex(where: { $0.id == appID }),
            let playing = cachedApps[i].isPlaying {
             cachedApps[i].isPlaying = !playing
         }
@@ -128,16 +128,26 @@ final class NowPlayingService {
     /// that fails — consent not yet granted, or the app has no AppleScript
     /// dictionary (browsers, Zen) — fall back to the consent-free MediaRemote
     /// adapter, which toggles the *current* now playing app.
-    func sendPlayPause(to bundleID: String) {
-        noteToggle(of: bundleID)
+    func sendPlayPause(to app: NowPlayingApp) {
+        noteToggle(of: app.id)
+        let bundleID = app.effectiveBundleID
         DispatchQueue.global(qos: .userInitiated).async {
+            // A QuickTime document is driven on its own; the adapter fallback
+            // would hit whatever is "now playing", not this document.
+            if let document = app.document {
+                QuickTimeDocuments.togglePlayPause(document)
+                return
+            }
             let ok = self.runTargetedAppleScript("playpause", to: bundleID, label: "playpause")
             if !ok { self.sendMediaRemoteCommandSync(.togglePlayPause, label: "playpause (fallback)") }
         }
     }
 
     /// Sends next-track or previous-track. Same osascript-first rule.
-    func sendTrackCommand(_ command: TrackCommand, to bundleID: String) {
+    func sendTrackCommand(_ command: TrackCommand, to app: NowPlayingApp) {
+        // QuickTime documents have no tracks; skipping does nothing.
+        guard app.document == nil else { return }
+        let bundleID = app.effectiveBundleID
         let mr: MediaRemoteCommand = (command == .next) ? .nextTrack : .previousTrack
         let label = command == .next ? "next track" : "previous track"
         let verb = command == .next ? "next track" : "previous track"
@@ -352,11 +362,13 @@ final class NowPlayingService {
         var clientsData: Data?
         var freshMetadata: [String: MetadataResult] = [:]
         var nowPlaying: String?
-        DispatchQueue.concurrentPerform(iterations: 3) { i in
+        var quickTimeDocuments: [QuickTimeDocuments.Document]?
+        DispatchQueue.concurrentPerform(iterations: 4) { i in
             switch i {
             case 0: clientsData = runAdapter(arguments: [script.path, framework.path, "clients"])
             case 1: freshMetadata = fetchArtworkByBundleID()
-            default: nowPlaying = currentNowPlayingBundleID()
+            case 2: nowPlaying = currentNowPlayingBundleID()
+            default: quickTimeDocuments = QuickTimeDocuments.list()
             }
         }
 
@@ -395,6 +407,28 @@ final class NowPlayingService {
             byBundleID[app.effectiveBundleID] = app
         }
 
+        // QuickTime is one Now Playing client but plays documents
+        // independently: list each open document in its place. If it can't
+        // be scripted (no Automation grant), keep the single entry.
+        if let qt = byBundleID[QuickTimeDocuments.bundleID],
+           let documents = quickTimeDocuments, !documents.isEmpty,
+           let slot = order.firstIndex(of: QuickTimeDocuments.bundleID) {
+            var ids: [String] = []
+            for document in documents {
+                var app = qt
+                app.document = document
+                app.isControllable = true
+                app.isPlaying = document.playing
+                app.metadataAvailable = true
+                app.trackTitle = document.name
+                app.artwork = document.path.flatMap(QuickTimeDocuments.artwork(forPath:))
+                byBundleID[app.id] = app
+                ids.append(app.id)
+            }
+            byBundleID.removeValue(forKey: QuickTimeDocuments.bundleID)
+            order.replaceSubrange(slot...slot, with: ids)
+        }
+
         // Sort real media apps first, squatters (Now Playing registrants that
         // aren't actually media players) last, preserving registry order within
         // each group so the picker is stable and predictable.
@@ -415,6 +449,8 @@ final class NowPlayingService {
     private func finalize(_ apps: [NowPlayingApp],
                           freshMetadata: [String: MetadataResult]) -> [NowPlayingApp] {
         apps.map { app in
+            // QuickTime documents bring their own artwork (QuickLook).
+            if app.document != nil { return app }
             var app = app
             let resolved = resolvedArtwork(for: app.effectiveBundleID,
                                            fresh: freshMetadata[app.effectiveBundleID])
