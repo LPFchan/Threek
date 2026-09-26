@@ -27,9 +27,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             updater.updater.checkForUpdatesInBackground()
         }
 
-        popup.onDispatch = { [weak self] bundleID, key in
+        popup.onDispatch = { [weak self] app, key in
             DispatchQueue.main.async {
-                self?.dispatch(key, to: bundleID)
+                self?.dispatch(key, to: app)
             }
         }
 
@@ -181,7 +181,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let self else { return }
             let controllable = apps.filter(\.isControllable)
             Log.write("[AppDelegate] route \(event): " + apps.map {
-                "\($0.effectiveBundleID)(ctl=\($0.isControllable) playing=\($0.isPlaying.map(String.init) ?? "?"))"
+                "\($0.id)(ctl=\($0.isControllable) playing=\($0.isPlaying.map(String.init) ?? "?"))"
             }.joined(separator: ", "))
             // When exactly one controllable app is confirmed playing, send
             // the key straight to it — no picker. Metadata is fetched with
@@ -220,19 +220,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// Sends a key straight to the one app it applies to, and flashes that
     /// app in the HUD so the routing is visible.
     private func dispatchShowing(_ event: MediaKeyEvent, to app: NowPlayingApp) {
-        dispatch(event, to: app.effectiveBundleID)
+        dispatch(event, to: app)
         popup.flash(app: app, key: event)
     }
 
     /// Sends the appropriate command for a key to a specific app.
-    private func dispatch(_ event: MediaKeyEvent, to bundleID: String) {
+    private func dispatch(_ event: MediaKeyEvent, to app: NowPlayingApp) {
         switch event {
         case .playPause:
-            NowPlayingService.shared.sendPlayPause(to: bundleID)
+            NowPlayingService.shared.sendPlayPause(to: app)
         case .next:
-            NowPlayingService.shared.sendTrackCommand(.next, to: bundleID)
+            NowPlayingService.shared.sendTrackCommand(.next, to: app)
         case .previous:
-            NowPlayingService.shared.sendTrackCommand(.previous, to: bundleID)
+            NowPlayingService.shared.sendTrackCommand(.previous, to: app)
         case .escape:
             break  // dismiss-only key, never routed to an app
         case .other:

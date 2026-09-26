@@ -76,8 +76,8 @@ final class SelectorViewModel: ObservableObject {
     /// animation don't act again.
     private var closing = false
 
-    /// Called with (bundleID, key) when the user confirms an app.
-    var onDispatch: ((String, MediaKeyEvent) -> Void)?
+    /// Called with (app, key) when the user confirms an app.
+    var onDispatch: ((NowPlayingApp, MediaKeyEvent) -> Void)?
     var onDismiss: (() -> Void)?
 
     private var timeoutTask: Task<Void, Never>?
@@ -235,7 +235,7 @@ final class SelectorViewModel: ObservableObject {
         cancelTimeout()
         closing = true
         withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) { chosenID = app.id }
-        onDispatch?(app.effectiveBundleID, pendingCommand)
+        onDispatch?(app, pendingCommand)
     }
 
     private func scheduleTimeout() {

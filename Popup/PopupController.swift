@@ -144,7 +144,7 @@ private extension EnvironmentValues {
 final class PopupController {
 
     var isShowing: Bool { panel?.isVisible ?? false }
-    var onDispatch: ((String, MediaKeyEvent) -> Void)?
+    var onDispatch: ((NowPlayingApp, MediaKeyEvent) -> Void)?
 
     private var panel: NSPanel?
     private lazy var viewModel = SelectorViewModel()
@@ -158,10 +158,10 @@ final class PopupController {
     private var backdropTask: Task<Void, Never>?
 
     init() {
-        viewModel.onDispatch = { [weak self] bundleID, key in
+        viewModel.onDispatch = { [weak self] app, key in
             // Send right away; the HUD lingers just long enough to show
             // which app was picked.
-            self?.onDispatch?(bundleID, key)
+            self?.onDispatch?(app, key)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) { self?.dismiss() }
         }
         viewModel.onDismiss = { [weak self] in self?.dismiss() }

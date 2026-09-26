@@ -32,8 +32,13 @@ struct NowPlayingApp: Identifiable, Equatable, Hashable {
     /// cache must not resurrect an older image). When false, artwork may just
     /// not have arrived yet, so a cached image for the same track stays valid.
     var metadataAvailable: Bool = false
+    /// Set for a QuickTime Player entry: QuickTime is listed once per open
+    /// document, and commands target that document (QuickTimeDocuments).
+    var document: QuickTimeDocuments.Document?
 
-    var id: String { effectiveBundleID }
+    var id: String {
+        document.map { "\(effectiveBundleID)#\($0.key)" } ?? effectiveBundleID
+    }
 
     /// The bundle ID to show and to send commands to — the parent's when this
     /// is a helper process, otherwise our own.

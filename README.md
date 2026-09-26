@@ -29,6 +29,10 @@ If exactly one app is actually playing, any media key goes straight to it; the
 HUD just flashes that app over the key, no picking needed. ⏮/⏭ follow the same routing as ⏯. Threek reads the real F7–F9 media
 keys, so no Karabiner remapping is needed.
 
+QuickTime Player gets one entry per open video or audio file, with the file's
+own frame or cover art, so each one can be paused on its own. QuickTime has no
+tracks, so ⏮/⏭ do nothing for it.
+
 ---
 
 ## How it works (macOS 15.4+)
