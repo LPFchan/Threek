@@ -34,6 +34,7 @@ mkdir -p "$licenses"
 cp "$root/LICENSE" "$licenses/Threek.txt"
 cp "$root/Vendor/mediaremote-adapter/LICENSE" "$licenses/mediaremote-adapter.txt"
 cp "$dd/SourcePackages/checkouts/Sparkle/LICENSE" "$licenses/Sparkle.txt"
+cp "$dd/SourcePackages/checkouts/PermissionFlow/LICENSE" "$licenses/PermissionFlow.txt"
 
 if [ -n "$identity" ]; then
     # Inside out, as Sparkle's docs describe. A stable certificate keeps the

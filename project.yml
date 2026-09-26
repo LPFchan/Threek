@@ -11,6 +11,11 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: 2.10.0
+  # Fork of jaywcjlove/PermissionFlow with swift-tools-version 6.1, so
+  # Xcode 16.3+ builds it (upstream needs Xcode 26).
+  PermissionFlow:
+    url: https://github.com/LPFchan/PermissionFlow
+    exactVersion: 2.11.2-swift6.1
 
 settings:
   base:
@@ -90,6 +95,7 @@ targets:
     dependencies:
       - sdk: CoreAudio.framework
       - package: Sparkle
+      - package: PermissionFlow
 
     scheme:
       buildAction:
