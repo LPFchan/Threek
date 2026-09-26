@@ -25,6 +25,10 @@ final class MediaKeyInterceptor {
     /// tap silently receives nothing (stale TCC grant after a rebuild).
     private(set) var hasSeenEvent = false
 
+    /// Forget earlier events, so the next health check only counts events
+    /// seen by the current tap.
+    func resetSeenEvent() { hasSeenEvent = false }
+
     /// Tags events Threek posts itself (re-injected keys) so the tap lets
     /// them through instead of catching them again in a loop.
     static let selfPostedMarker: Int64 = 0x7468_7265_656B  // "threek"

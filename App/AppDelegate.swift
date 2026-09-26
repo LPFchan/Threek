@@ -49,7 +49,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         checkAccessibilityAndStart(prompt: !onboard)
         if onboard { showOnboarding() }
         NowPlayingService.shared.warmCache()
-        verifyTapHealth()
 
         // `--preview-hud` auto-opens the picker shortly after launch so the
         // visual state can be verified headlessly (media-key tap may be
@@ -146,6 +145,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard interceptor.isRunning else { startPolling(); return }
         // The grant landed; PermissionFlow leaves its drag panel up otherwise.
         Permissions.controller.closePanel()
+        // Confirm events actually arrive, every time the tap starts: a grant
+        // that lands after launch (onboarding) needs checking too.
+        tapVerified = false
+        interceptor.resetSeenEvent()
+        verifyTapHealth()
         // macOS sends nothing when the grant is removed, and a tap without
         // it stalls all input; check for real every couple of seconds so
         // the tap comes out of the event path quickly.
