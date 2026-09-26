@@ -167,7 +167,27 @@ final class PopupController {
         viewModel.onDismiss = { [weak self] in self?.dismiss() }
     }
 
+    /// True while the HUD takes keys: the picker is open, not just flashing
+    /// a single app that was already sent the key.
+    var isInteractive: Bool { isShowing && !viewModel.isFlash }
+
     func show(apps: [NowPlayingApp], triggering: MediaKeyEvent = .playPause) {
+        open { viewModel.present(apps: apps, triggering: triggering) }
+    }
+
+    /// Shows the single app a key went straight to, over the key that was
+    /// pressed, with the same entrance and pick animation as the picker.
+    /// The key has already been sent; this is only the visual.
+    func flash(app: NowPlayingApp, key: MediaKeyEvent) {
+        open { viewModel.flash(app: app, key: key) }
+        let gen = generation
+        DispatchQueue.main.asyncAfter(deadline: .now() + SelectorViewModel.flashPickDelay + 0.32) { [weak self] in
+            guard let self, self.generation == gen else { return }
+            self.dismiss()
+        }
+    }
+
+    private func open(_ present: () -> Void) {
         if let screen = PhysicalMetrics.hudScreen {
             let (frame, scale) = PhysicalMetrics.hudFrame(on: screen)
             viewModel.scale = scale
@@ -181,7 +201,7 @@ final class PopupController {
         if let screen = PhysicalMetrics.hudScreen {
             watchBackdrop(behind: PhysicalMetrics.hudFrame(on: screen).frame, on: screen)
         }
-        viewModel.present(apps: apps, triggering: triggering)
+        present()
         guard let panel else { return }
         panel.alphaValue = 0
         panel.orderFrontRegardless()
@@ -445,6 +465,8 @@ private struct SelectorPopup: View {
                     .modifier(Entrance(appeared: viewModel.appeared, index: index))
                 }
             }
+            // A flashed single app sits over the key that was pressed.
+            .offset(x: CGFloat(flashSlot) * (PhysicalMetrics.designKeycap + gap) * s)
         case .selecting:
             CarouselRow(viewModel: viewModel)
                 .modifier(Entrance(appeared: viewModel.appeared, index: 0))
@@ -469,8 +491,18 @@ private struct SelectorPopup: View {
     /// mapping. F7 is the first slot; F8 is skipped entirely with two apps
     /// because ⏯ is unreachable there (it dispatches to slot one).
     private func keyLabel(for index: Int) -> String {
+        if viewModel.isFlash { return "F\(8 + flashSlot)" }
         let number = 7 + index + (viewModel.state.apps.count == 2 && index > 0 ? 1 : 0)
         return "F\(number)"
+    }
+
+    /// Key position (-1 F7, 0 F8, 1 F9) of a flashed single app; 0 otherwise.
+    private var flashSlot: Int {
+        switch viewModel.flashKey {
+        case .previous: return -1
+        case .next: return 1
+        default: return 0
+        }
     }
 
     /// True when the screen behind the HUD is light enough that on-HUD text

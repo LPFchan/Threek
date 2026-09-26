@@ -66,6 +66,12 @@ final class SelectorViewModel: ObservableObject {
     /// The app just picked. Its column pops and its key badge lights up
     /// while the others fade, before the panel goes away.
     @Published private(set) var chosenID: String?
+    /// The key a flashed single app was sent (see `flash`); nil for the
+    /// picker.
+    @Published private(set) var flashKey: MediaKeyEvent?
+    var isFlash: Bool { flashKey != nil }
+    /// How long a flash shows the app before it plays the pick.
+    static let flashPickDelay: TimeInterval = 0.2
     /// Set once the HUD is on its way out, so keys pressed during the exit
     /// animation don't act again.
     private var closing = false
@@ -84,6 +90,7 @@ final class SelectorViewModel: ObservableObject {
         sessionID = UUID()
         closing = false
         chosenID = nil
+        flashKey = nil
         appeared = false
         DispatchQueue.main.async { [weak self] in
             withAnimation(.spring(response: 0.34, dampingFraction: 0.72)) { self?.appeared = true }
@@ -191,6 +198,27 @@ final class SelectorViewModel: ObservableObject {
         let isLight = backdropIsLight ? luminance > 0.42 : luminance > 0.58
         guard isLight != backdropIsLight else { return }
         withAnimation(.easeInOut(duration: 0.15)) { backdropIsLight = isLight }
+    }
+
+    /// Shows one app that a key already went to: it rises in like the picker,
+    /// then plays the same pick (icon pops, badge presses) as if chosen.
+    @MainActor
+    func flash(app: NowPlayingApp, key: MediaKeyEvent) {
+        cancelTimeout()
+        sessionID = UUID()
+        closing = true
+        chosenID = nil
+        flashKey = key
+        state = .showing(apps: [app])
+        appeared = false
+        DispatchQueue.main.async { [weak self] in
+            withAnimation(.spring(response: 0.34, dampingFraction: 0.72)) { self?.appeared = true }
+        }
+        let session = sessionID
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.flashPickDelay) { [weak self] in
+            guard let self, self.sessionID == session else { return }
+            withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) { self.chosenID = app.id }
+        }
     }
 
     /// Sinks the columns back out; the controller orders the panel out
