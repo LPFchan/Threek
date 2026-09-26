@@ -101,7 +101,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard let window = onboardingWindow else { return }
         onboardingWindow = nil
         UserDefaults.standard.set(true, forKey: "onboarded")
-        if let openAtLogin, openAtLogin != LaunchAtLogin.isEnabled { LaunchAtLogin.toggle() }
+        if let openAtLogin, openAtLogin != LaunchAtLogin.isEnabled {
+            LaunchAtLogin.toggle()
+            // The menu was built before this choice; its Open at Login
+            // check would show the old state.
+            buildMenu()
+        }
         window.close()
     }
 
