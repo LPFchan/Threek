@@ -103,8 +103,9 @@ private struct OnboardingView: View {
 
     private func requestAccess() {
         if onboarding.prompted {
-            NSWorkspace.shared.open(URL(string:
-                "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!)
+            // The system prompt only shows once; after that, open the pane
+            // with PermissionFlow's floating drag-the-app panel.
+            Permissions.openAccessibility()
         } else {
             onboarding.prompted = true
             let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary

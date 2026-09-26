@@ -475,8 +475,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc private func promptAccessibility() {
-        let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
-        AXIsProcessTrustedWithOptions(options)
+        // PermissionFlow fires the system prompt (promptForAccessibilityTrust)
+        // and opens the pane with its floating drag-the-app panel.
+        Permissions.openAccessibility()
         startPolling()
     }
 
@@ -485,9 +486,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// rebuild macOS reports the app as trusted but delivers no events until
     /// the entry is re-toggled.
     @objc private func regrantAccessibility() {
-        let url = URL(string:
-            "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-        NSWorkspace.shared.open(url)
+        Permissions.openAccessibility()
         // Keep checking: once events flow again the canary will verify the tap.
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             self?.verifyTapHealth()
