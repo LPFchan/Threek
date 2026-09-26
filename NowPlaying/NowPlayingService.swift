@@ -270,6 +270,13 @@ final class NowPlayingService {
     /// stale cover after the track changes.
     private var artworkCache: [String: (trackTitle: String, artwork: NSImage)] = [:]
 
+    /// The last decoded cover per app, keyed by its base64 bytes. Every fetch
+    /// returns the same bytes for an unchanged cover; decoding them again
+    /// would hand the HUD a new NSImage each refresh, which it (rightly)
+    /// treats as a change and redraws. Fetches can overlap, hence the lock.
+    private var decodedArtwork: [String: (b64: String, image: NSImage)] = [:]
+    private let decodedArtworkLock = NSLock()
+
     /// Fetches every registered app's now-playing metadata + artwork via the
     /// adapter's `metadata` command, keyed by effective bundle ID. One-shot;
     /// returns an empty dict on any failure so discovery is never blocked by
@@ -284,13 +291,21 @@ final class NowPlayingService {
         for app in response.apps {
             guard let id = app.effectiveBundleID else { continue }
             var image: NSImage? = nil
-            if let b64 = app.metadata?.artworkData,
-               let bytes = Data(base64Encoded: b64) {
-                image = NSImage(data: bytes)
+            if let b64 = app.metadata?.artworkData {
+                image = decodeArtwork(b64, for: id)
             }
             result[id] = (app.metadata?.title, app.metadata?.playbackRate, image)
         }
         return result
+    }
+
+    private func decodeArtwork(_ b64: String, for id: String) -> NSImage? {
+        decodedArtworkLock.lock()
+        defer { decodedArtworkLock.unlock() }
+        if let hit = decodedArtwork[id], hit.b64 == b64 { return hit.image }
+        guard let bytes = Data(base64Encoded: b64), let image = NSImage(data: bytes) else { return nil }
+        decodedArtwork[id] = (b64, image)
+        return image
     }
 
     /// Merges a fresh metadata fetch into the artwork cache and returns the
