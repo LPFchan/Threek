@@ -8,6 +8,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let interceptor = MediaKeyInterceptor()
     private let popup = PopupController()
     private var refreshingWhileShowing = false
+    /// Armed while ⏯ is held: fires pause-all unless the key comes back up
+    /// first (then it's a normal press, routed on release).
+    private var playPauseHold: PlayPauseHold?
+    private let longPressDelay: TimeInterval = 0.5
     private lazy var updater = SPUStandardUpdaterController(
         startingUpdater: true, updaterDelegate: nil, userDriverDelegate: self)
 
@@ -86,6 +90,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func startInterceptor() {
         interceptor.onKeyDown = { [weak self] event in
             self?.handleMediaKey(event) ?? false
+        }
+        interceptor.onKeyUp = { [weak self] event in
+            self?.handleMediaKeyUp(event)
         }
         interceptor.onTapInvalidated = { [weak self] in
             self?.interceptor.stop()
@@ -177,6 +184,51 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return true
         }
 
+        // ⏯ acts on release so a hold can mean "pause everything" instead.
+        // A fresh discovery starts right away, so a hold pauses what's
+        // playing now, not what the cache last saw.
+        if case .playPause = event {
+            let hold = PlayPauseHold()
+            playPauseHold = hold
+            NowPlayingService.shared.fetchApps { [weak self] apps in
+                hold.apps = apps
+                if hold.fired { self?.pauseAll(apps) }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + longPressDelay) { [weak self] in
+                guard let self, self.playPauseHold === hold else { return }
+                self.playPauseHold = nil
+                hold.fired = true
+                if let apps = hold.apps { self.pauseAll(apps) }
+            }
+            return true
+        }
+
+        route(event)
+        return true
+    }
+
+    private func handleMediaKeyUp(_ event: MediaKeyEvent) {
+        guard case .playPause = event, playPauseHold != nil else { return }
+        playPauseHold = nil
+        route(event)
+    }
+
+    /// Pauses every controllable app that's playing, then flashes the ones
+    /// it actually reached.
+    private func pauseAll(_ apps: [NowPlayingApp]) {
+        let playing = apps.filter { $0.isControllable && $0.isPlaying == true }
+        guard !playing.isEmpty else { return }
+        NowPlayingService.shared.pauseAll(playing) { [weak self] paused in
+            Log.write("[AppDelegate] pause all: " + paused.map(\.id).joined(separator: ", ")
+                      + " of " + playing.map(\.id).joined(separator: ", "))
+            guard !paused.isEmpty else { return }
+            self?.popup.flashPauseAll(apps: paused)
+        }
+    }
+
+    /// Sends a media key to the right app: straight to the only one it
+    /// applies to, or through the picker when several do.
+    private func route(_ event: MediaKeyEvent) {
         NowPlayingService.shared.fetchAppsFast { [weak self] apps in
             guard let self else { return }
             let controllable = apps.filter(\.isControllable)
@@ -214,7 +266,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.refreshWhileShowing()
             }
         }
-        return true
     }
 
     /// Sends a key straight to the one app it applies to, and flashes that
@@ -410,4 +461,11 @@ extension AppDelegate: @preconcurrency SPUStandardUserDriverDelegate {
             updater.checkForUpdates(nil)
         }
     }
+}
+
+/// One press of ⏯: the discovery started on key-down, and whether the hold
+/// has already passed the long-press delay.
+private final class PlayPauseHold {
+    var apps: [NowPlayingApp]?
+    var fired = false
 }

@@ -70,6 +70,12 @@ final class SelectorViewModel: ObservableObject {
     /// picker.
     @Published private(set) var flashKey: MediaKeyEvent?
     var isFlash: Bool { flashKey != nil }
+    /// A pause-all flash: every column plays the pick together and the
+    /// badges show ⏸ instead of a key.
+    @Published private(set) var pausingAll = false
+    /// Set with the pick in a pause-all flash, standing in for `chosenID`
+    /// on every column at once.
+    @Published private(set) var chosenAll = false
     /// How long a flash shows the app before it plays the pick.
     static let flashPickDelay: TimeInterval = 0.2
     /// Set once the HUD is on its way out, so keys pressed during the exit
@@ -91,6 +97,8 @@ final class SelectorViewModel: ObservableObject {
         closing = false
         chosenID = nil
         flashKey = nil
+        pausingAll = false
+        chosenAll = false
         appeared = false
         DispatchQueue.main.async { [weak self] in
             withAnimation(.spring(response: 0.34, dampingFraction: 0.72)) { self?.appeared = true }
@@ -204,12 +212,25 @@ final class SelectorViewModel: ObservableObject {
     /// then plays the same pick (icon pops, badge presses) as if chosen.
     @MainActor
     func flash(app: NowPlayingApp, key: MediaKeyEvent) {
+        flash(apps: [app], key: key, pausingAll: false)
+    }
+
+    /// Shows the apps a held ⏯ just paused, all playing the pick together.
+    @MainActor
+    func flashPauseAll(apps: [NowPlayingApp]) {
+        flash(apps: apps, key: .playPause, pausingAll: true)
+    }
+
+    @MainActor
+    private func flash(apps: [NowPlayingApp], key: MediaKeyEvent, pausingAll: Bool) {
         cancelTimeout()
         sessionID = UUID()
         closing = true
         chosenID = nil
+        chosenAll = false
         flashKey = key
-        state = .showing(apps: [app])
+        self.pausingAll = pausingAll
+        state = .showing(apps: apps)
         appeared = false
         DispatchQueue.main.async { [weak self] in
             withAnimation(.spring(response: 0.34, dampingFraction: 0.72)) { self?.appeared = true }
@@ -217,7 +238,9 @@ final class SelectorViewModel: ObservableObject {
         let session = sessionID
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.flashPickDelay) { [weak self] in
             guard let self, self.sessionID == session else { return }
-            withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) { self.chosenID = app.id }
+            withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) {
+                if pausingAll { self.chosenAll = true } else { self.chosenID = apps.first?.id }
+            }
         }
     }
 

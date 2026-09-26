@@ -143,6 +143,47 @@ final class NowPlayingService {
         }
     }
 
+    /// Pauses every given app: AppleScript `pause` for scriptable apps (per
+    /// document for QuickTime). The adapter's pause only reaches the current
+    /// now-playing app, so it covers just that one among the rest (apps with
+    /// no dictionary, or where AppleScript failed). Pause rather than
+    /// toggle, so an app that already stopped stays put. `completion` gets,
+    /// on the main queue, the apps actually reached.
+    func pauseAll(_ apps: [NowPlayingApp], completion: @escaping ([NowPlayingApp]) -> Void) {
+        DispatchQueue.global(qos: .userInitiated).async {
+            var reached = [Bool](repeating: false, count: apps.count)
+            let lock = NSLock()
+            DispatchQueue.concurrentPerform(iterations: apps.count) { i in
+                let app = apps[i]
+                var ok = false
+                if let document = app.document {
+                    ok = QuickTimeDocuments.pause(document)
+                } else if Self.scriptableBundleIDs.contains(app.effectiveBundleID) {
+                    ok = self.runTargetedAppleScript("pause", to: app.effectiveBundleID, label: "pause")
+                }
+                lock.lock(); reached[i] = ok; lock.unlock()
+            }
+            let missed = apps.indices.filter { !reached[$0] }
+            if !missed.isEmpty, let nowPlaying = self.currentNowPlayingBundleID(),
+               let i = missed.first(where: { apps[$0].document == nil && apps[$0].effectiveBundleID == nowPlaying }) {
+                reached[i] = self.sendMediaRemoteCommandSync(.pause, label: "pause (adapter)")
+            }
+            let paused = apps.indices.filter { reached[$0] }.map { apps[$0] }
+            DispatchQueue.main.async {
+                let ids = Set(paused.map(\.id))
+                // Flip what the cache already lists, but leave its age alone:
+                // the hold's fresh discovery never went into it, so it isn't
+                // any fresher than before.
+                for i in self.cachedApps.indices where ids.contains(self.cachedApps[i].id) {
+                    self.cachedApps[i].isPlaying = false
+                }
+                self.acceptSnapshotsFrom = Date().addingTimeInterval(self.toggleSettle)
+                DispatchQueue.main.asyncAfter(deadline: .now() + self.toggleSettle) { self.warmCache() }
+                completion(paused)
+            }
+        }
+    }
+
     /// Sends next-track or previous-track. Same osascript-first rule.
     func sendTrackCommand(_ command: TrackCommand, to app: NowPlayingApp) {
         // QuickTime documents have no tracks; skipping does nothing.
@@ -194,6 +235,7 @@ final class NowPlayingService {
 
     /// MediaRemote command numbers (subset of MRCommand used here).
     private enum MediaRemoteCommand: Int {
+        case pause = 1             // kMRAPause
         case togglePlayPause = 2   // kMRATogglePlayPause
         case nextTrack = 4         // kMRANextTrack
         case previousTrack = 5     // kMRAPreviousTrack
@@ -203,10 +245,11 @@ final class NowPlayingService {
     /// talks to mediaremoted on our behalf, so no Automation / Apple Events
     /// permission is involved. Call from a background queue (it blocks on
     /// `waitUntilExit`).
-    private func sendMediaRemoteCommandSync(_ command: MediaRemoteCommand, label: String) {
+    @discardableResult
+    private func sendMediaRemoteCommandSync(_ command: MediaRemoteCommand, label: String) -> Bool {
         guard let script = self.perlScriptURL, let framework = self.frameworkURL else {
             Log.write("[NowPlayingService] adapter resources missing; cannot send \(label)")
-            return
+            return false
         }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/perl")
@@ -218,7 +261,7 @@ final class NowPlayingService {
             try process.run()
         } catch {
             Log.write("[NowPlayingService] adapter send launch failed (\(label)): \(error)")
-            return
+            return false
         }
         process.waitUntilExit()
         let errText = String(data: err.fileHandleForReading.readDataToEndOfFile(),
@@ -226,9 +269,10 @@ final class NowPlayingService {
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if process.terminationStatus == 0 {
             Log.write("[NowPlayingService] \(label) sent via adapter OK (now-playing)")
-        } else {
-            Log.write("[NowPlayingService] adapter send failed (\(label)): \(errText)")
+            return true
         }
+        Log.write("[NowPlayingService] adapter send failed (\(label)): \(errText)")
+        return false
     }
 
     enum TrackCommand {

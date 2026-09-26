@@ -180,6 +180,18 @@ final class PopupController {
     /// The key has already been sent; this is only the visual.
     func flash(app: NowPlayingApp, key: MediaKeyEvent) {
         open { viewModel.flash(app: app, key: key) }
+        dismissAfterFlash()
+    }
+
+    /// Shows the apps a held ⏯ just paused, the same way: they rise in, all
+    /// play the pick at once with ⏸ badges, and sink out. At most three
+    /// columns fit over F7–F9; any more are paused but not shown.
+    func flashPauseAll(apps: [NowPlayingApp]) {
+        open { viewModel.flashPauseAll(apps: Array(apps.prefix(3))) }
+        dismissAfterFlash()
+    }
+
+    private func dismissAfterFlash() {
         let gen = generation
         DispatchQueue.main.asyncAfter(deadline: .now() + SelectorViewModel.flashPickDelay + 0.32) { [weak self] in
             guard let self, self.generation == gen else { return }
@@ -454,11 +466,12 @@ private struct SelectorPopup: View {
             let gap = PhysicalMetrics.designGap
             HStack(spacing: (apps.count == 2 ? gap * 2 + PhysicalMetrics.designKeycap : gap) * s) {
                 ForEach(Array(apps.enumerated()), id: \.element.id) { index, app in
-                    let chosen = viewModel.chosenID == app.id
+                    let chosen = viewModel.chosenAll || viewModel.chosenID == app.id
                     VStack(spacing: 10 * s) {
                         AppIconView(app: app)
                             .scaleEffect(chosen ? 1.1 : 1)
                         KeyBadge(label: keyLabel(for: index),
+                                 symbol: viewModel.pausingAll ? "pause.fill" : nil,
                                  inverted: glyphInverted, pressed: chosen)
                     }
                     .opacity(viewModel.chosenID == nil || chosen ? 1 : 0.3)
@@ -577,6 +590,8 @@ private struct AppIconView: View {
 /// glyphs: white on a dark backdrop, near-black on a light one.
 private struct KeyBadge: View {
     let label: String
+    /// SF Symbol shown instead of `label` (⏸ for pause-all).
+    var symbol: String?
     let inverted: Bool
     /// Lit up like a pressed key when its app is picked.
     var pressed = false
@@ -584,7 +599,7 @@ private struct KeyBadge: View {
 
     var body: some View {
         let ink = inverted ? Color.black : Color.white
-        Text(label)
+        (symbol.map { Text(Image(systemName: $0)) } ?? Text(label))
             .font(.system(size: 17 * s, weight: .medium))
             .padding(.horizontal, 10 * s)
             .padding(.vertical, 5 * s)
