@@ -22,7 +22,7 @@ sh "$root/scripts/build-adapter.sh"
 xcodebuild -project "$root/Threek.xcodeproj" -scheme Threek -configuration Release \
     -derivedDataPath "$dd" -destination 'generic/platform=macOS' \
     MARKETING_VERSION="$version" CURRENT_PROJECT_VERSION="$build" \
-    CODE_SIGNING_ALLOWED=NO -quiet build
+    ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO -quiet build
 
 rm -rf "$app"
 ditto "$dd/Build/Products/Release/Threek.app" "$app"
