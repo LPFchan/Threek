@@ -17,7 +17,8 @@ same time — playing *or paused*.
 macOS hands play/pause to whichever app most recently claimed the Now Playing
 session. With Spotify, Music, and a browser tab all paused at once, pressing ⏯
 is a lottery. Threek intercepts the key, enumerates **every** app in the Now
-Playing registry, and pops up a HUD so you pick the target.
+Playing registry, and pops up a HUD so you pick the target. Apps are listed
+alphabetically, so each one keeps its F-key from one press to the next.
 
 | # of apps | Behavior |
 |---|---|
