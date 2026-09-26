@@ -10,6 +10,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var refreshingWhileShowing = false
     /// Set while the first-launch window is open.
     private var onboardingWindow: OnboardingWindow?
+    private var onboarding: Onboarding?
     /// What Threek had at the last check, so a grant that disappears
     /// (revoked, reset) brings the onboarding back at that step.
     private var lastGranted = Set<String>()
@@ -104,8 +105,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Onboarding
 
     private func showOnboarding(from step: Onboarding.Step = .welcome) {
-        guard onboardingWindow == nil else { return }
+        if let window = onboardingWindow, let open = onboarding {
+            // Already open: if a permission was just lost at an earlier
+            // step, go back to it rather than letting setup finish without it.
+            if step != .welcome, step.rawValue < open.step.rawValue { open.step = step }
+            NSApp.activate()
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
         let onboarding = Onboarding(step: step)
+        self.onboarding = onboarding
         // Default the switch on only for a first-time setup; a recovery
         // (revoked permission) keeps whatever the user chose before.
         if step != .welcome { onboarding.openAtLogin = LaunchAtLogin.isEnabled }
@@ -126,6 +135,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func finishOnboarding(openAtLogin: Bool?) {
         guard let window = onboardingWindow else { return }
         onboardingWindow = nil
+        onboarding = nil
         UserDefaults.standard.set(true, forKey: "onboarded")
         if let openAtLogin, openAtLogin != LaunchAtLogin.isEnabled {
             LaunchAtLogin.toggle()
@@ -577,7 +587,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openOnboarding() {
         showOnboarding(from: missingStep ?? .welcome)
-        onboardingWindow.map { NSApp.activate(); $0.makeKeyAndOrderFront(nil) }
     }
 
     /// Opens System Settings at the Accessibility pane so the user can toggle
