@@ -67,7 +67,65 @@
   .hero img { display: block; width: 112px; height: 112px; margin: 0 auto 12px; }
   h1 { margin: 0; font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
   .tagline { max-width: 560px; margin: 16px auto 28px; color: var(--text-muted); font-size: 19px; }
-  .screenshot { display: block; width: 100%; height: auto; margin: 0; border-radius: 12px; }
+  /* The HUD demo: design units (--u) match the app's, so the columns are
+     keycap-wide and one key pitch apart, the way the HUD sits over F7-F9. */
+  .demo { margin: 0; padding: 16px 0 8px; container-type: inline-size; }
+  .hud {
+    /* Larger share on narrow screens so it stays legible; capped on wide. */
+    --u: min(calc(100cqw / 300), 1.5px);
+    display: flex;
+    justify-content: center;
+    gap: calc(13 * var(--u));
+  }
+  .hud .col {
+    display: flex;
+    width: calc(84 * var(--u));
+    flex-direction: column;
+    align-items: center;
+    gap: calc(10 * var(--u));
+    filter: drop-shadow(0 calc(2 * var(--u)) calc(7 * var(--u)) rgb(0 0 0 / 45%));
+    transform-origin: bottom;
+    transition:
+      transform 340ms cubic-bezier(0.34, 1.56, 0.64, 1) calc(var(--i) * 40ms),
+      opacity 220ms ease calc(var(--i) * 40ms);
+  }
+  /* Shown still by default; the script marks the demo animated and then
+     hides the columns between loops, so it never goes blank without JS. */
+  .demo.animated .hud:not(.shown) .col { opacity: 0; transform: translateY(calc(12 * var(--u))) scale(0.86); }
+  .hud.leaving .col { transition: transform 200ms ease-in, opacity 200ms ease-in; }
+  .hud.picked .col:not(.chosen) { opacity: 0.3; transition-delay: 0ms; }
+  .hud .tile {
+    position: relative;
+    display: grid;
+    width: calc(84 * var(--u));
+    height: calc(84 * var(--u));
+    place-items: center;
+    transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .hud .cover {
+    width: calc(68 * var(--u));
+    height: calc(68 * var(--u));
+    border-radius: calc(12 * var(--u));
+    object-fit: cover;
+  }
+  .hud .badge {
+    position: absolute;
+    right: calc(3 * var(--u));
+    bottom: calc(3 * var(--u));
+    width: calc(26 * var(--u));
+    height: calc(26 * var(--u));
+  }
+  .hud .key {
+    padding: calc(5 * var(--u)) calc(10 * var(--u));
+    border: calc(2 * var(--u)) solid #fff;
+    border-radius: calc(8 * var(--u));
+    font-size: calc(17 * var(--u));
+    font-weight: 500;
+    line-height: 1.2;
+    transition: background 200ms, color 200ms, transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .hud .chosen .tile { transform: scale(1.1); }
+  .hud .chosen .key { color: #000; background: #fff; transform: scale(0.92); }
   .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
   .button {
     display: inline-flex;
@@ -144,7 +202,13 @@
     <p class="meta">Free and open source · macOS 15 or later</p>
   </section>
 
-  <img class="screenshot" src="screenshot.jpg" width="2940" height="1912" alt="The Threek HUD: QuickTime, Spotify and Music, each above the F-key that picks it">
+  <figure class="demo" role="img" aria-label="The Threek HUD showing QuickTime, Spotify and Music over F7, F8 and F9; pressing a key picks that app">
+    <div class="hud">
+      <div class="col" style="--i: 0"><div class="tile"><img class="cover" src="demo/cover-quicktime.jpg" alt=""><img class="badge" src="demo/icon-quicktime.png" alt=""></div><span class="key">F7</span></div>
+      <div class="col" style="--i: 1"><div class="tile"><img class="cover" src="demo/cover-spotify.jpg" alt=""><img class="badge" src="demo/icon-spotify.png" alt=""></div><span class="key">F8</span></div>
+      <div class="col" style="--i: 2"><div class="tile"><img class="cover" src="demo/cover-music.jpg" alt=""><img class="badge" src="demo/icon-music.png" alt=""></div><span class="key">F9</span></div>
+    </div>
+  </figure>
 
   <h2>What it does</h2>
   <ul class="features">
@@ -189,5 +253,34 @@
   <a href="https://github.com/LPFchan/Threek/blob/main/LICENSE">MIT License</a>
   <p class="credits">Now Playing access by <a href="https://github.com/ungive/mediaremote-adapter">MediaRemote Adapter</a>. Updates by <a href="https://sparkle-project.org">Sparkle</a>.</p>
 </footer>
+<script>
+// Loops the HUD demo: it opens, then F7, F8 and F9 pick in turn.
+(() => {
+  const demo = document.querySelector(".demo");
+  const hud = demo.querySelector(".hud");
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  demo.classList.add("animated");
+  const cols = [...hud.children];
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  (async () => {
+    for (let i = 0; ; i = (i + 1) % 3) {
+      hud.classList.remove("leaving");
+      // Let the hidden state paint first, or the first rise-in is skipped.
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      hud.classList.add("shown");
+      await wait(1500);
+      cols[i].classList.add("chosen");
+      hud.classList.add("picked");
+      await wait(320);
+      hud.classList.add("leaving");
+      hud.classList.remove("shown");
+      await wait(260);
+      hud.classList.remove("picked");
+      cols[i].classList.remove("chosen");
+      await wait(1000);
+    }
+  })();
+})();
+</script>
 </body>
 </html>
