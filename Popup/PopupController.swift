@@ -222,6 +222,21 @@ final class PopupController {
         }
     }
 
+    /// Swaps in a fresh discovery result (late artwork, a new track) and
+    /// re-casts the shadow once the swap has animated.
+    func update(apps: [NowPlayingApp]) {
+        guard panel?.isVisible == true else { return }
+        let before = viewModel.state.apps.map(\.artwork)
+        viewModel.update(apps: apps)
+        guard viewModel.state.apps.map(\.artwork) != before else { return }
+        let gen = generation
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self, self.generation == gen,
+                  let content = self.contentView, let shadow = self.shadowLayer else { return }
+            shadow.update(from: content)
+        }
+    }
+
     func handleKey(_ event: MediaKeyEvent) {
         viewModel.handleKey(event)
     }
@@ -496,31 +511,30 @@ private struct AppIconView: View {
                     .stroke(Color.white, lineWidth: 2.5 * s)
                     .frame(width: 84 * s, height: 84 * s)
             }
+            // Album artwork leads, with the app icon badged in the corner —
+            // the reference mockup's pairing — and the plain icon fills the
+            // tile when the app publishes no artwork. The icon is one view in
+            // both states, so artwork landing late shrinks it into the corner
+            // while the cover grows in behind it.
+            let hasArt = app.artwork != nil
             if let artwork = app.artwork {
-                // Album artwork leads, with the app icon badged in the corner —
-                // the reference mockup's pairing. Falls back to the plain icon
-                // below when the app publishes no artwork.
-                ZStack(alignment: .bottomTrailing) {
-                    // Fill the square and crop, so non-square covers keep
-                    // their proportions instead of squashing.
-                    Image(nsImage: artwork).resizable()
-                        .scaledToFill()
-                        .frame(width: 68 * s, height: 68 * s)
-                        .clipShape(RoundedRectangle(cornerRadius: 12 * s))
-                    if let icon = app.icon {
-                        Image(nsImage: icon).resizable()
-                            .frame(width: 26 * s, height: 26 * s)
-                            .clipShape(RoundedRectangle(cornerRadius: 7 * s))
-                            .overlay(RoundedRectangle(cornerRadius: 7 * s)
-                                .stroke(Color.black.opacity(0.35), lineWidth: s))
-                            .offset(x: 5 * s, y: 5 * s)
-                    }
-                }
-            } else if let icon = app.icon {
-                Image(nsImage: icon).resizable()
+                // Fill the square and crop, so non-square covers keep their
+                // proportions instead of squashing.
+                Image(nsImage: artwork).resizable()
+                    .scaledToFill()
                     .frame(width: 68 * s, height: 68 * s)
-                    .clipShape(RoundedRectangle(cornerRadius: 15 * s))
-            } else {
+                    .clipShape(RoundedRectangle(cornerRadius: 12 * s))
+                    .transition(.scale(scale: 0.6).combined(with: .opacity))
+            }
+            if let icon = app.icon {
+                Image(nsImage: icon).resizable()
+                    .frame(width: (hasArt ? 26 : 68) * s, height: (hasArt ? 26 : 68) * s)
+                    .clipShape(RoundedRectangle(cornerRadius: (hasArt ? 7 : 15) * s))
+                    .overlay(RoundedRectangle(cornerRadius: (hasArt ? 7 : 15) * s)
+                        .stroke(Color.black.opacity(hasArt ? 0.35 : 0), lineWidth: s))
+                    // Bottom-right corner of the cover, overhanging by 5.
+                    .offset(x: (hasArt ? 26 : 0) * s, y: (hasArt ? 26 : 0) * s)
+            } else if !hasArt {
                 Image(systemName: "app.fill").resizable()
                     .frame(width: 68 * s, height: 68 * s)
                     .foregroundStyle(.secondary)

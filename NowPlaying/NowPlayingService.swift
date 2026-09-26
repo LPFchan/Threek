@@ -86,13 +86,15 @@ final class NowPlayingService {
     }
 
     /// Kicks off a background refresh so the cache is warm by the time the
-    /// user presses a media key. Call at launch.
-    func warmCache() {
+    /// user presses a media key. Call at launch. `completion`, if given,
+    /// gets the cache once the refresh has landed.
+    func warmCache(completion: (([NowPlayingApp]) -> Void)? = nil) {
         let startedAt = Date()
         DispatchQueue.global(qos: .userInitiated).async {
             let (apps, fresh) = self.discoverApps()
             DispatchQueue.main.async {
                 self.store(apps, freshMetadata: fresh, startedAt: startedAt)
+                completion?(self.cachedApps)
             }
         }
     }

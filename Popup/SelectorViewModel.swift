@@ -151,6 +151,34 @@ final class SelectorViewModel: ObservableObject {
         onDismiss?()
     }
 
+    /// Takes a fresh discovery result while the HUD is up. Only the apps
+    /// already on screen are touched, in place — columns never appear,
+    /// vanish or reorder under the user's keys — and only when the artwork
+    /// or track actually changed, so the swap animates once.
+    @MainActor
+    func update(apps fresh: [NowPlayingApp]) {
+        guard !closing else { return }
+        let byID = Dictionary(fresh.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        func merged(_ apps: [NowPlayingApp]) -> [NowPlayingApp] {
+            apps.map { app in
+                guard let new = byID[app.id], new.metadataAvailable else { return app }
+                var app = app
+                app.artwork = new.artwork
+                app.trackTitle = new.trackTitle
+                return app
+            }
+        }
+        let next: State
+        switch state {
+        case .idle: return
+        case .showing(let apps): next = .showing(apps: merged(apps))
+        case .selecting(let apps, let i): next = .selecting(apps: merged(apps), selectedIndex: i)
+        }
+        guard next.apps.map(\.artwork) != state.apps.map(\.artwork)
+                || next.apps.map(\.trackTitle) != state.apps.map(\.trackTitle) else { return }
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.8)) { state = next }
+    }
+
     /// Takes a fresh backdrop sample. The first one of a show applies
     /// straight away; later ones cross-fade, and only past a margin either
     /// side of mid-grey, so a backdrop hovering there doesn't flicker.

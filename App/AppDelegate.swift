@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let interceptor = MediaKeyInterceptor()
     private let popup = PopupController()
+    private var refreshingWhileShowing = false
     private lazy var updater = SPUStandardUpdaterController(
         startingUpdater: true, updaterDelegate: nil, userDriverDelegate: self)
 
@@ -208,6 +209,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             default:
                 // Multiple apps registered — intercept and let the user pick.
                 self.popup.show(apps: apps, triggering: event)
+                self.refreshWhileShowing()
             }
         }
         return true
@@ -325,7 +327,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
             self.popup.show(apps: shown, triggering: .playPause)
+            self.refreshWhileShowing()
         }
+    }
+
+    /// The HUD can open on a snapshot taken before a track change landed
+    /// (artwork often arrives a beat after the title). Keep re-fetching while
+    /// it's up and hand each result over, so late artwork still shows.
+    private func refreshWhileShowing() {
+        guard !refreshingWhileShowing else { return }
+        refreshingWhileShowing = true
+        func next() {
+            NowPlayingService.shared.warmCache { [weak self] apps in
+                guard let self else { return }
+                guard self.popup.isShowing else {
+                    self.refreshingWhileShowing = false
+                    return
+                }
+                self.popup.update(apps: apps)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { next() }
+            }
+        }
+        next()
     }
 
     @objc private func toggleEnabled(_ item: NSMenuItem) {
