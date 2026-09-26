@@ -89,8 +89,14 @@ targets:
         NSAccessibilityUsageDescription: "Threek needs Accessibility access to intercept media keys and let you choose which app receives them."
         NSAppleEventsUsageDescription: "Threek needs to send play/pause to the media apps you choose."
 
+    # XcodeGen writes Threek.entitlements from these properties on every
+    # generate, so entitlements live here, not in the file.
     entitlements:
       path: Threek.entitlements
+      properties:
+        # Needed to send Apple events (and ask for Automation) under the
+        # hardened runtime.
+        com.apple.security.automation.apple-events: true
 
     dependencies:
       - sdk: CoreAudio.framework
