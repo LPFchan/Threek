@@ -74,8 +74,9 @@ is an OS ceiling. The repo has just adopted the repo-template operating model
   - Change: media keys route directly to the single playing app (bypassing
     the picker); the HUD's realtime blurred backdrop was removed in favor of
     a chrome-less panel that keeps the drop shadow and adaptive glyph color
-    (now driven by a one-shot screenshot, dropping the Screen Recording
-    permission need).
+    (now driven by a one-shot screenshot, which was expected to drop the
+    Screen Recording permission need; superseded 2026-09-26: macOS still asks
+    for Screen Recording, so the onboarding requests it).
   - Why it matters: removes the picker step for the common single-player
     case and simplifies the HUD rendering path.
   - Related ids: none
