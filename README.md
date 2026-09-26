@@ -34,6 +34,9 @@ keys, so no Karabiner remapping is needed.
 
 To show only app icons, turn off **Show Album Artwork** in the menu bar menu.
 
+With several displays, the HUD appears on the one the cursor is on; on the
+built-in display it lines up with the F7–F9 keys.
+
 Hold ⏯ for half a second to pause everything that's playing; the HUD shows
 each app it paused. A normal tap still acts on release, so it works as before.
 
