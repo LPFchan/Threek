@@ -76,8 +76,8 @@ pre-build phase) — no committed binaries.
 2. Open Threek. macOS refuses the first launch because the app isn't notarized
    by Apple: go to **System Settings → Privacy & Security**, scroll down, click
    **Open Anyway**, and open it again.
-3. Allow Threek under **Privacy & Security → Accessibility** so it can see the
-   media keys.
+3. A short welcome walks you through allowing Threek under **Privacy &
+   Security → Accessibility**, so it can see the media keys.
 4. The first time Threek controls a media app, macOS asks for **Automation**
    access to it. Allow it once per app.
 
