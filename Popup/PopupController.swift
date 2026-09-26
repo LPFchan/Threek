@@ -97,10 +97,12 @@ enum PhysicalMetrics {
         return screen.frame.width / sizeMM.width
     }
 
-    /// The screen above the keys being pressed: the built-in display when
-    /// it's on, otherwise the main screen.
+    /// The screen the cursor is on, which is where the user is looking.
+    /// On the built-in display the HUD still lines up with the keys; on
+    /// any other it sits at the bottom center.
     static var hudScreen: NSScreen? {
-        NSScreen.screens.first { pointsPerMM(for: $0) != nil } ?? NSScreen.main
+        let mouse = NSEvent.mouseLocation
+        return NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) } ?? NSScreen.main
     }
 
     /// Points per design unit. On other displays there are no keys to line
@@ -200,7 +202,9 @@ final class PopupController {
     }
 
     private func open(_ present: () -> Void) {
-        if let screen = PhysicalMetrics.hudScreen {
+        // Picked once: the cursor could cross displays between two reads.
+        let screen = PhysicalMetrics.hudScreen
+        if let screen {
             let (frame, scale) = PhysicalMetrics.hudFrame(on: screen)
             viewModel.scale = scale
             if panel == nil { buildPanel(size: frame.size) }
@@ -210,7 +214,7 @@ final class PopupController {
         }
         generation += 1
         let gen = generation
-        if let screen = PhysicalMetrics.hudScreen {
+        if let screen {
             watchBackdrop(behind: PhysicalMetrics.hudFrame(on: screen).frame, on: screen)
         }
         present()
