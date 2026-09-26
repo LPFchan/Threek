@@ -106,6 +106,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showOnboarding(from step: Onboarding.Step = .welcome) {
         guard onboardingWindow == nil else { return }
         let onboarding = Onboarding(step: step)
+        // Default the switch on only for a first-time setup; a recovery
+        // (revoked permission) keeps whatever the user chose before.
+        if step != .welcome { onboarding.openAtLogin = LaunchAtLogin.isEnabled }
         let window = OnboardingWindow(onboarding)
         onboarding.onFinish = { [weak self, weak onboarding] in
             guard let self, let onboarding else { return }
@@ -126,10 +129,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         UserDefaults.standard.set(true, forKey: "onboarded")
         if let openAtLogin, openAtLogin != LaunchAtLogin.isEnabled {
             LaunchAtLogin.toggle()
-            // The menu was built before this choice; its Open at Login
-            // check would show the old state.
-            buildMenu()
         }
+        // The menu was built before this: Open at Login and Open Threek
+        // would show the old state.
+        buildMenu()
         window.close()
     }
 
