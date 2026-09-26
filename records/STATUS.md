@@ -18,7 +18,7 @@ Update it when the project's real state changes.
 Threek v2 is functional: it intercepts ⏯, enumerates all Now Playing apps via
 the perl-shim adapter, and dispatches to the chosen app. When exactly one
 controllable app is actually playing, a media-key press routes straight to it
-without opening the picker. The HUD is now chrome-less — no realtime blurred
+without opening the picker; the HUD only flashes that app over the pressed key. The HUD is now chrome-less — no realtime blurred
 backdrop; content separation comes from a drop shadow and background-adaptive
 glyph color (keyed off one-shot screenshots of the screen behind the panel,
 re-taken every 250 ms while the HUD is up; no Screen Recording permission). Research on

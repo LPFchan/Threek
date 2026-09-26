@@ -153,7 +153,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func handleMediaKey(_ event: MediaKeyEvent) -> Bool {
         // Esc only exists to dismiss the HUD; never consume it otherwise.
         if case .escape = event {
-            guard popup.isShowing else { return false }
+            guard popup.isInteractive else { return false }
             popup.handleKey(event)
             return true
         }
@@ -170,7 +170,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         guard isEnabled else { return false }
 
-        if popup.isShowing {
+        // A single-app flash doesn't take keys: the next press routes afresh
+        // (and flashes again) rather than being swallowed by it.
+        if popup.isInteractive {
             popup.handleKey(event)
             return true
         }
@@ -188,7 +190,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             // and simply falls through to the normal paths.
             let playing = controllable.filter { $0.isPlaying == true }
             if playing.count == 1 {
-                self.dispatch(event, to: playing[0].effectiveBundleID)
+                self.dispatchShowing(event, to: playing[0])
                 return
             }
             switch controllable.count {
@@ -201,11 +203,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     // Registrants exist but none are controllable; the key
                     // is already consumed, so route it to the current
                     // now-playing app via the adapter rather than dead-key.
-                    self.dispatch(event, to: apps[0].effectiveBundleID)
+                    self.dispatchShowing(event, to: apps[0])
                 }
             case 1:
                 // Exactly one app — send straight to it, no picker.
-                self.dispatch(event, to: controllable[0].effectiveBundleID)
+                self.dispatchShowing(event, to: controllable[0])
             default:
                 // Multiple apps registered — intercept and let the user pick.
                 self.popup.show(apps: apps, triggering: event)
@@ -213,6 +215,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         return true
+    }
+
+    /// Sends a key straight to the one app it applies to, and flashes that
+    /// app in the HUD so the routing is visible.
+    private func dispatchShowing(_ event: MediaKeyEvent, to app: NowPlayingApp) {
+        dispatch(event, to: app.effectiveBundleID)
+        popup.flash(app: app, key: event)
     }
 
     /// Sends the appropriate command for a key to a specific app.
