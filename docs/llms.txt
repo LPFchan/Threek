@@ -5,12 +5,15 @@
 - Download: https://github.com/LPFchan/Threek/releases/latest/download/Threek.dmg
 - Source, README and build instructions: https://github.com/LPFchan/Threek
 - Release notes: https://github.com/LPFchan/Threek/releases
+- Agent skill for installing and setting it up: https://threek.lost.plus/.well-known/agent-skills/install-threek/SKILL.md
 
 ## Using it
 
 - Press ⏯ with two or three apps registered: a HUD shows each app above the F-key that picks it (F7, F8, F9). Press that key to send play/pause to that app.
 - With four or more apps, ⏮/⏭ move a selection ring and ⏯ confirms.
-- With exactly one app playing, any media key goes straight to it, no HUD. Esc or a 3-second timeout dismisses the HUD.
+- With exactly one app playing, any media key goes straight to it; the HUD only flashes that app over the pressed key. Esc or a 4-second timeout dismisses the picker.
+- Hold ⏯ for half a second to pause every app that's playing.
+- QuickTime Player gets one entry per open video or audio file, each paused on its own; ⏮/⏭ do nothing for it.
 - The menu bar icon has Enabled, Open at Login, Check for Updates and About. Updates install through Sparkle.
 
 ## First launch
