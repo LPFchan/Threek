@@ -533,16 +533,10 @@ private struct Entrance: ViewModifier {
 
 private struct AppIconView: View {
     let app: NowPlayingApp
-    var isSelected: Bool = false
     @Environment(\.hudScale) private var s
 
     var body: some View {
         ZStack {
-            if isSelected {
-                RoundedRectangle(cornerRadius: 20 * s)
-                    .stroke(Color.white, lineWidth: 2.5 * s)
-                    .frame(width: 84 * s, height: 84 * s)
-            }
             // Album artwork leads, with the app icon badged in the corner —
             // the reference mockup's pairing — and the plain icon fills the
             // tile when the app publishes no artwork. The icon is one view in
@@ -672,28 +666,52 @@ private struct CarouselRow: View {
         // repetitions gets two positions), so identity is always unique.
         let positions = Array((cursor - 2)...(cursor + 2))
 
-        ZStack {
-            HStack(spacing: slotSpacing) {
-                ForEach(positions, id: \.self) { position in
-                    let wrapped = ((position % count) + count) % count
-                    let picked = viewModel.chosenID != nil
-                    CarouselIconView(app: apps[wrapped],
-                                     distance: position - cursor)
-                        .scaleEffect(picked && position == cursor ? 1.1 : 1)
-                        .opacity(picked && position != cursor ? 0.3 : 1)
-                        .transition(.opacity)
-                }
+        HStack(spacing: slotSpacing) {
+            ForEach(positions, id: \.self) { position in
+                let wrapped = ((position % count) + count) % count
+                let picked = viewModel.chosenID != nil
+                CarouselIconView(app: apps[wrapped],
+                                 distance: position - cursor)
+                    .scaleEffect(picked && position == cursor ? 1.1 : 1)
+                    .opacity(picked && position != cursor ? 0.3 : 1)
+                    .transition(.opacity)
             }
-            .animation(.interpolatingSpring(stiffness: 420, damping: 34),
-                       value: cursor)
-
-            // Stationary selection ring — the centered icon grows into it.
-            RoundedRectangle(cornerRadius: 20 * s)
-                .stroke(Color.white, lineWidth: 2.5 * s)
-                .frame(width: slotWidth, height: slotWidth)
         }
+        .animation(.interpolatingSpring(stiffness: 420, damping: 34),
+                   value: cursor)
         .frame(width: clipWidth, height: slotWidth)
         .clipped()
+        // Outside the clip: the ring is a little taller than the slot row.
+        .overlay { SelectionRing(app: apps[((cursor % count) + count) % count],
+                                 inverted: viewModel.backdropIsLight) }
+    }
+}
+
+/// Stationary ring around the centered carousel slot; the centered icon
+/// grows into it. Concentric with the tile under it (its corner radius is
+/// the tile's plus the gap, so the gap is even all the way round), wide
+/// enough to clear the corner app badge on artwork, and drawn in the same
+/// backdrop-adaptive ink as the key badges.
+private struct SelectionRing: View {
+    let app: NowPlayingApp
+    let inverted: Bool
+    @Environment(\.hudScale) private var s
+
+    /// Tile 68 with corner radius 12 (artwork) or 15 (plain icon). The badge
+    /// on artwork reaches 5 past the tile's corner, so 11 of gap keeps the
+    /// ring's inner curve about 2 clear of it.
+    private static let tile: CGFloat = 68
+    private static let gap: CGFloat = 11
+    private static let line: CGFloat = 2
+
+    var body: some View {
+        let radius = (app.artwork != nil ? 12 : 15) + Self.gap
+        let side = Self.tile + (Self.gap + Self.line) * 2
+        RoundedRectangle(cornerRadius: (radius + Self.line) * s)
+            .strokeBorder(inverted ? Color.black : Color.white, lineWidth: Self.line * s)
+            .frame(width: side * s, height: side * s)
+            .animation(.easeInOut(duration: 0.2), value: radius)
+            .animation(.easeInOut(duration: 0.25), value: inverted)
     }
 }
 
