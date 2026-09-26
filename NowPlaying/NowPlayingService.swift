@@ -144,20 +144,13 @@ final class NowPlayingService {
     }
 
     /// Pauses every given app: AppleScript `pause` for scriptable apps (per
-    /// document for QuickTime), and the adapter's pause, which reaches the
-    /// current now-playing app, for the rest or when AppleScript fails.
-    /// Pause rather than toggle, so an app that already stopped stays put.
-    func pauseAll(_ apps: [NowPlayingApp]) {
-        let ids = Set(apps.map(\.id))
-        for i in cachedApps.indices where ids.contains(cachedApps[i].id) {
-            cachedApps[i].isPlaying = false
-        }
-        cacheTime = Date()
-        acceptSnapshotsFrom = Date().addingTimeInterval(toggleSettle)
-        DispatchQueue.main.asyncAfter(deadline: .now() + toggleSettle) { self.warmCache() }
-
+    /// document for QuickTime). The adapter's pause only reaches the current
+    /// now-playing app, so it covers just that one among the rest (apps with
+    /// no dictionary, or where AppleScript failed). Pause rather than
+    /// toggle, so an app that already stopped stays put. `completion` gets,
+    /// on the main queue, the apps actually reached.
+    func pauseAll(_ apps: [NowPlayingApp], completion: @escaping ([NowPlayingApp]) -> Void) {
         DispatchQueue.global(qos: .userInitiated).async {
-            // Which apps AppleScript reached; the rest get the adapter's pause.
             var reached = [Bool](repeating: false, count: apps.count)
             let lock = NSLock()
             DispatchQueue.concurrentPerform(iterations: apps.count) { i in
@@ -170,7 +163,23 @@ final class NowPlayingService {
                 }
                 lock.lock(); reached[i] = ok; lock.unlock()
             }
-            if reached.contains(false) { self.sendMediaRemoteCommandSync(.pause, label: "pause (adapter)") }
+            let missed = apps.indices.filter { !reached[$0] }
+            if !missed.isEmpty, let nowPlaying = self.currentNowPlayingBundleID(),
+               let i = missed.first(where: { apps[$0].document == nil && apps[$0].effectiveBundleID == nowPlaying }) {
+                self.sendMediaRemoteCommandSync(.pause, label: "pause (adapter)")
+                reached[i] = true
+            }
+            let paused = apps.indices.filter { reached[$0] }.map { apps[$0] }
+            DispatchQueue.main.async {
+                let ids = Set(paused.map(\.id))
+                for i in self.cachedApps.indices where ids.contains(self.cachedApps[i].id) {
+                    self.cachedApps[i].isPlaying = false
+                }
+                self.cacheTime = Date()
+                self.acceptSnapshotsFrom = Date().addingTimeInterval(self.toggleSettle)
+                DispatchQueue.main.asyncAfter(deadline: .now() + self.toggleSettle) { self.warmCache() }
+                completion(paused)
+            }
         }
     }
 
