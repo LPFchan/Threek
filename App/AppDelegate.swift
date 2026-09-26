@@ -23,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// True once we've confirmed the event tap actually receives events. A
     /// stale TCC grant leaves AXIsProcessTrusted()==true but the tap blind.
     private var tapVerified = false
+    private var accessWatch: Timer?
     private var selfTestKeyCode: Int32 = -1
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -67,7 +68,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Accessibility
 
     private func checkAccessibilityAndStart(prompt: Bool) {
-        if AXIsProcessTrusted() {
+        if MediaKeyInterceptor.hasAccessibility() {
             startInterceptor()
             return
         }
@@ -119,7 +120,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func poll() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
             guard let self else { return }
-            if AXIsProcessTrusted() {
+            // AXIsProcessTrusted can lag both ways; the probe tap can't.
+            if MediaKeyInterceptor.hasAccessibility() {
                 self.isPolling = false
                 self.startInterceptor()
             } else {
@@ -136,14 +138,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             self?.handleMediaKeyUp(event)
         }
         interceptor.onTapInvalidated = { [weak self] in
-            self?.interceptor.stop()
-            self?.updateIcon(trusted: false)
-            self?.startPolling()
+            self?.accessibilityLost()
         }
         interceptor.start()
         Log.write("[AppDelegate] AXIsProcessTrusted=\(AXIsProcessTrusted()) interceptor.isRunning=\(interceptor.isRunning)")
         updateIcon(trusted: interceptor.isRunning)
-        if !interceptor.isRunning { startPolling() }
+        guard interceptor.isRunning else { startPolling(); return }
+        // macOS sends nothing when the grant is removed, and a tap without
+        // it stalls all input; check for real every couple of seconds so
+        // the tap comes out of the event path quickly.
+        accessWatch?.invalidate()
+        accessWatch = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
+            if !MediaKeyInterceptor.hasAccessibility() { self?.accessibilityLost() }
+        }
+    }
+
+    /// The Accessibility grant is gone: take the tap out of the event path
+    /// and wait for the grant to come back.
+    private func accessibilityLost() {
+        accessWatch?.invalidate()
+        accessWatch = nil
+        guard interceptor.isRunning else { return }
+        interceptor.stop()
+        updateIcon(trusted: false)
+        Log.write("[AppDelegate] Accessibility lost; tap stopped, waiting for the grant")
+        startPolling()
     }
 
     // MARK: - Tap health
