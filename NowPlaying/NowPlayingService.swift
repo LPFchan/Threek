@@ -166,16 +166,17 @@ final class NowPlayingService {
             let missed = apps.indices.filter { !reached[$0] }
             if !missed.isEmpty, let nowPlaying = self.currentNowPlayingBundleID(),
                let i = missed.first(where: { apps[$0].document == nil && apps[$0].effectiveBundleID == nowPlaying }) {
-                self.sendMediaRemoteCommandSync(.pause, label: "pause (adapter)")
-                reached[i] = true
+                reached[i] = self.sendMediaRemoteCommandSync(.pause, label: "pause (adapter)")
             }
             let paused = apps.indices.filter { reached[$0] }.map { apps[$0] }
             DispatchQueue.main.async {
                 let ids = Set(paused.map(\.id))
+                // Flip what the cache already lists, but leave its age alone:
+                // the hold's fresh discovery never went into it, so it isn't
+                // any fresher than before.
                 for i in self.cachedApps.indices where ids.contains(self.cachedApps[i].id) {
                     self.cachedApps[i].isPlaying = false
                 }
-                self.cacheTime = Date()
                 self.acceptSnapshotsFrom = Date().addingTimeInterval(self.toggleSettle)
                 DispatchQueue.main.asyncAfter(deadline: .now() + self.toggleSettle) { self.warmCache() }
                 completion(paused)
@@ -244,10 +245,11 @@ final class NowPlayingService {
     /// talks to mediaremoted on our behalf, so no Automation / Apple Events
     /// permission is involved. Call from a background queue (it blocks on
     /// `waitUntilExit`).
-    private func sendMediaRemoteCommandSync(_ command: MediaRemoteCommand, label: String) {
+    @discardableResult
+    private func sendMediaRemoteCommandSync(_ command: MediaRemoteCommand, label: String) -> Bool {
         guard let script = self.perlScriptURL, let framework = self.frameworkURL else {
             Log.write("[NowPlayingService] adapter resources missing; cannot send \(label)")
-            return
+            return false
         }
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/perl")
@@ -259,7 +261,7 @@ final class NowPlayingService {
             try process.run()
         } catch {
             Log.write("[NowPlayingService] adapter send launch failed (\(label)): \(error)")
-            return
+            return false
         }
         process.waitUntilExit()
         let errText = String(data: err.fileHandleForReading.readDataToEndOfFile(),
@@ -267,9 +269,10 @@ final class NowPlayingService {
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if process.terminationStatus == 0 {
             Log.write("[NowPlayingService] \(label) sent via adapter OK (now-playing)")
-        } else {
-            Log.write("[NowPlayingService] adapter send failed (\(label)): \(errText)")
+            return true
         }
+        Log.write("[NowPlayingService] adapter send failed (\(label)): \(errText)")
+        return false
     }
 
     enum TrackCommand {
