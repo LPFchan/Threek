@@ -11,11 +11,11 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: 2.10.0
-  # Fork of jaywcjlove/PermissionFlow with swift-tools-version 6.1, so
-  # Xcode 16.3+ builds it (upstream needs Xcode 26).
   PermissionFlow:
-    url: https://github.com/LPFchan/PermissionFlow
-    exactVersion: 2.11.2-swift6.1.1
+    url: https://github.com/jaywcjlove/PermissionFlow
+    # Next release after v2.11.2 ships swift-tools-version 6.1
+    # (jaywcjlove/PermissionFlow#12). Pin to that tag when it lands.
+    from: 2.11.3
 
 settings:
   base:
