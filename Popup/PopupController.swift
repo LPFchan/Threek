@@ -123,7 +123,10 @@ enum PhysicalMetrics {
         if let ppm, let f8 = layout.f8OffsetMM { offset = f8 * ppm }
         let centerX = screen.frame.midX + offset
         let lift = (ppm ?? designKeycap / layout.keycapMM) * bottomLiftMM
-        let frame = NSRect(x: centerX - size.width / 2, y: screen.frame.minY + lift,
+        // The built-in display measures from its physical edge, over the
+        // keys; elsewhere the Dock may sit along the bottom, so start above it.
+        let bottom = ppm != nil ? screen.frame.minY : screen.visibleFrame.minY
+        let frame = NSRect(x: centerX - size.width / 2, y: bottom + lift,
                            width: size.width, height: size.height)
         return (frame, s)
     }
@@ -326,11 +329,11 @@ final class PopupController {
     /// persistent stream, and the one-shot API needs no Screen Recording
     /// permission.
     private func watchBackdrop(behind frame: NSRect, on screen: NSScreen) {
-        let primaryH = NSScreen.screens.first?.frame.height ?? screen.frame.height
-        // SCStreamConfiguration/sourceRect work in points with a top-left
-        // origin; AppKit frames are points, bottom-left — flip Y only.
-        let rect = CGRect(x: frame.minX,
-                          y: primaryH - frame.maxY,
+        // SCStreamConfiguration/sourceRect is in points, relative to the
+        // captured display with a top-left origin; AppKit frames are global
+        // points with a bottom-left origin. Make it display-local, flip Y.
+        let rect = CGRect(x: frame.minX - screen.frame.minX,
+                          y: screen.frame.maxY - frame.maxY,
                           width: frame.width,
                           height: frame.height)
         let scale = screen.backingScaleFactor
