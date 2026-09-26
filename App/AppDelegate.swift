@@ -144,6 +144,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Log.write("[AppDelegate] AXIsProcessTrusted=\(AXIsProcessTrusted()) interceptor.isRunning=\(interceptor.isRunning)")
         updateIcon(trusted: interceptor.isRunning)
         guard interceptor.isRunning else { startPolling(); return }
+        // The grant landed; PermissionFlow leaves its drag panel up otherwise.
+        Permissions.controller.closePanel()
         // macOS sends nothing when the grant is removed, and a tap without
         // it stalls all input; check for real every couple of seconds so
         // the tap comes out of the event path quickly.
