@@ -5,6 +5,15 @@
     <link>https://threek.lost.plus/appcast.xml</link>
     <language>en</language>
     <item>
+      <title>Version 1.2.0</title>
+      <pubDate>Sat, 26 Sep 2026 08:31:27 GMT</pubDate>
+      <sparkle:version>62</sparkle:version>
+      <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+      <sparkle:fullReleaseNotesLink>https://github.com/LPFchan/Threek/releases/tag/v1.2.0</sparkle:fullReleaseNotesLink>
+      <enclosure url="https://github.com/LPFchan/Threek/releases/download/v1.2.0/Threek.dmg" type="application/octet-stream" sparkle:edSignature="BuBHU7nz7kbyp7fsAIYMPo7v4JqNsn+VgPsQuENLzfk2mswwQN5vv0a4UpkZ6B16RlpAYhHtpybrtQliXw/YCg==" length="2870587"/>
+    </item>
+    <item>
       <title>Version 1.1.2</title>
       <pubDate>Sat, 26 Sep 2026 04:59:16 GMT</pubDate>
       <sparkle:version>58</sparkle:version>
