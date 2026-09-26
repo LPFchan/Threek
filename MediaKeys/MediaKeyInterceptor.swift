@@ -81,20 +81,11 @@ final class MediaKeyInterceptor {
         Log.write("[MediaKeyInterceptor] tap started")
     }
 
-    /// Whether Threek really has Accessibility right now. `AXIsProcessTrusted`
-    /// can keep answering true after the grant is removed, so this makes a
-    /// throwaway event tap instead: macOS refuses to create one without the
-    /// grant. The tap is switched off and destroyed before it sees an event.
+    /// Whether Threek really has Accessibility right now, from the TCC
+    /// service. `AXIsProcessTrusted` can keep answering true after the grant
+    /// is removed (and false after it's given) for the life of the process.
     static func hasAccessibility() -> Bool {
-        guard let probe = CGEvent.tapCreate(
-            tap: .cgSessionEventTap, place: .tailAppendEventTap, options: .defaultTap,
-            eventsOfInterest: 1 << 14,
-            callback: { _, _, event, _ in Unmanaged.passUnretained(event) },
-            userInfo: nil)
-        else { return false }
-        CGEvent.tapEnable(tap: probe, enable: false)
-        CFMachPortInvalidate(probe)
-        return true
+        TCC.preflight("kTCCServiceAccessibility") ?? AXIsProcessTrusted()
     }
 
     func stop() {
