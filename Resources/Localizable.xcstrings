@@ -517,6 +517,522 @@
         }
       }
     },
+    "Allow Media Control": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "السماح بالتحكم في الوسائط"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разреши управление на мултимедията"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Povolit ovládání médií"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillad mediestyring"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mediensteuerung erlauben"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir control multimedia"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luba meedia juhtimine"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salli median ohjaus"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser le contrôle multimédia"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "मीडिया नियंत्रण की अनुमति दें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dopusti upravljanje medijima"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Médiavezérlés engedélyezése"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consenti controllo multimediale"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メディア操作を許可"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "미디어 제어 허용"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillat mediestyring"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mediabediening toestaan"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zezwól na sterowanie multimediami"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir controle de mídia"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir controlo multimédia"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite controlul media"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешить управление медиа"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Povoliť ovládanie médií"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillåt mediestyrning"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medya Kontrolüne İzin Ver"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дозволити керування медіа"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cho phép điều khiển phương tiện"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许控制媒体"
+          }
+        }
+      }
+    },
+    "Allow Screen Recording": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "السماح بتسجيل الشاشة"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разреши запис на екрана"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Povolit záznam obrazovky"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillad skærmoptagelse"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bildschirmaufnahme erlauben"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir grabación de pantalla"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luba ekraanisalvestus"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salli näytön tallennus"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser l’enregistrement de l’écran"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "स्क्रीन रिकॉर्डिंग की अनुमति दें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dopusti snimanje zaslona"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Képernyőfelvétel engedélyezése"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consenti registrazione schermo"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面収録を許可"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "화면 기록 허용"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillat skjermopptak"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sta schermopname toe"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zezwól na nagrywanie ekranu"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir Gravação de Tela"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir gravação do ecrã"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite înregistrarea ecranului"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешить запись экрана"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Povoliť nahrávanie obrazovky"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillåt skärminspelning"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ekran Kaydına İzin Ver"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дозволити запис екрана"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cho phép Ghi màn hình"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许录屏"
+          }
+        }
+      }
+    },
+    "Asking…": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "جارٍ السؤال…"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пита се…"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Probíhá dotaz…"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spørger…"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird gefragt …"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preguntando…"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Küsitakse…"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kysytään…"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Demande en cours…"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "पूछा जा रहा है…"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pita se…"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kérdés folyamatban…"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Richiesta in corso…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "確認中…"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "묻는 중…"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spør …"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bezig met vragen…"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pytanie…"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Perguntando…"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A perguntar…"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se întreabă…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запрос…"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prebieha otázka…"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Frågar …"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Soruluyor…"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запит…"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đang hỏi…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在询问…"
+          }
+        }
+      }
+    },
     "Check for Updates…": {
       "localizations": {
         "ar": {
@@ -1549,178 +2065,6 @@
         }
       }
     },
-    "Grant Accessibility Access…": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "منح إذن تسهيلات الاستخدام…"
-          }
-        },
-        "bg": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Разрешаване на достъп до Достъпност…"
-          }
-        },
-        "cs": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Udělit přístup k Zpřístupnění…"
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Giv adgang til Tilgængelighed…"
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Zugriff auf Bedienungshilfen erlauben …"
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conceder acceso a Accesibilidad…"
-          }
-        },
-        "et": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Luba hõlbustusfunktsioonide kasutamine…"
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Salli Käyttöapu-pääsy…"
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Autoriser l’accès à l’Accessibilité…"
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "एक्सेसिबिलिटी की अनुमति दें…"
-          }
-        },
-        "hr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Dopusti pristup pristupačnosti…"
-          }
-        },
-        "hu": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kisegítő lehetőségek engedélyezése…"
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Consenti accesso ad Accessibilità…"
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "アクセシビリティへのアクセスを許可…"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "손쉬운 사용 접근 허용…"
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gi tilgang til Tilgjengelighet…"
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Geef toegang tot Toegankelijkheid…"
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Przyznaj dostęp do Dostępności…"
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conceder Acesso à Acessibilidade…"
-          }
-        },
-        "pt-PT": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Conceder acesso à Acessibilidade…"
-          }
-        },
-        "ro": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Acordă acces la Accesibilitate…"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Разрешить доступ к Универсальному доступу…"
-          }
-        },
-        "sk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Udeliť prístup k Prístupnosti…"
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Ge åtkomst till Hjälpmedel…"
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Erişilebilirlik İzni Ver…"
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Надати доступ до Параметрів доступності…"
-          }
-        },
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cấp quyền Trợ năng…"
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "授予辅助功能权限…"
-          }
-        }
-      }
-    },
     "Let Threek catch your media keys": {
       "localizations": {
         "ar": {
@@ -1893,6 +2237,350 @@
         }
       }
     },
+    "Let Threek control your media apps": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسمح لـ Threek بالتحكم في تطبيقات الوسائط"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Позволете на Threek да управлява мултимедийните приложения"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nechte Threek ovládat vaše multimediální aplikace"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lad Threek styre dine medieapps"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lass Threek deine Medien-Apps steuern"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deja que Threek controle tus apps multimedia"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luba Threekil juhtida meediarakendusi"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anna Threekin ohjata media-appejasi"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laissez Threek contrôler vos apps multimédia"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek को आपके मीडिया ऐप नियंत्रित करने दें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dopustite Threeku da upravlja vašim medijskim aplikacijama"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Engedd, hogy a Threek vezérelje a médiaappokat"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consenti a Threek di controllare le app multimediali"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek がメディアアプリを操作できるようにする"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek이 미디어 앱을 제어할 수 있게 허용하세요"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La Threek styre medieappene dine"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laat Threek je media-apps bedienen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pozwól Threek sterować aplikacjami multimedialnymi"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deixe o Threek controlar seus apps de mídia"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deixe o Threek controlar as suas apps multimédia"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite-i lui Threek să controleze aplicațiile media"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешите Threek управлять медиаприложениями"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nechajte Threek ovládať multimediálne aplikácie"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Låt Threek styra dina medieappar"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek’in medya uygulamalarınızı kontrol etmesine izin verin"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дозвольте Threek керувати медіазастосунками"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cho phép Threek điều khiển ứng dụng phương tiện"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "让 Threek 控制你的媒体 App"
+          }
+        }
+      }
+    },
+    "Let Threek see behind the HUD": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسمح لـ Threek برؤية ما خلف الواجهة"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Позволете на Threek да вижда зад панела"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nechte Threek vidět, co je za panelem"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lad Threek se bag om HUD’en"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lass Threek sehen, was hinter dem HUD liegt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deja que Threek vea detrás del HUD"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luba Threekil näha paneeli taha"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anna Threekin nähdä HUD:n taakse"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laissez Threek voir derrière le HUD"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek को HUD के पीछे देखने दें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dopustite Threeku da vidi iza HUD-a"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Engedd, hogy a Threek lássa, mi van a HUD mögött"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consenti a Threek di vedere dietro l’HUD"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek が HUD の背後を見られるようにする"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek이 HUD 뒤를 볼 수 있게 허용하세요"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La Threek se bak HUD-en"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laat Threek achter de HUD kijken"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pozwól Threek widzieć, co jest za HUD-em"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deixe o Threek ver o que está atrás do HUD"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deixe o Threek ver o que está por trás do HUD"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite-i lui Threek să vadă în spatele HUD-ului"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешите Threek видеть, что за панелью"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nechajte Threek vidieť, čo je za panelom"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Låt Threek se bakom HUD:en"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek’in HUD’un arkasını görmesine izin verin"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дозвольте Threek бачити, що за панеллю"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cho phép Threek nhìn phía sau HUD"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "让 Threek 看到 HUD 后面的内容"
+          }
+        }
+      }
+    },
     "Media keys not working — re-grant Accessibility": {
       "localizations": {
         "ar": {
@@ -2061,6 +2749,522 @@
           "stringUnit": {
             "state": "translated",
             "value": "媒体键无法使用 — 请重新授予辅助功能权限"
+          }
+        }
+      }
+    },
+    "No supported media apps found. macOS will ask when Threek first controls one.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم يُعثر على تطبيقات وسائط مدعومة. سيسأل macOS عندما يتحكم Threek في أحدها لأول مرة."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не са намерени поддържани мултимедийни приложения. macOS ще попита, когато Threek управлява такова за първи път."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nebyly nalezeny žádné podporované multimediální aplikace. macOS se zeptá, až Threek nějakou poprvé ovládne."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Der blev ikke fundet nogen understøttede medieapps. macOS spørger, første gang Threek styrer en."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine unterstützten Medien-Apps gefunden. macOS fragt, wenn Threek zum ersten Mal eine steuert."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontraron apps multimedia compatibles. macOS preguntará cuando Threek controle una por primera vez."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toetatud meediarakendusi ei leitud. macOS küsib, kui Threek esimest korda mõnda juhib."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tuettuja media-appeja ei löytynyt. macOS kysyy, kun Threek ohjaa jotakin ensimmäistä kertaa."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aucune app multimédia compatible trouvée. macOS demandera quand Threek en contrôlera une pour la première fois."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कोई समर्थित मीडिया ऐप नहीं मिला। जब Threek पहली बार किसी को नियंत्रित करेगा, तब macOS पूछेगा।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nije pronađena nijedna podržana medijska aplikacija. macOS će pitati kad Threek prvi put upravlja nekom."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nem található támogatott médiaapp. A macOS akkor kérdez, amikor a Threek először vezérel egyet."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nessuna app multimediale supportata trovata. macOS chiederà quando Threek ne controllerà una la prima volta."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "対応するメディアアプリが見つかりません。Threek が初めてアプリを操作するときに macOS が確認します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "지원되는 미디어 앱을 찾지 못했습니다. Threek이 처음 앱을 제어할 때 macOS가 묻습니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fant ingen støttede medieapper. macOS spør første gang Threek styrer en."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geen ondersteunde media-apps gevonden. macOS vraagt het als Threek er voor het eerst een bedient."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie znaleziono obsługiwanych aplikacji multimedialnych. macOS zapyta, gdy Threek pierwszy raz którąś sterować."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhum app de mídia compatível encontrado. O macOS vai perguntar quando o Threek controlar um pela primeira vez."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenhuma app multimédia compatível encontrada. O macOS vai perguntar quando o Threek controlar uma pela primeira vez."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nu s-au găsit aplicații media compatibile. macOS va întreba când Threek va controla una prima dată."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Поддерживаемые медиаприложения не найдены. macOS спросит, когда Threek впервые будет управлять одним из них."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nenašli sa žiadne podporované multimediálne aplikácie. macOS sa opýta, keď Threek prvýkrát nejakú ovláda."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inga appar som stöds hittades. macOS frågar första gången Threek styr en."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desteklenen medya uygulaması bulunamadı. Threek birini ilk kez kontrol ettiğinde macOS soracak."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Підтримуваних медіазастосунків не знайдено. macOS запитає, коли Threek уперше керуватиме одним із них."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Không tìm thấy ứng dụng phương tiện nào được hỗ trợ. macOS sẽ hỏi khi Threek điều khiển một ứng dụng lần đầu."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未找到支持的媒体 App。Threek 首次控制某个 App 时，macOS 会询问。"
+          }
+        }
+      }
+    },
+    "Open System Settings": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح إعدادات النظام"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отвори Системни настройки"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otevřít Nastavení systému"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åbn Systemindstillinger"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Systemeinstellungen öffnen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Ajustes del Sistema"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ava Süsteemiseaded"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avaa Järjestelmäasetukset"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir Réglages Système"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सिस्टम सेटिंग्ज़ खोलें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otvori Postavke sustava"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rendszerbeállítások megnyitása"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri Impostazioni di Sistema"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "システム設定を開く"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "시스템 설정 열기"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne Systeminnstillinger"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Systeeminstellingen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otwórz Ustawienia systemowe"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Ajustes do Sistema"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Definições do Sistema"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deschide Configurări sistem"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть Системные настройки"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otvoriť Systémové nastavenia"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öppna Systeminställningar"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistem Ayarları’nı Aç"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкрити Системні параметри"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mở Cài đặt hệ thống"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开“系统设置”"
+          }
+        }
+      }
+    },
+    "Open Threek": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح Threek"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отвори Threek"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otevřít Threek"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åbn Threek"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek öffnen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Threek"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ava Threek"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avaa Threek"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir Threek"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek खोलें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otvori Threek"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek megnyitása"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri Threek"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek を開く"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek 열기"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne Threek"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Threek"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otwórz Threek"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Threek"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Threek"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deschide Threek"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открыть Threek"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otvoriť Threek"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öppna Threek"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek’i Aç"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкрити Threek"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mở Threek"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "打开 Threek"
           }
         }
       }
@@ -2753,6 +3957,178 @@
         }
       }
     },
+    "Screen Recording allowed": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم السماح بتسجيل الشاشة"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записът на екрана е разрешен"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Záznam obrazovky povolen"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skærmoptagelse er tilladt"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bildschirmaufnahme erlaubt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grabación de pantalla permitida"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ekraanisalvestus lubatud"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Näytön tallennus sallittu"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistrement de l’écran autorisé"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "स्क्रीन रिकॉर्डिंग की अनुमति मिल गई"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Snimanje zaslona dopušteno"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Képernyőfelvétel engedélyezve"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registrazione schermo consentita"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "画面収録を許可しました"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "화면 기록 허용됨"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skjermopptak er tillatt"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Schermopname toegestaan"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nagrywanie ekranu dozwolone"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gravação de Tela permitida"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gravação do ecrã permitida"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Înregistrarea ecranului permisă"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запись экрана разрешена"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nahrávanie obrazovky povolené"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skärminspelning tillåten"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ekran Kaydı izni verildi"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запис екрана дозволено"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đã cho phép Ghi màn hình"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已允许录屏"
+          }
+        }
+      }
+    },
     "Show Album Artwork": {
       "localizations": {
         "ar": {
@@ -2921,178 +4297,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "显示专辑插图"
-          }
-        }
-      }
-    },
-    "The first time Threek controls an app, macOS will ask you to allow that too.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "في أول مرة يتحكم فيها Threek في تطبيق، سيطلب منك macOS السماح بذلك أيضًا."
-          }
-        },
-        "bg": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Първия път, когато Threek управлява приложение, macOS ще поиска и това разрешение."
-          }
-        },
-        "cs": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Když Threek poprvé ovládá nějakou aplikaci, macOS vás požádá i o toto svolení."
-          }
-        },
-        "da": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Første gang Threek styrer en app, beder macOS dig også om at tillade det."
-          }
-        },
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Wenn Threek zum ersten Mal eine App steuert, fragt macOS auch dafür nach deiner Erlaubnis."
-          }
-        },
-        "es": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La primera vez que Threek controle una app, macOS también te pedirá permiso."
-          }
-        },
-        "et": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kui Threek esimest korda mõnda rakendust juhib, küsib macOS ka selleks luba."
-          }
-        },
-        "fi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kun Threek ohjaa appia ensimmäistä kertaa, macOS pyytää lupaa myös siihen."
-          }
-        },
-        "fr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La première fois que Threek contrôle une app, macOS vous demandera aussi de l’autoriser."
-          }
-        },
-        "hi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "जब Threek पहली बार किसी ऐप को नियंत्रित करेगा, तो macOS इसकी भी अनुमति माँगेगा।"
-          }
-        },
-        "hr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Kad Threek prvi put upravlja nekom aplikacijom, macOS će tražiti i to dopuštenje."
-          }
-        },
-        "hu": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Amikor a Threek először vezérel egy appot, a macOS ehhez is engedélyt kér."
-          }
-        },
-        "it": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "La prima volta che Threek controlla un’app, macOS ti chiederà di consentire anche questo."
-          }
-        },
-        "ja": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Threek が初めてアプリを操作するときは、macOS からもう一度許可を求められます。"
-          }
-        },
-        "ko": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Threek이 처음 앱을 제어할 때 macOS가 이에 대한 허용도 요청합니다."
-          }
-        },
-        "nb": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Første gang Threek styrer en app, ber macOS deg også om å tillate det."
-          }
-        },
-        "nl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "De eerste keer dat Threek een app bedient, vraagt macOS je ook daarvoor toestemming."
-          }
-        },
-        "pl": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gdy Threek pierwszy raz steruje aplikacją, macOS poprosi też o to pozwolenie."
-          }
-        },
-        "pt-BR": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Na primeira vez que o Threek controlar um app, o macOS também vai pedir sua permissão."
-          }
-        },
-        "pt-PT": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Da primeira vez que o Threek controlar uma app, o macOS também vai pedir a sua autorização."
-          }
-        },
-        "ro": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Prima dată când Threek controlează o aplicație, macOS îți va cere permisiunea și pentru asta."
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Когда Threek впервые управляет приложением, macOS попросит разрешение и на это."
-          }
-        },
-        "sk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Keď Threek prvýkrát ovláda nejakú aplikáciu, macOS vás požiada aj o toto povolenie."
-          }
-        },
-        "sv": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Första gången Threek styr en app ber macOS dig att tillåta även det."
-          }
-        },
-        "tr": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Threek bir uygulamayı ilk kez kontrol ettiğinde macOS bunun için de izin isteyecek."
-          }
-        },
-        "uk": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Коли Threek уперше керуватиме застосунком, macOS попросить дозволу й на це."
-          }
-        },
-        "vi": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Lần đầu Threek điều khiển một ứng dụng, macOS cũng sẽ hỏi bạn cho phép."
-          }
-        },
-        "zh-Hans": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Threek 第一次控制某个 App 时，macOS 也会请你允许。"
           }
         }
       }
@@ -3269,6 +4473,178 @@
         }
       }
     },
+    "Threek looks at the part of the screen behind its HUD to pick white or black text you can read. Nothing is recorded or saved.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يفحص Threek جزء الشاشة خلف الواجهة ليختار نصًا أبيض أو أسود يسهل قراءته. لا يُسجَّل أي شيء ولا يُحفظ."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek гледа частта от екрана зад панела, за да избере бял или черен текст, който се чете. Нищо не се записва и не се пази."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek se dívá na část obrazovky za panelem, aby vybral bílý nebo černý text, který přečtete. Nic se nenahrává ani neukládá."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek kigger på den del af skærmen, der ligger bag HUD’en, for at vælge hvid eller sort tekst, du kan læse. Intet optages eller gemmes."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek schaut auf den Bildschirmbereich hinter dem HUD, um lesbaren weißen oder schwarzen Text zu wählen. Nichts wird aufgenommen oder gespeichert."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek mira la parte de la pantalla detrás del HUD para elegir texto blanco o negro legible. No se graba ni se guarda nada."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek vaatab paneeli taga olevat ekraaniosa, et valida loetav valge või must tekst. Midagi ei salvestata."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek katsoo HUD:n takana olevaa näytön osaa valitakseen luettavan valkoisen tai mustan tekstin. Mitään ei tallenneta."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek regarde la partie de l’écran derrière le HUD pour choisir un texte blanc ou noir lisible. Rien n’est enregistré ni conservé."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek HUD के पीछे की स्क्रीन देखकर पढ़ने लायक सफ़ेद या काला टेक्स्ट चुनता है। कुछ भी रिकॉर्ड या सेव नहीं होता।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek gleda dio zaslona iza HUD-a kako bi odabrao bijeli ili crni tekst koji se može čitati. Ništa se ne snima niti sprema."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Threek megnézi a képernyő HUD mögötti részét, hogy olvasható fehér vagy fekete szöveget válasszon. Semmit sem rögzít vagy ment."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek guarda la parte dello schermo dietro l’HUD per scegliere un testo bianco o nero leggibile. Non viene registrato né salvato nulla."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek は HUD の背後にある画面の一部を見て、読みやすい白または黒の文字を選びます。何も録画・保存しません。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek은 HUD 뒤의 화면 일부를 보고 읽기 쉬운 흰색 또는 검은색 글자를 고릅니다. 아무것도 녹화하거나 저장하지 않습니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek ser på delen av skjermen bak HUD-en for å velge hvit eller svart tekst som er lett å lese. Ingenting tas opp eller lagres."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek kijkt naar het deel van het scherm achter de HUD om leesbare witte of zwarte tekst te kiezen. Er wordt niets opgenomen of bewaard."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek patrzy na fragment ekranu za HUD-em, by wybrać czytelny biały lub czarny tekst. Nic nie jest nagrywane ani zapisywane."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek olha a parte da tela atrás do HUD para escolher texto branco ou preto legível. Nada é gravado ou salvo."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek observa a parte do ecrã por trás do HUD para escolher texto branco ou preto legível. Nada é gravado nem guardado."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek se uită la partea de ecran din spatele HUD-ului ca să aleagă text alb sau negru lizibil. Nimic nu se înregistrează sau salvează."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek смотрит на часть экрана за панелью, чтобы выбрать читаемый белый или чёрный текст. Ничего не записывается и не сохраняется."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek sa pozerá na časť obrazovky za panelom, aby vybral biely alebo čierny text, ktorý sa dá čítať. Nič sa nenahráva ani neukladá."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek tittar på den del av skärmen som ligger bakom HUD:en för att välja läsbar vit eller svart text. Inget spelas in eller sparas."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek, okunabilir beyaz veya siyah metni seçmek için HUD’un arkasındaki ekran bölümüne bakar. Hiçbir şey kaydedilmez veya saklanmaz."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek дивиться на частину екрана за панеллю, щоб вибрати читабельний білий чи чорний текст. Нічого не записується і не зберігається."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek xem phần màn hình phía sau HUD để chọn chữ trắng hoặc đen dễ đọc. Không có gì được ghi lại hay lưu."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek 会查看 HUD 后面的屏幕区域，以选择易读的白色或黑色文字。不会录制或保存任何内容。"
+          }
+        }
+      }
+    },
     "Threek needs Accessibility access to catch ⏯, ⏮ and ⏭ before macOS sends them to an app. It ignores every other key.": {
       "localizations": {
         "ar": {
@@ -3441,6 +4817,178 @@
         }
       }
     },
+    "Threek sends play and pause to the app you pick. macOS asks once for each app; Threek opens any that aren't running in the background just long enough to ask.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يرسل Threek أمري التشغيل والإيقاف المؤقت إلى التطبيق الذي تختاره. يسأل macOS مرة واحدة لكل تطبيق؛ ويفتح Threek أي تطبيق غير مشغّل في الخلفية لمدة تكفي للسؤال فقط."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek изпраща пускане и пауза към приложението, което изберете. macOS пита веднъж за всяко приложение; Threek отваря неработещите на заден план само колкото да се зададе въпросът."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek posílá přehrát a pozastavit do aplikace, kterou vyberete. macOS se ptá jednou pro každou aplikaci; Threek otevře ty, které neběží, na pozadí jen na dobu dotazu."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek sender afspil og pause til den app, du vælger. macOS spørger én gang for hver app; Threek åbner dem, der ikke kører, i baggrunden lige længe nok til at spørge."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek sendet Wiedergabe und Pause an die App, die du wählst. macOS fragt einmal pro App; Apps, die nicht laufen, öffnet Threek kurz im Hintergrund, nur für die Frage."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek envía reproducir y pausa a la app que elijas. macOS pregunta una vez por cada app; Threek abre en segundo plano las que no estén abiertas, solo el tiempo de preguntar."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek saadab esitamise ja pausi valitud rakendusele. macOS küsib iga rakenduse kohta ühe korra; mittetöötavad rakendused avab Threek taustal vaid küsimise ajaks."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek lähettää toiston ja tauon valitsemaasi appiin. macOS kysyy kerran kustakin apista; Threek avaa käynnissä olemattomat taustalle vain kysymisen ajaksi."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek envoie lecture et pause à l’app que vous choisissez. macOS demande une fois par app ; Threek ouvre en arrière-plan celles qui ne tournent pas, le temps de la question."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek आपके चुने ऐप को चलाओ और रोको भेजता है। macOS हर ऐप के लिए एक बार पूछता है; जो ऐप नहीं चल रहे, उन्हें Threek पूछने भर के लिए बैकग्राउंड में खोलता है।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek šalje reprodukciju i pauzu aplikaciji koju odaberete. macOS pita jednom za svaku aplikaciju; one koje nisu pokrenute Threek otvara u pozadini samo dok se ne pita."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Threek lejátszást és szünetet küld a választott appnak. A macOS minden appnál egyszer kérdez; a nem futó appokat a Threek csak a kérdés idejére nyitja meg a háttérben."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek invia riproduci e pausa all’app che scegli. macOS chiede una volta per ogni app; Threek apre in background quelle non aperte, solo il tempo di chiedere."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek は選んだアプリに再生と一時停止を送ります。macOS はアプリごとに一度だけ確認します。起動していないアプリは、確認のあいだだけ Threek がバックグラウンドで開きます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek은 선택한 앱에 재생과 일시 정지를 보냅니다. macOS는 앱마다 한 번씩 묻고, 실행 중이 아닌 앱은 Threek이 물어보는 동안만 백그라운드에서 엽니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek sender spill av og pause til appen du velger. macOS spør én gang for hver app; Threek åpner de som ikke kjører i bakgrunnen, bare lenge nok til å spørre."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek stuurt afspelen en pauzeren naar de app die je kiest. macOS vraagt het één keer per app; apps die niet draaien opent Threek op de achtergrond, net lang genoeg om te vragen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek wysyła odtwarzanie i pauzę do wybranej aplikacji. macOS pyta raz o każdą aplikację; te, które nie działają, Threek otwiera w tle tylko na czas pytania."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek envia reproduzir e pausar ao app que você escolher. O macOS pergunta uma vez por app; os que não estão abertos o Threek abre em segundo plano só pelo tempo da pergunta."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek envia reproduzir e pausa para a app que escolher. O macOS pergunta uma vez por app; as que não estão abertas o Threek abre em segundo plano só o tempo da pergunta."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek trimite redare și pauză aplicației alese. macOS întreabă o dată pentru fiecare aplicație; pe cele care nu rulează, Threek le deschide în fundal doar cât durează întrebarea."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek отправляет воспроизведение и паузу выбранному приложению. macOS спрашивает один раз для каждого приложения; незапущенные Threek открывает в фоне только на время вопроса."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek posiela prehrať a pozastaviť do aplikácie, ktorú vyberiete. macOS sa pýta raz pre každú aplikáciu; tie, ktoré nebežia, Threek otvorí na pozadí len na čas otázky."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek skickar spela upp och paus till appen du väljer. macOS frågar en gång per app; appar som inte är igång öppnar Threek i bakgrunden bara så länge frågan tar."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek seçtiğiniz uygulamaya oynat ve duraklat gönderir. macOS her uygulama için bir kez sorar; çalışmayanları Threek yalnızca sormak için arka planda kısa süre açar."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek надсилає відтворення й паузу вибраному застосунку. macOS питає один раз для кожного застосунку; незапущені Threek відкриває у фоні лише на час запитання."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek gửi phát và tạm dừng đến ứng dụng bạn chọn. macOS hỏi một lần cho mỗi ứng dụng; ứng dụng nào chưa chạy thì Threek mở ở chế độ nền đủ lâu để hỏi."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek 会把播放和暂停发给你选的 App。macOS 会为每个 App 询问一次；未运行的 App，Threek 会在后台打开，只停留到询问完成。"
+          }
+        }
+      }
+    },
     "Turn on Threek in the list, then come back here.": {
       "localizations": {
         "ar": {
@@ -3609,6 +5157,350 @@
           "stringUnit": {
             "state": "translated",
             "value": "在列表中打开 Threek，然后回到这里。"
+          }
+        }
+      }
+    },
+    "Turn on Threek in the list. If macOS asks to quit and reopen Threek, go ahead; setup picks up where it left off.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فعّل Threek في القائمة. إذا طلب macOS إنهاء Threek وإعادة فتحه، فوافق؛ سيكمل الإعداد من حيث توقف."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включете Threek в списъка. Ако macOS поиска да затвори и отвори отново Threek, съгласете се; настройката продължава оттам, докъдето е стигнала."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapněte Threek v seznamu. Pokud macOS požádá o ukončení a znovuotevření Threeku, potvrďte to; nastavení bude pokračovat tam, kde skončilo."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå Threek til på listen. Hvis macOS beder om at afslutte og genåbne Threek, så gør det; opsætningen fortsætter, hvor den slap."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktiviere Threek in der Liste. Wenn macOS anbietet, Threek zu beenden und neu zu öffnen, tu das; die Einrichtung macht dort weiter."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa Threek en la lista. Si macOS pide cerrar y volver a abrir Threek, acepta; la configuración seguirá donde se quedó."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lülita loendis Threek sisse. Kui macOS palub Threeki sulgeda ja uuesti avada, nõustu; seadistus jätkab samast kohast."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laita Threek päälle luettelossa. Jos macOS pyytää lopettamaan ja avaamaan Threekin uudelleen, tee niin; käyttöönotto jatkuu siitä mihin jäi."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez Threek dans la liste. Si macOS propose de quitter et rouvrir Threek, acceptez ; la configuration reprendra là où elle s’était arrêtée."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सूची में Threek चालू करें। अगर macOS Threek को बंद करके फिर खोलने को कहे, तो कर दें; सेटअप वहीं से आगे बढ़ेगा।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uključite Threek na popisu. Ako macOS zatraži da zatvorite i ponovno otvorite Threek, prihvatite; postavljanje nastavlja gdje je stalo."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapcsold be a Threeket a listában. Ha a macOS kéri a Threek bezárását és újranyitását, fogadd el; a beállítás ott folytatódik, ahol abbamaradt."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attiva Threek nell’elenco. Se macOS chiede di chiudere e riaprire Threek, accetta; la configurazione riprenderà da dove era rimasta."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リストで Threek をオンにしてください。macOS に Threek の終了と再起動を求められたら、そのまま進めてください。設定は途中から再開します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "목록에서 Threek을 켜세요. macOS가 Threek을 종료하고 다시 열라고 하면 그대로 진행하세요. 설정은 멈춘 곳에서 이어집니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå på Threek i listen. Hvis macOS ber om å avslutte og åpne Threek på nytt, gjør det; oppsettet fortsetter der det slapp."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zet Threek aan in de lijst. Vraagt macOS om Threek te stoppen en opnieuw te openen, doe dat dan; de installatie gaat verder waar hij was."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Włącz Threek na liście. Jeśli macOS poprosi o zamknięcie i ponowne otwarcie Threek, zgódź się; konfiguracja wznowi się w tym samym miejscu."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ative o Threek na lista. Se o macOS pedir para encerrar e reabrir o Threek, aceite; a configuração continua de onde parou."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ative o Threek na lista. Se o macOS pedir para encerrar e reabrir o Threek, aceite; a configuração continua onde ficou."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activează Threek în listă. Dacă macOS cere închiderea și redeschiderea Threek, acceptă; configurarea continuă de unde a rămas."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включите Threek в списке. Если macOS предложит закрыть и снова открыть Threek, согласитесь: настройка продолжится с того же места."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapnite Threek v zozname. Ak macOS požiada o ukončenie a opätovné otvorenie Threeku, potvrďte to; nastavenie pokračuje tam, kde skončilo."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå på Threek i listan. Om macOS ber dig avsluta och öppna Threek igen, gör det; konfigurationen fortsätter där den slutade."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listede Threek’i açın. macOS Threek’i kapatıp yeniden açmayı isterse kabul edin; kurulum kaldığı yerden devam eder."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Увімкніть Threek у списку. Якщо macOS попросить закрити й знову відкрити Threek, погодьтеся: налаштування продовжиться з того ж місця."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bật Threek trong danh sách. Nếu macOS yêu cầu thoát và mở lại Threek, hãy đồng ý; phần thiết lập sẽ tiếp tục từ chỗ đang dừng."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在列表中打开 Threek。如果 macOS 要求退出并重新打开 Threek，请照做；设置会从中断处继续。"
+          }
+        }
+      }
+    },
+    "Turn on the apps you want Threek to control under Automation, then come back here.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فعّل التطبيقات التي تريد أن يتحكم فيها Threek ضمن الأتمتة، ثم عُد إلى هنا."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включете приложенията, които Threek да управлява, в „Автоматизация“ и се върнете тук."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "V části Automatizace zapněte aplikace, které má Threek ovládat, a vraťte se sem."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå de apps til under Automatisering, som Threek skal styre, og vend så tilbage hertil."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktiviere unter „Automation“ die Apps, die Threek steuern soll, und komm dann hierher zurück."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa en Automatización las apps que quieres que Threek controle y vuelve aquí."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lülita jaotises Automatiseerimine sisse rakendused, mida Threek peab juhtima, ja tule siia tagasi."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laita Automaatio-kohdassa päälle apit, joita Threekin halutaan ohjaavan, ja palaa sitten tänne."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez sous Automatisation les apps que Threek doit contrôler, puis revenez ici."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऑटोमेशन में वे ऐप चालू करें जिन्हें Threek नियंत्रित करे, फिर यहाँ वापस आएँ।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "U odjeljku Automatizacija uključite aplikacije kojima Threek treba upravljati, a zatim se vratite ovamo."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Az Automatizálás részben kapcsold be azokat az appokat, amelyeket a Threek vezéreljen, majd gyere vissza ide."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Automazione attiva le app che vuoi far controllare a Threek, poi torna qui."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "オートメーションで Threek に操作させたいアプリをオンにしてから、ここに戻ってください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "자동화에서 Threek이 제어할 앱을 켠 다음 여기로 돌아오세요."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå på appene du vil at Threek skal styre under Automatisering, og kom tilbake hit."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zet onder Automatisering de apps aan die Threek mag bedienen en kom dan hier terug."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "W sekcji Automatyzacja włącz aplikacje, którymi ma sterować Threek, a potem wróć tutaj."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ative em Automação os apps que o Threek deve controlar e volte aqui."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ative em Automação as apps que o Threek deve controlar e volte aqui."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activează în Automatizare aplicațiile pe care vrei să le controleze Threek, apoi revino aici."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включите в разделе «Автоматизация» приложения, которыми должен управлять Threek, и вернитесь сюда."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "V časti Automatizácia zapnite aplikácie, ktoré má Threek ovládať, a vráťte sa sem."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå på apparna som Threek ska styra under Automatisering och kom sedan tillbaka hit."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otomasyon’da Threek’in kontrol etmesini istediğiniz uygulamaları açın, sonra buraya dönün."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Увімкніть у розділі «Автоматизація» застосунки, якими має керувати Threek, і поверніться сюди."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bật các ứng dụng bạn muốn Threek điều khiển trong mục Tự động hóa, rồi quay lại đây."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在“自动化”中打开你希望 Threek 控制的 App，然后回到这里。"
           }
         }
       }

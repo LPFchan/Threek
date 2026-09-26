@@ -10,12 +10,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var refreshingWhileShowing = false
     /// Set while the first-launch window is open.
     private var onboardingWindow: OnboardingWindow?
+    /// What Threek had at the last check, so a grant that disappears
+    /// (revoked, reset) brings the onboarding back at that step.
+    private var lastGranted = Set<String>()
+    /// The first onboarding step still missing a permission, from the last
+    /// check (checks call into other processes, so the menu reads this).
+    private var missingStep: Onboarding.Step?
+    private var permissionWatch: Timer?
     /// Armed while ⏯ is held: fires pause-all unless the key comes back up
     /// first (then it's a normal press, routed on release).
     private var playPauseHold: PlayPauseHold?
     private let longPressDelay: TimeInterval = 0.5
+    // Debug builds report version 1.0.0, so a running updater would find the
+    // release, and with automatic installs on, swap the build out on quit.
+    #if DEBUG
+    private let updatesEnabled = false
+    #else
+    private let updatesEnabled = true
+    #endif
     private lazy var updater = SPUStandardUpdaterController(
-        startingUpdater: true, updaterDelegate: nil, userDriverDelegate: self)
+        startingUpdater: updatesEnabled, updaterDelegate: nil, userDriverDelegate: self)
 
     private var statusItem: NSStatusItem?
     private var isEnabled = true
@@ -30,7 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         // Sparkle's own schedule checks at most daily and skips the first
         // launch; also check on every launch, as Sparkle advises.
-        if updater.updater.automaticallyChecksForUpdates {
+        if updatesEnabled, updater.updater.automaticallyChecksForUpdates {
             updater.updater.checkForUpdatesInBackground()
         }
 
@@ -42,12 +56,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         setupMenuBar()
         // `--onboarding` shows the first-launch window again, for testing.
-        let onboard = CommandLine.arguments.contains("--onboarding")
+        // Someone who has onboarded but is missing a permission (revoked,
+        // reset, a new media app) gets it back at that step.
+        let firstRun = CommandLine.arguments.contains("--onboarding")
             || !UserDefaults.standard.bool(forKey: "onboarded")
-        // The onboarding asks for Accessibility itself, with an explanation
-        // first, rather than the bare system prompt at launch.
+        let missing = PermissionStatus.firstMissingStep()
+        missingStep = missing
+        let onboard = firstRun || missing != nil
+        Log.write("[AppDelegate] launch: firstRun=\(firstRun) missing=\(missing.map { "\($0)" } ?? "none") onboard=\(onboard)")
+        // The onboarding asks for each permission itself, with an
+        // explanation first, rather than the bare system prompt at launch.
         checkAccessibilityAndStart(prompt: !onboard)
-        if onboard { showOnboarding() }
+        if onboard { showOnboarding(from: firstRun ? .welcome : missing ?? .welcome) }
+        watchPermissions()
         NowPlayingService.shared.warmCache()
 
         // `--preview-hud` auto-opens the picker shortly after launch so the
@@ -81,8 +102,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Onboarding
 
-    private func showOnboarding() {
-        let onboarding = Onboarding()
+    private func showOnboarding(from step: Onboarding.Step = .welcome) {
+        guard onboardingWindow == nil else { return }
+        let onboarding = Onboarding(step: step)
         let window = OnboardingWindow(onboarding)
         onboarding.onFinish = { [weak self, weak onboarding] in
             guard let self, let onboarding else { return }
@@ -176,6 +198,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         updateIcon(trusted: false)
         Log.write("[AppDelegate] Accessibility lost; tap stopped, waiting for the grant")
         startPolling()
+        showOnboarding(from: .accessibility)
+    }
+
+    /// Every few seconds, compares what Threek is granted with the last
+    /// check; if anything was taken away, reopens the onboarding at the
+    /// first missing step. Only a loss triggers it, so an app the user chose
+    /// not to allow doesn't bring the window back again and again.
+    private func watchPermissions() {
+        let check = { [weak self] in
+            DispatchQueue.global(qos: .utility).async {
+                let now = PermissionStatus.granted()
+                let missing = PermissionStatus.firstMissingStep()
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    let lost = self.lastGranted.subtracting(now)
+                    self.lastGranted = now
+                    if missing != self.missingStep {
+                        self.missingStep = missing
+                        self.buildMenu()
+                    }
+                    if !lost.isEmpty, let missing {
+                        Log.write("[AppDelegate] permission revoked: \(lost.sorted())")
+                        self.showOnboarding(from: missing)
+                    }
+                }
+            }
+        }
+        check()
+        permissionWatch = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in check() }
     }
 
     // MARK: - Tap health
@@ -409,11 +460,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(.separator())
 
-        if !interceptor.isRunning {
-            let ax = NSMenuItem(title: String(localized: "Grant Accessibility Access…"),
-                                action: #selector(promptAccessibility), keyEquivalent: "")
-            ax.target = self
-            menu.addItem(ax)
+        // Setup isn't finished (a permission is missing, or the onboarding
+        // was closed early): offer to pick it up where it stopped.
+        if missingStep != nil || !UserDefaults.standard.bool(forKey: "onboarded") {
+            let open = NSMenuItem(title: String(localized: "Open Threek"),
+                                  action: #selector(openOnboarding), keyEquivalent: "")
+            open.target = self
+            menu.addItem(open)
         }
 
         let artwork = NSMenuItem(title: String(localized: "Show Album Artwork"),
@@ -506,11 +559,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         item.state = LaunchAtLogin.isEnabled ? .on : .off
     }
 
-    @objc private func promptAccessibility() {
-        // PermissionFlow fires the system prompt (promptForAccessibilityTrust)
-        // and opens the pane with its floating drag-the-app panel.
-        Permissions.openAccessibility()
-        startPolling()
+    @objc private func openOnboarding() {
+        showOnboarding(from: missingStep ?? .welcome)
+        onboardingWindow.map { NSApp.activate(); $0.makeKeyAndOrderFront(nil) }
     }
 
     /// Opens System Settings at the Accessibility pane so the user can toggle
