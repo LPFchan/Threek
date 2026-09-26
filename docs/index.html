@@ -264,6 +264,8 @@
   (async () => {
     for (let i = 0; ; i = (i + 1) % 3) {
       hud.classList.remove("leaving");
+      // Let the hidden state paint first, or the first rise-in is skipped.
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
       hud.classList.add("shown");
       await wait(1500);
       cols[i].classList.add("chosen");
