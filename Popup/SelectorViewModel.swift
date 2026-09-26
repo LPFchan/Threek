@@ -54,10 +54,10 @@ final class SelectorViewModel: ObservableObject {
     /// every present so icon identities from a previous HUD never collide.
     @Published private(set) var carouselCursor: Int = 0
     @Published private(set) var sessionID: UUID = UUID()
-    /// Average luminance (0–1) of the screen region behind the HUD, sampled
-    /// once when the panel is shown. Drives the glyphs' background-adaptive
-    /// light/dark appearance.
-    @Published var backdropLuminance: CGFloat = 0
+    /// True when the screen behind the HUD is light enough that on-HUD
+    /// glyphs should read dark instead of white. Re-sampled while the HUD
+    /// is up.
+    @Published private(set) var backdropIsLight = false
     /// Points per HUD design unit (PhysicalMetrics.scale), set per show.
     @Published var scale: CGFloat = 1
     /// Drives the entrance: false while the panel appears, then springs to
@@ -148,8 +148,30 @@ final class SelectorViewModel: ObservableObject {
     func dismiss() {
         cancelTimeout()
         closing = true
-        withAnimation(.easeIn(duration: 0.12)) { appeared = false }
         onDismiss?()
+    }
+
+    /// Takes a fresh backdrop sample. The first one of a show applies
+    /// straight away; later ones cross-fade, and only past a margin either
+    /// side of mid-grey, so a backdrop hovering there doesn't flicker.
+    @MainActor
+    func noteBackdrop(luminance: CGFloat, initial: Bool) {
+        if initial {
+            backdropIsLight = luminance > 0.5
+            return
+        }
+        let isLight = backdropIsLight ? luminance > 0.42 : luminance > 0.58
+        guard isLight != backdropIsLight else { return }
+        withAnimation(.easeInOut(duration: 0.15)) { backdropIsLight = isLight }
+    }
+
+    /// Sinks the columns back out; the controller orders the panel out
+    /// once this has played.
+    @MainActor
+    func disappear() {
+        cancelTimeout()
+        closing = true
+        appeared = false
     }
 
     @MainActor

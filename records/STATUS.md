@@ -20,8 +20,8 @@ the perl-shim adapter, and dispatches to the chosen app. When exactly one
 controllable app is actually playing, a media-key press routes straight to it
 without opening the picker. The HUD is now chrome-less — no realtime blurred
 backdrop; content separation comes from a drop shadow and background-adaptive
-glyph color (keyed off a one-shot screenshot of the screen behind the panel,
-no Screen Recording permission). Research on
+glyph color (keyed off one-shot screenshots of the screen behind the panel,
+re-taken every 250 ms while the HUD is up; no Screen Recording permission). Research on
 2026-07-31 (RSH-20260731-001) established that per-app artwork is reachable
 through a richer MediaRemote API, while targeted control of backgrounded apps
 is an OS ceiling. The repo has just adopted the repo-template operating model

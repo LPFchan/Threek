@@ -150,6 +150,12 @@ final class PopupController {
     private lazy var viewModel = SelectorViewModel()
     private var shadowLayer: ShadowCastingView?
     private weak var contentView: NSView?
+    /// Bumped on every show and dismiss, so a delayed step from an earlier
+    /// one (shadow fade-in, order-out) can tell it's stale and skip.
+    private var generation = 0
+    /// Re-samples the backdrop while the HUD is up, so the glyphs follow
+    /// whatever moves behind it (video, scrolling, a window switching).
+    private var backdropTask: Task<Void, Never>?
 
     init() {
         viewModel.onDispatch = { [weak self] bundleID, key in
@@ -169,10 +175,11 @@ final class PopupController {
             shadowLayer?.blurRadius = 7 * scale
             shadowLayer?.offsetY = 2 * scale
             panel?.setFrame(frame, display: false)
-            // Sample what's actually behind the panel BEFORE it orders
-            // front, so the glyphs adapt to the real background, not the
-            // HUD itself.
-            updateGlyphColor(for: frame, on: screen)
+        }
+        generation += 1
+        let gen = generation
+        if let screen = PhysicalMetrics.hudScreen {
+            watchBackdrop(behind: PhysicalMetrics.hudFrame(on: screen).frame, on: screen)
         }
         viewModel.present(apps: apps, triggering: triggering)
         guard let panel else { return }
@@ -186,7 +193,8 @@ final class PopupController {
         // animation has settled (the snapshot is a still), then fade it in.
         shadowLayer?.alphaValue = 0
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            guard let self, let content = self.contentView, let shadow = self.shadowLayer else { return }
+            guard let self, self.generation == gen,
+                  let content = self.contentView, let shadow = self.shadowLayer else { return }
             shadow.update(from: content)
             NSAnimationContext.runAnimationGroup { ctx in
                 ctx.duration = 0.15
@@ -197,10 +205,21 @@ final class PopupController {
 
     func dismiss() {
         guard let panel, panel.isVisible else { return }
-        NSAnimationContext.runAnimationGroup({ ctx in
-            ctx.duration = 0.12
-            panel.animator().alphaValue = 0
-        }, completionHandler: { panel.orderOut(nil) })
+        generation += 1
+        let gen = generation
+        // The columns sink out in SwiftUI (Entrance); the shadow is a still
+        // snapshot, so it fades rather than being left behind. The panel
+        // stays opaque until the sink has played, then orders out.
+        viewModel.disappear()
+        backdropTask?.cancel()
+        NSAnimationContext.runAnimationGroup { ctx in
+            ctx.duration = 0.1
+            shadowLayer?.animator().alphaValue = 0
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Entrance.exitDuration) { [weak self] in
+            guard let self, self.generation == gen else { return }
+            panel.orderOut(nil)
+        }
     }
 
     func handleKey(_ event: MediaKeyEvent) {
@@ -249,12 +268,13 @@ final class PopupController {
         panel = p
     }
 
-    /// Samples the screen region the HUD is about to cover and sets the
-    /// glyphs' light/dark appearance from its average luminance. Uses a
-    /// one-shot SCScreenshotManager capture taken before the panel orders
-    /// front, so the HUD itself never pollutes the sample; no persistent
-    /// stream, and the one-shot API needs no Screen Recording permission.
-    private func updateGlyphColor(for frame: NSRect, on screen: NSScreen) {
+    /// Sets the glyphs' light/dark appearance from the average luminance
+    /// of the screen behind the HUD, then keeps re-sampling it until the
+    /// HUD goes away. Uses one-shot SCScreenshotManager captures with the
+    /// panel excluded, so the HUD itself never pollutes a sample; no
+    /// persistent stream, and the one-shot API needs no Screen Recording
+    /// permission.
+    private func watchBackdrop(behind frame: NSRect, on screen: NSScreen) {
         let primaryH = NSScreen.screens.first?.frame.height ?? screen.frame.height
         // SCStreamConfiguration/sourceRect work in points with a top-left
         // origin; AppKit frames are points, bottom-left — flip Y only.
@@ -265,7 +285,8 @@ final class PopupController {
         let scale = screen.backingScaleFactor
         let displayID = (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value
         let excludeID = panel.map { CGWindowID($0.windowNumber) }
-        Task {
+        backdropTask?.cancel()
+        backdropTask = Task { [weak self] in
             guard let content = try? await SCShareableContent.excludingDesktopWindows(
                 false, onScreenWindowsOnly: true),
                 let display = content.displays.first(where: { $0.displayID == displayID })
@@ -277,11 +298,15 @@ final class PopupController {
             config.width = max(1, Int(rect.width * scale))
             config.height = max(1, Int(rect.height * scale))
             config.showsCursor = false
-            guard let image = try? await SCScreenshotManager.captureImage(
-                contentFilter: filter, configuration: config) else { return }
-            let lum = Self.averageLuminance(of: image)
-            await MainActor.run { [weak self] in
-                self?.viewModel.backdropLuminance = lum
+            var first = true
+            while !Task.isCancelled {
+                if let image = try? await SCScreenshotManager.captureImage(
+                    contentFilter: filter, configuration: config), !Task.isCancelled {
+                    self?.viewModel.noteBackdrop(luminance: Self.averageLuminance(of: image),
+                                                 initial: first)
+                    first = false
+                }
+                try? await Task.sleep(for: .milliseconds(250))
             }
         }
     }
@@ -436,13 +461,14 @@ private struct SelectorPopup: View {
     /// True when the screen behind the HUD is light enough that on-HUD text
     /// should read dark instead of white.
     private var glyphInverted: Bool {
-        viewModel.backdropLuminance > 0.5
+        viewModel.backdropIsLight
     }
 }
 
 /// Rises into place from slightly below and smaller, one column after the
 /// other (`index` staggers it), and sinks back out on dismiss.
 private struct Entrance: ViewModifier {
+    static let exitDuration = 0.2
     let appeared: Bool
     let index: Int
     @Environment(\.hudScale) private var s
@@ -452,8 +478,9 @@ private struct Entrance: ViewModifier {
             .scaleEffect(appeared ? 1 : 0.86, anchor: .bottom)
             .offset(y: appeared ? 0 : 12 * s)
             .opacity(appeared ? 1 : 0)
-            .animation(.spring(response: 0.34, dampingFraction: 0.72)
-                .delay(appeared ? Double(index) * 0.04 : 0), value: appeared)
+            .animation(appeared
+                ? .spring(response: 0.34, dampingFraction: 0.72).delay(Double(index) * 0.04)
+                : .easeIn(duration: Self.exitDuration), value: appeared)
     }
 }
 
