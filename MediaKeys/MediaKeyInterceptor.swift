@@ -81,11 +81,10 @@ final class MediaKeyInterceptor {
         Log.write("[MediaKeyInterceptor] tap started")
     }
 
-    /// Whether Threek really has Accessibility right now, from the TCC
-    /// service. `AXIsProcessTrusted` can keep answering true after the grant
-    /// is removed (and false after it's given) for the life of the process.
+    /// Whether Threek really has Accessibility right now (see
+    /// PermissionCheck: the in-process answers are cached).
     static func hasAccessibility() -> Bool {
-        TCC.preflight("kTCCServiceAccessibility") ?? AXIsProcessTrusted()
+        PermissionCheck.has(.accessibility)
     }
 
     func stop() {
