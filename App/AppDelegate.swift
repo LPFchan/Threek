@@ -343,6 +343,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(ax)
         }
 
+        let artwork = NSMenuItem(title: String(localized: "Show Album Artwork"),
+                                 action: #selector(toggleArtwork(_:)), keyEquivalent: "")
+        artwork.target = self
+        artwork.state = Preferences.showArtwork ? .on : .off
+        menu.addItem(artwork)
+
         let login = NSMenuItem(title: String(localized: "Open at Login"), action: #selector(toggleLogin(_:)), keyEquivalent: "")
         login.target = self
         login.state = LaunchAtLogin.isEnabled ? .on : .off
@@ -415,6 +421,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         isEnabled.toggle()
         item.state = isEnabled ? .on : .off
         if !isEnabled { popup.dismiss() }
+    }
+
+    @objc private func toggleArtwork(_ item: NSMenuItem) {
+        Preferences.showArtwork.toggle()
+        item.state = Preferences.showArtwork ? .on : .off
     }
 
     @objc private func toggleLogin(_ item: NSMenuItem) {

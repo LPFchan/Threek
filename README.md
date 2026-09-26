@@ -31,6 +31,8 @@ If exactly one app is actually playing, any media key goes straight to it; the
 HUD just flashes that app over the key, no picking needed. ⏮/⏭ follow the same routing as ⏯. Threek reads the real F7–F9 media
 keys, so no Karabiner remapping is needed.
 
+To show only app icons, turn off **Show Album Artwork** in the menu bar menu.
+
 Hold ⏯ for half a second to pause everything that's playing; the HUD shows
 each app it paused. A normal tap still acts on release, so it works as before.
 

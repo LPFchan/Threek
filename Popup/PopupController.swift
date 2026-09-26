@@ -547,16 +547,18 @@ private struct Entrance: ViewModifier {
 private struct AppIconView: View {
     let app: NowPlayingApp
     @Environment(\.hudScale) private var s
+    @AppStorage(Preferences.showArtworkKey) private var showArtwork = true
 
     var body: some View {
+        let artwork = showArtwork ? app.artwork : nil
         ZStack {
             // Album artwork leads, with the app icon badged in the corner —
             // the reference mockup's pairing — and the plain icon fills the
             // tile when the app publishes no artwork. The icon is one view in
             // both states, so artwork landing late shrinks it into the corner
             // while the cover grows in behind it.
-            let hasArt = app.artwork != nil
-            if let artwork = app.artwork {
+            let hasArt = artwork != nil
+            if let artwork {
                 // Fill the square and crop, so non-square covers keep their
                 // proportions instead of squashing.
                 Image(nsImage: artwork).resizable()
@@ -711,6 +713,7 @@ private struct SelectionRing: View {
     let app: NowPlayingApp
     let inverted: Bool
     @Environment(\.hudScale) private var s
+    @AppStorage(Preferences.showArtworkKey) private var showArtwork = true
 
     /// Tile 68 with corner radius 12 (artwork) or 15 (plain icon). The badge
     /// on artwork reaches 5 past the tile's corner, so 11 of gap keeps the
@@ -720,7 +723,7 @@ private struct SelectionRing: View {
     private static let line: CGFloat = 2
 
     var body: some View {
-        let radius = (app.artwork != nil ? 12 : 15) + Self.gap
+        let radius = (showArtwork && app.artwork != nil ? 12 : 15) + Self.gap
         let side = Self.tile + (Self.gap + Self.line) * 2
         RoundedRectangle(cornerRadius: (radius + Self.line) * s)
             .strokeBorder(inverted ? Color.black : Color.white, lineWidth: Self.line * s)
