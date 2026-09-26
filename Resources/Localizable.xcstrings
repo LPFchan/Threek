@@ -173,6 +173,350 @@
         }
       }
     },
+    "Accessibility access allowed": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم السماح بإذن تسهيلات الاستخدام"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Достъпът до „Достъпност“ е разрешен"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Přístup ke Zpřístupnění povolen"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Adgang til Tilgængelighed er givet"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zugriff auf Bedienungshilfen erlaubt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acceso de Accesibilidad permitido"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Juurdepääs hõlbustusfunktsioonidele lubatud"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Käyttöapu-oikeus sallittu"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accès à l’Accessibilité autorisé"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऐक्सेसिबिलिटी की अनुमति मिल गई"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pristup Pristupačnosti dopušten"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kisegítő lehetőségek hozzáférés engedélyezve"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Accesso ad Accessibilità consentito"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アクセシビリティを許可しました"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "손쉬운 사용 권한 허용됨"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tilgang til Tilgjengelighet er gitt"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toegang tot Toegankelijkheid toegestaan"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dostęp do Dostępności przyznany"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acesso à Acessibilidade permitido"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acesso à Acessibilidade permitido"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acces la Accesibilitate permis"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Универсальный доступ разрешен"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prístup k Prístupnosti povolený"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åtkomst till Hjälpmedel tillåten"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erişilebilirlik izni verildi"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Доступ до Доступності дозволено"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Đã cho phép quyền Trợ năng"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已允许“辅助功能”权限"
+          }
+        }
+      }
+    },
+    "Allow Accessibility Access": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "السماح بإذن تسهيلات الاستخدام"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разреши достъп до „Достъпност“"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Povolit přístup ke Zpřístupnění"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Giv adgang til Tilgængelighed"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zugriff auf Bedienungshilfen erlauben"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir acceso de Accesibilidad"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luba juurdepääs hõlbustusfunktsioonidele"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salli Käyttöapu-oikeus"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Autoriser l’accès à l’Accessibilité"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ऐक्सेसिबिलिटी की अनुमति दें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dopusti pristup Pristupačnosti"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kisegítő lehetőségek engedélyezése"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consenti accesso ad Accessibilità"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アクセシビリティを許可"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "손쉬운 사용 권한 허용"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gi tilgang til Tilgjengelighet"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sta toegang tot Toegankelijkheid toe"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zezwól na dostęp do Dostępności"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir acesso à Acessibilidade"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permitir acesso à Acessibilidade"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite acces la Accesibilitate"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешить универсальный доступ"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Povoliť prístup k Prístupnosti"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tillåt åtkomst till Hjälpmedel"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erişilebilirlik İzni Ver"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дозволити доступ до Доступності"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cho phép quyền Trợ năng"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "允许“辅助功能”权限"
+          }
+        }
+      }
+    },
     "Check for Updates…": {
       "localizations": {
         "ar": {
@@ -341,6 +685,522 @@
           "stringUnit": {
             "state": "translated",
             "value": "检查更新…"
+          }
+        }
+      }
+    },
+    "Choose which app your media keys control, right from the keyboard.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختر التطبيق الذي تتحكم فيه مفاتيح الوسائط، مباشرة من لوحة المفاتيح."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Изберете кое приложение да управляват мултимедийните клавиши – направо от клавиатурата."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vyberte, kterou aplikaci budou ovládat multimediální klávesy – přímo z klávesnice."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vælg, hvilken app dine medietaster styrer – direkte fra tastaturet."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle direkt auf der Tastatur, welche App deine Medientasten steuern."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige qué app controlan tus teclas multimedia, directamente desde el teclado."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vali otse klaviatuurilt, millist rakendust meediaklahvid juhivad."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valitse suoraan näppäimistöltä, mitä appia mediapainikkeet ohjaavat."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choisissez l’app que contrôlent vos touches multimédia, directement depuis le clavier."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "कीबोर्ड से ही चुनें कि आपकी मीडिया कुंजियाँ किस ऐप को नियंत्रित करें।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Odaberite koju aplikaciju kontroliraju medijske tipke, izravno s tipkovnice."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Válaszd ki közvetlenül a billentyűzetről, melyik appot vezéreljék a médiagombok."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Scegli quale app controllano i tasti multimediali, direttamente dalla tastiera."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "メディアキーで操作するアプリを、キーボードから直接選べます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "키보드에서 바로 미디어 키가 제어할 앱을 선택하세요."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velg hvilken app medietastene styrer, rett fra tastaturet."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kies direct vanaf het toetsenbord welke app je mediatoetsen bedienen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wybierz prosto z klawiatury, którą aplikacją sterują klawisze multimedialne."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolha qual app suas teclas de mídia controlam, direto do teclado."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escolha a app que as teclas multimédia controlam, diretamente no teclado."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alege ce aplicație controlează tastele media, direct de pe tastatură."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбирайте, каким приложением управляют медиаклавиши, прямо с клавиатуры."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vyberte priamo z klávesnice, ktorú aplikáciu budú ovládať multimediálne klávesy."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Välj vilken app medietangenterna styr, direkt från tangentbordet."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Medya tuşlarınızın hangi uygulamayı kontrol edeceğini doğrudan klavyeden seçin."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Обирайте просто з клавіатури, яким застосунком керують медіаклавіші."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chọn ứng dụng mà các phím phương tiện điều khiển, ngay từ bàn phím."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "直接在键盘上选择媒体键要控制的 App。"
+          }
+        }
+      }
+    },
+    "Continue": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متابعة"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продължи"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pokračovat"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fortsæt"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiter"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jätka"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Jatka"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuer"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जारी रखें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nastavi"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tovább"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continua"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "続ける"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "계속"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fortsett"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ga door"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dalej"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuă"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продолжить"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pokračovať"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fortsätt"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Devam"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продовжити"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tiếp tục"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Готово"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hotovo"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Færdig"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fertig"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listo"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valmis"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valmis"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Terminé"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "हो गया"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gotovo"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kész"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fine"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "완료"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ferdig"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klaar"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gotowe"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "OK"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gata"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Готово"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hotovo"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klar"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bitti"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Готово"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Xong"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完成"
           }
         }
       }
@@ -517,6 +1377,178 @@
         }
       }
     },
+    "Get Started": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ابدأ"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Начало"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Začít"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kom i gang"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los geht’s"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empezar"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alusta"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aloita"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Commencer"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "शुरू करें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Započni"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kezdés"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Inizia"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "はじめる"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "시작하기"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kom i gang"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aan de slag"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zaczynamy"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Começar"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Começar"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Începe"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Начать"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Začať"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kom igång"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Başla"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Почати"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bắt đầu"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "开始"
+          }
+        }
+      }
+    },
     "Grant Accessibility Access…": {
       "localizations": {
         "ar": {
@@ -685,6 +1717,178 @@
           "stringUnit": {
             "state": "translated",
             "value": "授予辅助功能权限…"
+          }
+        }
+      }
+    },
+    "Let Threek catch your media keys": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اسمح لـ Threek بالتقاط مفاتيح الوسائط"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Позволете на Threek да прихваща мултимедийните клавиши"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nechte Threek zachytávat multimediální klávesy"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lad Threek fange dine medietaster"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lass Threek deine Medientasten abfangen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deja que Threek capte tus teclas multimedia"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Luba Threekil meediaklahve püüda"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anna Threekin siepata mediapainikkeet"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laissez Threek intercepter vos touches multimédia"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek को आपकी मीडिया कुंजियाँ पकड़ने दें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dopustite Threeku da hvata medijske tipke"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Engedd, hogy a Threek elkapja a médiagombokat"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consenti a Threek di intercettare i tasti multimediali"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek がメディアキーを受け取れるようにする"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek이 미디어 키를 받을 수 있게 허용하세요"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La Threek fange opp medietastene"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laat Threek je mediatoetsen opvangen"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pozwól Threek przechwytywać klawisze multimedialne"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deixe o Threek capturar suas teclas de mídia"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deixe o Threek captar as teclas multimédia"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permite-i lui Threek să preia tastele media"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Разрешите Threek перехватывать медиаклавиши"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nechajte Threek zachytávať multimediálne klávesy"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Låt Threek fånga upp medietangenterna"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek’in medya tuşlarınızı yakalamasına izin verin"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дозвольте Threek перехоплювати медіаклавіші"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cho phép Threek nhận các phím phương tiện"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "让 Threek 接收你的媒体键"
           }
         }
       }
@@ -861,6 +2065,178 @@
         }
       }
     },
+    "Open Threek when I log in": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فتح Threek عند تسجيل الدخول"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отваряй Threek при влизане"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otevírat Threek po přihlášení"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åbn Threek, når jeg logger ind"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek beim Anmelden öffnen"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir Threek al iniciar sesión"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ava Threek sisselogimisel"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Avaa Threek, kun kirjaudun sisään"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir Threek à l’ouverture de session"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "लॉग इन करने पर Threek खोलें"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otvori Threek kad se prijavim"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Threek megnyitása bejelentkezéskor"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apri Threek al login"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ログイン時に Threek を開く"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "로그인 시 Threek 열기"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Åpne Threek når jeg logger på"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Threek als ik inlog"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otwieraj Threek po zalogowaniu"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir o Threek ao iniciar sessão"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abrir o Threek ao iniciar sessão"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deschide Threek la autentificare"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Открывать Threek при входе"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Otvárať Threek po prihlásení"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Öppna Threek när jag loggar in"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Oturum açtığımda Threek’i aç"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Відкривати Threek під час входу"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mở Threek khi tôi đăng nhập"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "登录时打开 Threek"
+          }
+        }
+      }
+    },
     "Open at Login": {
       "localizations": {
         "ar": {
@@ -1029,6 +2405,178 @@
           "stringUnit": {
             "state": "translated",
             "value": "登录时打开"
+          }
+        }
+      }
+    },
+    "Press ⏯ when more than one app is playing, then pick one with F7, F8 or F9. Hold ⏯ to pause everything.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اضغط ⏯ عند تشغيل أكثر من تطبيق، ثم اختر واحدًا بـ F7 أو F8 أو F9. اضغط مطولًا على ⏯ لإيقاف كل شيء مؤقتًا."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Натиснете ⏯, когато свирят няколко приложения, и изберете едно с F7, F8 или F9. Задръжте ⏯, за да спрете всичко на пауза."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Když hraje víc aplikací, stiskněte ⏯ a vyberte jednu klávesou F7, F8 nebo F9. Podržením ⏯ pozastavíte vše."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tryk på ⏯, når flere apps spiller, og vælg én med F7, F8 eller F9. Hold ⏯ nede for at sætte alt på pause."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drücke ⏯, wenn mehrere Apps spielen, und wähle eine mit F7, F8 oder F9. Halte ⏯ gedrückt, um alles zu pausieren."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pulsa ⏯ cuando suene más de una app y elige una con F7, F8 o F9. Mantén pulsado ⏯ para pausarlo todo."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kui mängib mitu rakendust, vajuta ⏯ ja vali üks klahviga F7, F8 või F9. Hoia ⏯ all, et kõik peatada."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paina ⏯, kun useampi appi soittaa, ja valitse yksi näppäimellä F7, F8 tai F9. Pidä ⏯ painettuna keskeyttääksesi kaiken."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appuyez sur ⏯ quand plusieurs apps jouent, puis choisissez-en une avec F7, F8 ou F9. Maintenez ⏯ pour tout mettre en pause."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जब एक से ज़्यादा ऐप चल रहे हों, तो ⏯ दबाएँ और F7, F8 या F9 से एक चुनें। सब कुछ रोकने के लिए ⏯ दबाकर रखें।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pritisnite ⏯ kad svira više aplikacija i odaberite jednu tipkom F7, F8 ili F9. Držite ⏯ da sve pauzirate."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nyomd meg a ⏯ gombot, ha több app is szól, majd válassz egyet az F7, F8 vagy F9 billentyűvel. Tartsd lenyomva a ⏯ gombot, hogy mindent szüneteltess."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Premi ⏯ quando più app sono in riproduzione e scegline una con F7, F8 o F9. Tieni premuto ⏯ per mettere tutto in pausa."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "複数のアプリが再生中のときは ⏯ を押し、F7・F8・F9 でひとつを選びます。⏯ を長押しするとすべて一時停止します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "여러 앱이 재생 중일 때 ⏯를 누르고 F7, F8, F9로 하나를 고르세요. ⏯를 길게 누르면 모두 일시 정지됩니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trykk på ⏯ når flere apper spiller, og velg én med F7, F8 eller F9. Hold inne ⏯ for å sette alt på pause."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Druk op ⏯ als er meer dan één app speelt en kies er een met F7, F8 of F9. Houd ⏯ ingedrukt om alles te pauzeren."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gdy gra więcej niż jedna aplikacja, naciśnij ⏯ i wybierz jedną klawiszem F7, F8 lub F9. Przytrzymaj ⏯, aby wszystko wstrzymać."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pressione ⏯ quando mais de um app estiver tocando e escolha um com F7, F8 ou F9. Mantenha ⏯ pressionado para pausar tudo."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prima ⏯ quando mais do que uma app estiver a tocar e escolha uma com F7, F8 ou F9. Mantenha ⏯ premido para pausar tudo."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apasă ⏯ când rulează mai multe aplicații, apoi alege una cu F7, F8 sau F9. Ține apăsat ⏯ ca să pui totul pe pauză."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда играет несколько приложений, нажмите ⏯ и выберите одно клавишей F7, F8 или F9. Удерживайте ⏯, чтобы поставить всё на паузу."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keď hrá viac aplikácií, stlačte ⏯ a vyberte jednu klávesom F7, F8 alebo F9. Podržaním ⏯ pozastavíte všetko."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tryck på ⏯ när flera appar spelar och välj en med F7, F8 eller F9. Håll ned ⏯ för att pausa allt."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Birden fazla uygulama çalarken ⏯ tuşuna basın, sonra F7, F8 veya F9 ile birini seçin. Her şeyi duraklatmak için ⏯ tuşunu basılı tutun."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Коли грає кілька застосунків, натисніть ⏯ і виберіть один клавішею F7, F8 або F9. Утримуйте ⏯, щоб поставити все на паузу."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nhấn ⏯ khi có nhiều ứng dụng đang phát, rồi chọn một ứng dụng bằng F7, F8 hoặc F9. Giữ ⏯ để tạm dừng tất cả."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "多个 App 同时播放时按 ⏯，再用 F7、F8 或 F9 选一个。按住 ⏯ 可全部暂停。"
           }
         }
       }
@@ -1373,6 +2921,1210 @@
           "stringUnit": {
             "state": "translated",
             "value": "显示专辑插图"
+          }
+        }
+      }
+    },
+    "The first time Threek controls an app, macOS will ask you to allow that too.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "في أول مرة يتحكم فيها Threek في تطبيق، سيطلب منك macOS السماح بذلك أيضًا."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Първия път, когато Threek управлява приложение, macOS ще поиска и това разрешение."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Když Threek poprvé ovládá nějakou aplikaci, macOS vás požádá i o toto svolení."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Første gang Threek styrer en app, beder macOS dig også om at tillade det."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn Threek zum ersten Mal eine App steuert, fragt macOS auch dafür nach deiner Erlaubnis."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La primera vez que Threek controle una app, macOS también te pedirá permiso."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kui Threek esimest korda mõnda rakendust juhib, küsib macOS ka selleks luba."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kun Threek ohjaa appia ensimmäistä kertaa, macOS pyytää lupaa myös siihen."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La première fois que Threek contrôle une app, macOS vous demandera aussi de l’autoriser."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जब Threek पहली बार किसी ऐप को नियंत्रित करेगा, तो macOS इसकी भी अनुमति माँगेगा।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kad Threek prvi put upravlja nekom aplikacijom, macOS će tražiti i to dopuštenje."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Amikor a Threek először vezérel egy appot, a macOS ehhez is engedélyt kér."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La prima volta che Threek controlla un’app, macOS ti chiederà di consentire anche questo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek が初めてアプリを操作するときは、macOS からもう一度許可を求められます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek이 처음 앱을 제어할 때 macOS가 이에 대한 허용도 요청합니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Første gang Threek styrer en app, ber macOS deg også om å tillate det."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "De eerste keer dat Threek een app bedient, vraagt macOS je ook daarvoor toestemming."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gdy Threek pierwszy raz steruje aplikacją, macOS poprosi też o to pozwolenie."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Na primeira vez que o Threek controlar um app, o macOS também vai pedir sua permissão."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Da primeira vez que o Threek controlar uma app, o macOS também vai pedir a sua autorização."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prima dată când Threek controlează o aplicație, macOS îți va cere permisiunea și pentru asta."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда Threek впервые управляет приложением, macOS попросит разрешение и на это."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keď Threek prvýkrát ovláda nejakú aplikáciu, macOS vás požiada aj o toto povolenie."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Första gången Threek styr en app ber macOS dig att tillåta även det."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek bir uygulamayı ilk kez kontrol ettiğinde macOS bunun için de izin isteyecek."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Коли Threek уперше керуватиме застосунком, macOS попросить дозволу й на це."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lần đầu Threek điều khiển một ứng dụng, macOS cũng sẽ hỏi bạn cho phép."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek 第一次控制某个 App 时，macOS 也会请你允许。"
+          }
+        }
+      }
+    },
+    "Threek lives in the menu bar. Click it to turn Threek off or change its settings.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يوجد Threek في شريط القوائم. انقر عليه لإيقاف Threek أو تغيير إعداداته."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek е в лентата с менюта. Щракнете върху него, за да го изключите или да промените настройките му."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek najdete na řádku nabídek. Kliknutím ho můžete vypnout nebo změnit jeho nastavení."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek bor i menulinjen. Klik på den for at slå Threek fra eller ændre indstillingerne."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek lebt in der Menüleiste. Klicke darauf, um Threek auszuschalten oder die Einstellungen zu ändern."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek vive en la barra de menús. Haz clic en él para desactivarlo o cambiar sus ajustes."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek asub menüüribal. Klõpsa seda, et Threek välja lülitada või seadeid muuta."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek asuu valikkorivillä. Klikkaa sitä sammuttaaksesi Threekin tai muuttaaksesi sen asetuksia."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek se trouve dans la barre des menus. Cliquez dessus pour le désactiver ou modifier ses réglages."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek मेन्यू बार में रहता है। इसे बंद करने या इसकी सेटिंग बदलने के लिए उस पर क्लिक करें।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek se nalazi na traci izbornika. Kliknite ga da biste isključili Threek ili promijenili postavke."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Threek a menüsorban lakik. Kattints rá, hogy kikapcsold vagy módosítsd a beállításait."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek si trova nella barra dei menu. Fai clic per disattivarlo o cambiarne le impostazioni."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek はメニューバーにあります。クリックすると、オフにしたり設定を変えたりできます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek은 메뉴 막대에 있습니다. 클릭해서 Threek을 끄거나 설정을 바꿀 수 있습니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek bor i menylinjen. Klikk på den for å slå av Threek eller endre innstillingene."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek zit in de menubalk. Klik erop om Threek uit te zetten of de instellingen te wijzigen."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek znajduje się na pasku menu. Kliknij go, aby wyłączyć Threek lub zmienić ustawienia."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek fica na barra de menus. Clique nele para desativá-lo ou mudar os ajustes."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek fica na barra de menus. Clique nele para o desativar ou alterar as definições."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek stă în bara de meniu. Fă clic pe el ca să-l dezactivezi sau să-i schimbi setările."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek находится в строке меню. Нажмите на него, чтобы выключить Threek или изменить настройки."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek nájdete na lište s ponukami. Kliknutím ho môžete vypnúť alebo zmeniť jeho nastavenia."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek finns i menyraden. Klicka på den för att stänga av Threek eller ändra inställningarna."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek menü çubuğunda yaşar. Threek’i kapatmak veya ayarlarını değiştirmek için ona tıklayın."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek живе в рядку меню. Натисніть його, щоб вимкнути Threek або змінити налаштування."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek nằm trên thanh menu. Bấm vào đó để tắt Threek hoặc thay đổi cài đặt."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek 位于菜单栏。点按它即可关闭 Threek 或更改设置。"
+          }
+        }
+      }
+    },
+    "Threek needs Accessibility access to catch ⏯, ⏮ and ⏭ before macOS sends them to an app. It ignores every other key.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يحتاج Threek إلى إذن تسهيلات الاستخدام لالتقاط ⏯ و⏮ و⏭ قبل أن يرسلها macOS إلى أي تطبيق. ويتجاهل كل المفاتيح الأخرى."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek се нуждае от достъп до „Достъпност“, за да прихваща ⏯, ⏮ и ⏭, преди macOS да ги изпрати към приложение. Всички други клавиши се пренебрегват."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek potřebuje přístup ke Zpřístupnění, aby zachytil ⏯, ⏮ a ⏭ dřív, než je macOS pošle aplikaci. Všechny ostatní klávesy ignoruje."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek skal have adgang til Tilgængelighed for at fange ⏯, ⏮ og ⏭, før macOS sender dem til en app. Alle andre taster ignoreres."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek braucht Zugriff auf die Bedienungshilfen, um ⏯, ⏮ und ⏭ abzufangen, bevor macOS sie an eine App weitergibt. Alle anderen Tasten ignoriert Threek."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek necesita acceso de Accesibilidad para captar ⏯, ⏮ y ⏭ antes de que macOS los envíe a una app. Ignora todas las demás teclas."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek vajab juurdepääsu hõlbustusfunktsioonidele, et püüda ⏯, ⏮ ja ⏭ enne, kui macOS need rakendusele saadab. Kõiki teisi klahve eiratakse."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek tarvitsee Käyttöapu-oikeuden siepatakseen ⏯, ⏮ ja ⏭ ennen kuin macOS lähettää ne apille. Kaikki muut näppäimet se ohittaa."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek a besoin de l’accès à l’Accessibilité pour intercepter ⏯, ⏮ et ⏭ avant que macOS ne les envoie à une app. Toutes les autres touches sont ignorées."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS द्वारा किसी ऐप को भेजने से पहले ⏯, ⏮ और ⏭ पकड़ने के लिए Threek को ऐक्सेसिबिलिटी की अनुमति चाहिए। बाकी सभी कुंजियों को यह अनदेखा करता है।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek treba pristup Pristupačnosti da uhvati ⏯, ⏮ i ⏭ prije nego što ih macOS pošalje aplikaciji. Sve ostale tipke zanemaruje."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A Threeknek Kisegítő lehetőségek hozzáférés kell, hogy elkapja a ⏯, ⏮ és ⏭ gombot, mielőtt a macOS továbbadja őket egy appnak. Minden más billentyűt figyelmen kívül hagy."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek ha bisogno dell’accesso ad Accessibilità per intercettare ⏯, ⏮ e ⏭ prima che macOS li invii a un’app. Ignora tutti gli altri tasti."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS がアプリに送る前に ⏯・⏮・⏭ を受け取るため、Threek にはアクセシビリティの許可が必要です。ほかのキーはすべて無視します。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS가 앱에 보내기 전에 ⏯, ⏮, ⏭를 받으려면 Threek에 손쉬운 사용 권한이 필요합니다. 다른 키는 모두 무시합니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek trenger tilgang til Tilgjengelighet for å fange ⏯, ⏮ og ⏭ før macOS sender dem til en app. Alle andre taster ignoreres."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek heeft toegang tot Toegankelijkheid nodig om ⏯, ⏮ en ⏭ op te vangen voordat macOS ze naar een app stuurt. Alle andere toetsen negeert Threek."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek potrzebuje dostępu do Dostępności, aby przechwycić ⏯, ⏮ i ⏭, zanim macOS wyśle je do aplikacji. Wszystkie inne klawisze ignoruje."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek precisa de acesso à Acessibilidade para capturar ⏯, ⏮ e ⏭ antes que o macOS os envie a um app. Todas as outras teclas são ignoradas."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O Threek precisa de acesso à Acessibilidade para captar ⏯, ⏮ e ⏭ antes de o macOS os enviar para uma app. Todas as outras teclas são ignoradas."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek are nevoie de acces la Accesibilitate ca să preia ⏯, ⏮ și ⏭ înainte ca macOS să le trimită unei aplicații. Toate celelalte taste sunt ignorate."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek нужен универсальный доступ, чтобы перехватывать ⏯, ⏮ и ⏭ до того, как macOS передаст их приложению. Остальные клавиши он игнорирует."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek potrebuje prístup k Prístupnosti, aby zachytil ⏯, ⏮ a ⏭ skôr, než ich macOS pošle aplikácii. Všetky ostatné klávesy ignoruje."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek behöver åtkomst till Hjälpmedel för att fånga ⏯, ⏮ och ⏭ innan macOS skickar dem till en app. Alla andra tangenter ignoreras."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek’in ⏯, ⏮ ve ⏭ tuşlarını macOS bir uygulamaya göndermeden önce yakalaması için Erişilebilirlik izni gerekir. Diğer tüm tuşları yok sayar."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek потрібен доступ до Доступності, щоб перехоплювати ⏯, ⏮ і ⏭, перш ніж macOS надішле їх застосунку. Усі інші клавіші він ігнорує."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek cần quyền Trợ năng để nhận ⏯, ⏮ và ⏭ trước khi macOS gửi chúng đến một ứng dụng. Mọi phím khác đều được bỏ qua."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek 需要“辅助功能”权限，才能在 macOS 把 ⏯、⏮ 和 ⏭ 发给 App 之前接收它们。其他按键一律忽略。"
+          }
+        }
+      }
+    },
+    "Turn on Threek in the list, then come back here.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فعّل Threek في القائمة، ثم عُد إلى هنا."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включете Threek в списъка и се върнете тук."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapněte Threek v seznamu a vraťte se sem."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå Threek til på listen, og vend så tilbage hertil."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aktiviere Threek in der Liste und komm dann hierher zurück."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activa Threek en la lista y vuelve aquí."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lülita loendis Threek sisse ja tule siia tagasi."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Laita Threek päälle luettelossa ja palaa sitten tänne."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activez Threek dans la liste, puis revenez ici."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सूची में Threek चालू करें, फिर यहाँ वापस आएँ।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uključite Threek na popisu, a zatim se vratite ovamo."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kapcsold be a Threeket a listában, majd gyere vissza ide."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attiva Threek nell’elenco, poi torna qui."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "リストで Threek をオンにしてから、ここに戻ってください。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "목록에서 Threek을 켠 다음 여기로 돌아오세요."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå på Threek i listen, og kom tilbake hit."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zet Threek aan in de lijst en kom dan hier terug."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Włącz Threek na liście, a potem wróć tutaj."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ative o Threek na lista e volte aqui."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ative o Threek na lista e volte aqui."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activează Threek în listă, apoi revino aici."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Включите Threek в списке и вернитесь сюда."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zapnite Threek v zozname a vráťte sa sem."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Slå på Threek i listan och kom sedan tillbaka hit."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Listede Threek’i açın, sonra buraya dönün."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Увімкніть Threek у списку й поверніться сюди."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bật Threek trong danh sách, rồi quay lại đây."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在列表中打开 Threek，然后回到这里。"
+          }
+        }
+      }
+    },
+    "Welcome to Threek": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مرحبًا بك في Threek"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добре дошли в Threek"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vítá vás Threek"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velkommen til Threek"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Willkommen bei Threek"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Te damos la bienvenida a Threek"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tere tulemast Threeki"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tervetuloa Threekiin"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bienvenue dans Threek"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek में आपका स्वागत है"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dobro došli u Threek"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Üdvözöl a Threek"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Benvenuto in Threek"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threekへようこそ"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek에 오신 것을 환영합니다"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Velkommen til Threek"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welkom bij Threek"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Witamy w Threek"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Boas-vindas ao Threek"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bem-vindo ao Threek"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bun venit în Threek"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Добро пожаловать в Threek"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vitajte v aplikácii Threek"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Välkommen till Threek"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threek’e hoş geldiniz"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вітаємо в Threek"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chào mừng bạn đến với Threek"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "欢迎使用 Threek"
+          }
+        }
+      }
+    },
+    "When more than one app is playing, ⏯ shows each one over the F-key that picks it.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "عند تشغيل أكثر من تطبيق، يعرض ⏯ كل تطبيق فوق مفتاح F الذي يختاره."
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когато свирят няколко приложения, ⏯ показва всяко над F клавиша, който го избира."
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Když hraje víc aplikací, ⏯ zobrazí každou nad klávesou F, která ji vybere."
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Når flere apps spiller, viser ⏯ hver af dem over den F-tast, der vælger den."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wenn mehrere Apps spielen, zeigt ⏯ jede über der F-Taste, die sie auswählt."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuando suena más de una app, ⏯ muestra cada una sobre la tecla F que la elige."
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kui mängib mitu rakendust, näitab ⏯ igaüht selle F-klahvi kohal, mis selle valib."
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kun useampi appi soittaa, ⏯ näyttää jokaisen sen valitsevan F-näppäimen yläpuolella."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quand plusieurs apps jouent, ⏯ affiche chacune au-dessus de la touche F qui la choisit."
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "जब एक से ज़्यादा ऐप चल रहे हों, तो ⏯ हर ऐप को उसे चुनने वाली F-कुंजी के ऊपर दिखाता है।"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kad svira više aplikacija, ⏯ prikazuje svaku iznad F-tipke koja je odabire."
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ha több app is szól, a ⏯ mindegyiket az őt kiválasztó F-billentyű fölött mutatja."
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quando più app sono in riproduzione, ⏯ mostra ciascuna sopra il tasto F che la sceglie."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "複数のアプリが再生中のときは、⏯ を押すと各アプリが対応する F キーの上に表示されます。"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "여러 앱이 재생 중일 때 ⏯를 누르면 각 앱이 선택할 F 키 위에 표시됩니다."
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Når flere apper spiller, viser ⏯ hver av dem over F-tasten som velger den."
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Als er meer dan één app speelt, toont ⏯ elke app boven de F-toets waarmee je hem kiest."
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gdy gra więcej niż jedna aplikacja, ⏯ pokazuje każdą nad klawiszem F, który ją wybiera."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quando mais de um app está tocando, ⏯ mostra cada um sobre a tecla F que o escolhe."
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quando mais do que uma app está a tocar, ⏯ mostra cada uma sobre a tecla F que a escolhe."
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Când rulează mai multe aplicații, ⏯ afișează fiecare deasupra tastei F care o alege."
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда играет несколько приложений, ⏯ показывает каждое над F-клавишей, которая его выбирает."
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keď hrá viac aplikácií, ⏯ zobrazí každú nad klávesom F, ktorý ju vyberie."
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "När flera appar spelar visar ⏯ var och en ovanför F-tangenten som väljer den."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Birden fazla uygulama çalarken ⏯, her birini onu seçen F tuşunun üzerinde gösterir."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Коли грає кілька застосунків, ⏯ показує кожен над F-клавішею, що його обирає."
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Khi có nhiều ứng dụng đang phát, ⏯ hiển thị từng ứng dụng phía trên phím F để chọn nó."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "多个 App 同时播放时，按 ⏯ 会把每个 App 显示在选中它的 F 键上方。"
+          }
+        }
+      }
+    },
+    "You’re all set": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كل شيء جاهز"
+          }
+        },
+        "bg": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Всичко е готово"
+          }
+        },
+        "cs": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vše je připraveno"
+          }
+        },
+        "da": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Du er klar"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alles bereit"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Todo listo"
+          }
+        },
+        "et": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kõik on valmis"
+          }
+        },
+        "fi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Valmista tuli"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tout est prêt"
+          }
+        },
+        "hi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "सब तैयार है"
+          }
+        },
+        "hr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sve je spremno"
+          }
+        },
+        "hu": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Minden kész"
+          }
+        },
+        "it": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "È tutto pronto"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "準備ができました"
+          }
+        },
+        "ko": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "모두 준비되었습니다"
+          }
+        },
+        "nb": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Alt er klart"
+          }
+        },
+        "nl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je bent er klaar voor"
+          }
+        },
+        "pl": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wszystko gotowe"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tudo pronto"
+          }
+        },
+        "pt-PT": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Está tudo pronto"
+          }
+        },
+        "ro": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Totul e gata"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Все готово"
+          }
+        },
+        "sk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Všetko je pripravené"
+          }
+        },
+        "sv": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allt är klart"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Her şey hazır"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Усе готово"
+          }
+        },
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mọi thứ đã sẵn sàng"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "一切就绪"
           }
         }
       }

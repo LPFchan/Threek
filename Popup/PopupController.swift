@@ -439,7 +439,7 @@ private final class ShadowCastingView: NSView {
     }
 }
 
-private struct SelectorPopup: View {
+struct SelectorPopup: View {
     @ObservedObject var viewModel: SelectorViewModel
 
     var body: some View {

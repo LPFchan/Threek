@@ -8,6 +8,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let interceptor = MediaKeyInterceptor()
     private let popup = PopupController()
     private var refreshingWhileShowing = false
+    /// Set while the first-launch window is open.
+    private var onboardingWindow: OnboardingWindow?
     /// Armed while ⏯ is held: fires pause-all unless the key comes back up
     /// first (then it's a normal press, routed on release).
     private var playPauseHold: PlayPauseHold?
@@ -38,7 +40,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         setupMenuBar()
-        checkAccessibilityAndStart()
+        // `--onboarding` shows the first-launch window again, for testing.
+        let onboard = CommandLine.arguments.contains("--onboarding")
+            || !UserDefaults.standard.bool(forKey: "onboarded")
+        // The onboarding asks for Accessibility itself, with an explanation
+        // first, rather than the bare system prompt at launch.
+        checkAccessibilityAndStart(prompt: !onboard)
+        if onboard { showOnboarding() }
         NowPlayingService.shared.warmCache()
         verifyTapHealth()
 
@@ -58,15 +66,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Accessibility
 
-    private func checkAccessibilityAndStart() {
+    private func checkAccessibilityAndStart(prompt: Bool) {
         if AXIsProcessTrusted() {
             startInterceptor()
             return
         }
-        let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
-        AXIsProcessTrustedWithOptions(options)
+        if prompt {
+            let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
+            AXIsProcessTrustedWithOptions(options)
+        }
         updateIcon(trusted: false)
         startPolling()
+    }
+
+    // MARK: - Onboarding
+
+    private func showOnboarding() {
+        let onboarding = Onboarding()
+        let window = OnboardingWindow(onboarding)
+        onboarding.onFinish = { [weak self, weak onboarding] in
+            guard let self, let onboarding else { return }
+            // Only a finished walkthrough applies the login choice; closing
+            // it early leaves login items alone.
+            self.finishOnboarding(openAtLogin: onboarding.step == .done ? onboarding.openAtLogin : nil)
+        }
+        onboardingWindow = window
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
+        // activate() is only a request; make sure it isn't left behind.
+        window.orderFrontRegardless()
+    }
+
+    private func finishOnboarding(openAtLogin: Bool?) {
+        guard let window = onboardingWindow else { return }
+        onboardingWindow = nil
+        UserDefaults.standard.set(true, forKey: "onboarded")
+        if let openAtLogin, openAtLogin != LaunchAtLogin.isEnabled { LaunchAtLogin.toggle() }
+        window.close()
     }
 
     private func startPolling() {
