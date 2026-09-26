@@ -326,8 +326,8 @@ final class PopupController {
     /// of the screen behind the HUD, then keeps re-sampling it until the
     /// HUD goes away. Uses one-shot SCScreenshotManager captures with the
     /// panel excluded, so the HUD itself never pollutes a sample; no
-    /// persistent stream, and the one-shot API needs no Screen Recording
-    /// permission.
+    /// persistent stream. Needs Screen Recording (asked in the onboarding);
+    /// without it the capture fails and the glyphs stay white.
     private func watchBackdrop(behind frame: NSRect, on screen: NSScreen) {
         // SCStreamConfiguration/sourceRect is in points, relative to the
         // captured display with a top-left origin; AppKit frames are global
