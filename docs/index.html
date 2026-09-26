@@ -71,7 +71,8 @@
      keycap-wide and one key pitch apart, the way the HUD sits over F7-F9. */
   .demo { margin: 0; padding: 16px 0 8px; container-type: inline-size; }
   .hud {
-    --u: calc(100cqw / 640);
+    /* Larger share on narrow screens so it stays legible; capped on wide. */
+    --u: min(calc(100cqw / 300), 1.5px);
     display: flex;
     justify-content: center;
     gap: calc(13 * var(--u));
