@@ -473,16 +473,31 @@ final class NowPlayingService {
             order.replaceSubrange(slot...slot, with: ids)
         }
 
-        // Sort real media apps first, squatters (Now Playing registrants that
-        // aren't actually media players) last, preserving registry order within
-        // each group so the picker is stable and predictable.
+        // Alphabetical by app name, so an app keeps its place (and its F-key)
+        // from one press to the next. Squatters (Now Playing registrants that
+        // aren't actually media players) go last. QuickTime documents sort
+        // by file name under QuickTime; the id is a final tiebreak so the
+        // order is total.
         let squatters: Set<String> = ["com.rescuetime.RescueTime"]
-        let sorted = order.compactMap { byBundleID[$0] }.sorted { a, b in
-            let aSq = squatters.contains(a.effectiveBundleID)
-            let bSq = squatters.contains(b.effectiveBundleID)
-            if aSq != bSq { return !aSq }
-            return false  // stable: keep registry order within a group
+        func name(_ app: NowPlayingApp) -> String {
+            NSRunningApplication.runningApplications(withBundleIdentifier: app.effectiveBundleID)
+                .first?.localizedName ?? app.displayName
         }
+        let sorted = order.compactMap { byBundleID[$0] }
+            .map { (app: $0, name: name($0)) }
+            .sorted { a, b in
+                let aSq = squatters.contains(a.app.effectiveBundleID)
+                let bSq = squatters.contains(b.app.effectiveBundleID)
+                if aSq != bSq { return !aSq }
+                for (x, y) in [(a.name, b.name),
+                               (a.app.document?.name ?? "", b.app.document?.name ?? ""),
+                               (a.app.id, b.app.id)] {
+                    let order = x.localizedStandardCompare(y)
+                    if order != .orderedSame { return order == .orderedAscending }
+                }
+                return false
+            }
+            .map(\.app)
         return (sorted, freshMetadata)
     }
 
