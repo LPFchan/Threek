@@ -84,28 +84,27 @@ enum QuickTimeDocuments {
     private static let thumbnailLock = NSLock()
 
     /// The file's own picture as QuickLook renders it — embedded cover art
-    /// for audio, a frame for video — or nil when it has none. Cached per
-    /// path, misses included. Blocks; call off the main queue.
+    /// for audio, a frame for video — or nil when it has none or it isn't
+    /// ready yet. Never blocks: the first ask starts QuickLook in the
+    /// background and returns nil, so a slow file can't hold up a key press;
+    /// a later discovery (the HUD refreshes while it's up) picks the picture
+    /// up and animates it in. Cached per path, misses included.
     static func artwork(forPath path: String) -> NSImage? {
         thumbnailLock.lock()
-        if let hit = thumbnails[path] { thumbnailLock.unlock(); return hit }
-        thumbnailLock.unlock()
+        defer { thumbnailLock.unlock() }
+        if let hit = thumbnails[path] { return hit }
+        thumbnails[path] = .some(nil)  // in flight; a miss until it lands
 
         let request = QLThumbnailGenerator.Request(
             fileAt: URL(fileURLWithPath: path), size: CGSize(width: 256, height: 256),
             scale: 2, representationTypes: .thumbnail)
-        var image: NSImage?
-        let done = DispatchSemaphore(value: 0)
         QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { rep, _ in
-            image = rep?.nsImage
-            done.signal()
+            guard let image = rep?.nsImage else { return }
+            thumbnailLock.lock()
+            thumbnails[path] = image
+            thumbnailLock.unlock()
         }
-        _ = done.wait(timeout: .now() + 2)
-
-        thumbnailLock.lock()
-        thumbnails[path] = image
-        thumbnailLock.unlock()
-        return image
+        return nil
     }
 
     // MARK: - Helpers
