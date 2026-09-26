@@ -13,9 +13,7 @@ packages:
     from: 2.10.0
   PermissionFlow:
     url: https://github.com/jaywcjlove/PermissionFlow
-    # Next release after v2.11.2 ships swift-tools-version 6.1
-    # (jaywcjlove/PermissionFlow#12). Pin to that tag when it lands.
-    from: 2.11.3
+    exactVersion: 2.11.2
 
 settings:
   base:
