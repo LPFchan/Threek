@@ -25,6 +25,10 @@ final class MediaKeyInterceptor {
     /// tap silently receives nothing (stale TCC grant after a rebuild).
     private(set) var hasSeenEvent = false
 
+    /// Forget earlier events, so the next health check only counts events
+    /// seen by the current tap.
+    func resetSeenEvent() { hasSeenEvent = false }
+
     /// Tags events Threek posts itself (re-injected keys) so the tap lets
     /// them through instead of catching them again in a loop.
     static let selfPostedMarker: Int64 = 0x7468_7265_656B  // "threek"
@@ -81,6 +85,12 @@ final class MediaKeyInterceptor {
         Log.write("[MediaKeyInterceptor] tap started")
     }
 
+    /// Whether Threek really has Accessibility right now (see
+    /// PermissionCheck: the in-process answers are cached).
+    static func hasAccessibility() -> Bool {
+        PermissionCheck.has(.accessibility)
+    }
+
     func stop() {
         guard isRunning else { return }
         if let tap = eventTap {
@@ -88,6 +98,8 @@ final class MediaKeyInterceptor {
             if let source = runLoopSource {
                 CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
             }
+            // Destroy the tap outright, so nothing is left in the event path.
+            CFMachPortInvalidate(tap)
         }
         eventTap = nil
         runLoopSource = nil
@@ -96,18 +108,21 @@ final class MediaKeyInterceptor {
 
     private func handle(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
         if type == .tapDisabledByUserInput || type == .tapDisabledByTimeout {
-            // macOS auto-disables a tap whose callback is too slow. Re-enable
-            // it so media keys don't go dead silently after a hiccup.
+            let why = type == .tapDisabledByTimeout ? "timeout" : "user input"
+            // Without the grant the tap can't pass events on, so every key
+            // and click stalls until macOS disables it again. Re-enabling it
+            // then would freeze input over and over; stay off and let the app
+            // wait for the grant instead.
+            guard Self.hasAccessibility() else {
+                Log.write("[MediaKeyInterceptor] tap disabled (\(why)), Accessibility gone: stopping")
+                DispatchQueue.main.async { [weak self] in self?.onTapInvalidated?() }
+                return Unmanaged.passUnretained(event)
+            }
+            // Just a slow callback: re-enable so media keys don't go dead.
             if let tap = eventTap {
                 CGEvent.tapEnable(tap: tap, enable: true)
             }
-            Log.write("[MediaKeyInterceptor] tap disabled (\(type == .tapDisabledByTimeout ? "timeout" : "user input")), re-enabled")
-            // Only a lost Accessibility grant needs the full stop/poll/restart
-            // cycle; tearing the tap down for a mere hiccup would let keys
-            // leak through to the system until it comes back.
-            if !AXIsProcessTrusted() {
-                DispatchQueue.main.async { [weak self] in self?.onTapInvalidated?() }
-            }
+            Log.write("[MediaKeyInterceptor] tap disabled (\(why)), re-enabled")
             return Unmanaged.passUnretained(event)
         }
 

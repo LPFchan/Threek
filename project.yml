@@ -15,7 +15,7 @@ packages:
   # Xcode 16.3+ builds it (upstream needs Xcode 26).
   PermissionFlow:
     url: https://github.com/LPFchan/PermissionFlow
-    exactVersion: 2.11.2-swift6.1
+    exactVersion: 2.11.2-swift6.1.1
 
 settings:
   base:
