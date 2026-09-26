@@ -8,6 +8,8 @@ same time — playing *or paused*.
 
 **[Download](https://github.com/LPFchan/Threek/releases/latest/download/Threek.dmg)** · [threek.lost.plus](https://threek.lost.plus) · macOS 15+, Apple silicon and Intel
 
+![The Threek HUD: QuickTime, Spotify and Music, each above the F-key that picks it](docs/screenshot.jpg)
+
 ---
 
 ## What it does
