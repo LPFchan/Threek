@@ -197,6 +197,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         interceptor.stop()
         updateIcon(trusted: false)
         Log.write("[AppDelegate] Accessibility lost; tap stopped, waiting for the grant")
+        missingStep = .accessibility
+        buildMenu()
         startPolling()
         showOnboarding(from: .accessibility)
     }
@@ -447,6 +449,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(.separator())
         }
 
+        // Say what's missing, above everything else; Open Threek fixes it.
+        if let notice = missingNotice {
+            menu.addItem(NSMenuItem(title: notice, action: nil, keyEquivalent: ""))
+            menu.addItem(.separator())
+        }
+
         let enabled = NSMenuItem(title: String(localized: "Enabled"), action: #selector(toggleEnabled(_:)), keyEquivalent: "")
         enabled.target = self
         enabled.state = isEnabled ? .on : .off
@@ -557,6 +565,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func toggleLogin(_ item: NSMenuItem) {
         LaunchAtLogin.toggle()
         item.state = LaunchAtLogin.isEnabled ? .on : .off
+    }
+
+    private var missingNotice: String? {
+        switch missingStep {
+        case .accessibility: return String(localized: "Accessibility is off — media keys aren’t caught")
+        case .screenRecording: return String(localized: "Screen Recording is off")
+        case .automation: return String(localized: "Media Control is off for some apps")
+        default: return nil
+        }
     }
 
     @objc private func openOnboarding() {
