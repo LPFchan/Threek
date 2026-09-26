@@ -117,14 +117,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func poll() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            guard let self else { return }
-            // AXIsProcessTrusted can lag both ways; the probe tap can't.
-            if MediaKeyInterceptor.hasAccessibility() {
-                self.isPolling = false
-                self.startInterceptor()
-            } else {
-                self.poll()
+        // The check starts a process and waits for it; keep that off the
+        // main thread, which also runs the event tap.
+        DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + 1) { [weak self] in
+            let granted = MediaKeyInterceptor.hasAccessibility()
+            DispatchQueue.main.async {
+                guard let self else { return }
+                if granted {
+                    self.isPolling = false
+                    self.startInterceptor()
+                } else {
+                    self.poll()
+                }
             }
         }
     }
@@ -155,7 +159,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // the tap comes out of the event path quickly.
         accessWatch?.invalidate()
         accessWatch = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            if !MediaKeyInterceptor.hasAccessibility() { self?.accessibilityLost() }
+            DispatchQueue.global(qos: .utility).async {
+                guard !MediaKeyInterceptor.hasAccessibility() else { return }
+                DispatchQueue.main.async { self?.accessibilityLost() }
+            }
         }
     }
 
