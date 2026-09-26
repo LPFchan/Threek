@@ -43,7 +43,7 @@ extension Permissions {
 /// catches the media keys, Screen Recording lets the HUD pick readable text
 /// for what's behind it, and Automation (asked per app) sends it commands.
 enum PermissionStatus {
-    enum Automation: Equatable { case allowed, denied, notAsked, notRunning }
+    enum Automation: String, Equatable { case allowed, denied, notAsked, notRunning }
 
     /// Supported players that are installed, in a stable order.
     static var installedPlayers: [String] {
@@ -60,36 +60,79 @@ enum PermissionStatus {
     /// until it is, so call it off the main thread. Needs the app running.
     static func automation(_ bundleID: String, ask: Bool) -> Automation {
         let target = NSAppleEventDescriptor(bundleIdentifier: bundleID)
+        let state: Automation
         switch AEDeterminePermissionToAutomateTarget(target.aeDesc, typeWildCard, typeWildCard, ask) {
-        case noErr: return .allowed
-        case OSStatus(errAEEventNotPermitted): return .denied
-        case OSStatus(errAEEventWouldRequireUserConsent): return .notAsked
-        default: return .notRunning
+        case noErr: state = .allowed
+        case OSStatus(errAEEventNotPermitted): state = .denied
+        case OSStatus(errAEEventWouldRequireUserConsent): state = .notAsked
+        default: state = .notRunning
+        }
+        remember(state, for: bundleID)
+        return state
+    }
+
+    // macOS can only answer for a running app, so the last answer seen for
+    // each player is kept; a stopped player is judged by that.
+    private static let knownKey = "automationKnown"
+    private static let knownLock = NSLock()
+
+    private static func remember(_ state: Automation, for bundleID: String) {
+        guard state != .notRunning else { return }
+        knownLock.lock(); defer { knownLock.unlock() }
+        var known = UserDefaults.standard.dictionary(forKey: knownKey) as? [String: String] ?? [:]
+        known[bundleID] = state.rawValue
+        UserDefaults.standard.set(known, forKey: knownKey)
+    }
+
+    /// The live answer if the player is running, else the last one seen
+    /// (never seen counts as not asked).
+    static func bestKnown(_ bundleID: String) -> Automation {
+        let live = automation(bundleID, ask: false)
+        guard live == .notRunning else { return live }
+        knownLock.lock(); defer { knownLock.unlock() }
+        let known = UserDefaults.standard.dictionary(forKey: knownKey) as? [String: String] ?? [:]
+        return known[bundleID].flatMap(Automation.init(rawValue:)) ?? .notAsked
+    }
+
+    /// Everything, checked once: one checker process for Accessibility and
+    /// Screen Recording, plus an Automation answer per installed player.
+    /// Calls into other processes; keep it off the main thread.
+    struct Snapshot {
+        var accessibility: Bool
+        var screen: Bool
+        var automation: [String: Automation]
+
+        /// Grant keys ("accessibility", "screen", "automation:<bundle id>").
+        var granted: Set<String> {
+            var keys = Set(automation.filter { $0.value == .allowed }.map { "automation:\($0.key)" })
+            if accessibility { keys.insert("accessibility") }
+            if screen { keys.insert("screen") }
+            return keys
+        }
+
+        /// The first step with anything not granted (for the menu).
+        var missing: Onboarding.Step? {
+            if !accessibility { return .accessibility }
+            if !screen { return .screenRecording }
+            if automation.values.contains(where: { $0 != .allowed }) { return .automation }
+            return nil
+        }
+
+        /// Like `missing`, but a player the user already said no to doesn't
+        /// count, so a deliberate "Don't Allow" doesn't reopen setup at every
+        /// launch.
+        var unanswered: Onboarding.Step? {
+            if !accessibility { return .accessibility }
+            if !screen { return .screenRecording }
+            if automation.values.contains(.notAsked) { return .automation }
+            return nil
         }
     }
 
-    /// The grants Threek has right now, as keys ("accessibility",
-    /// "screen", "automation:<bundle id>"). Automation is only knowable for
-    /// running apps. Calls into other apps; keep it off the main thread.
-    static func granted() -> Set<String> {
-        var keys = Set<String>()
-        if accessibility { keys.insert("accessibility") }
-        if screenRecording { keys.insert("screen") }
-        for id in installedPlayers where automation(id, ask: false) == .allowed {
-            keys.insert("automation:\(id)")
-        }
-        return keys
-    }
-
-    /// The first onboarding step whose permission is missing, or nil when
-    /// everything that can be checked is granted. Off the main thread.
-    static func firstMissingStep() -> Onboarding.Step? {
-        if !accessibility { return .accessibility }
-        if !screenRecording { return .screenRecording }
-        if installedPlayers.contains(where: {
-            let state = automation($0, ask: false)
-            return state == .denied || state == .notAsked
-        }) { return .automation }
-        return nil
+    static func snapshot() -> Snapshot {
+        let (accessibility, screen) = PermissionCheck.both()
+        var automation: [String: Automation] = [:]
+        for id in installedPlayers { automation[id] = bestKnown(id) }
+        return Snapshot(accessibility: accessibility, screen: screen, automation: automation)
     }
 }

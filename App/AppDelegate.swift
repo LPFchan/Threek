@@ -37,7 +37,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// True once we've confirmed the event tap actually receives events. A
     /// stale TCC grant leaves AXIsProcessTrusted()==true but the tap blind.
     private var tapVerified = false
-    private var accessWatch: Timer?
     private var selfTestKeyCode: Int32 = -1
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -60,14 +59,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // reset, a new media app) gets it back at that step.
         let firstRun = CommandLine.arguments.contains("--onboarding")
             || !UserDefaults.standard.bool(forKey: "onboarded")
-        let missing = PermissionStatus.firstMissingStep()
-        missingStep = missing
-        let onboard = firstRun || missing != nil
-        Log.write("[AppDelegate] launch: firstRun=\(firstRun) missing=\(missing.map { "\($0)" } ?? "none") onboard=\(onboard)")
+        let snapshot = PermissionStatus.snapshot()
+        missingStep = snapshot.missing
+        lastGranted = snapshot.granted
+        let unanswered = snapshot.unanswered
+        let onboard = firstRun || unanswered != nil
+        Log.write("[AppDelegate] launch: firstRun=\(firstRun) unanswered=\(unanswered.map { "\($0)" } ?? "none") onboard=\(onboard)")
         // The onboarding asks for each permission itself, with an
         // explanation first, rather than the bare system prompt at launch.
         checkAccessibilityAndStart(prompt: !onboard)
-        if onboard { showOnboarding(from: firstRun ? .welcome : missing ?? .welcome) }
+        if onboard { showOnboarding(from: firstRun ? .welcome : unanswered ?? .welcome) }
         watchPermissions()
         NowPlayingService.shared.warmCache()
 
@@ -176,23 +177,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         tapVerified = false
         interceptor.resetSeenEvent()
         verifyTapHealth()
-        // macOS sends nothing when the grant is removed, and a tap without
-        // it stalls all input; check for real every couple of seconds so
-        // the tap comes out of the event path quickly.
-        accessWatch?.invalidate()
-        accessWatch = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] _ in
-            DispatchQueue.global(qos: .utility).async {
-                guard !MediaKeyInterceptor.hasAccessibility() else { return }
-                DispatchQueue.main.async { self?.accessibilityLost() }
-            }
-        }
+        // watchPermissions checks the grant every 2 s and takes the tap out
+        // when it's gone (macOS sends nothing when it's removed).
     }
 
     /// The Accessibility grant is gone: take the tap out of the event path
     /// and wait for the grant to come back.
     private func accessibilityLost() {
-        accessWatch?.invalidate()
-        accessWatch = nil
         guard interceptor.isRunning else { return }
         interceptor.stop()
         updateIcon(trusted: false)
@@ -210,10 +201,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func watchPermissions() {
         let check = { [weak self] in
             DispatchQueue.global(qos: .utility).async {
-                let now = PermissionStatus.granted()
-                let missing = PermissionStatus.firstMissingStep()
+                let snapshot = PermissionStatus.snapshot()
+                let now = snapshot.granted
+                let missing = snapshot.missing
                 DispatchQueue.main.async {
                     guard let self else { return }
+                    // This watch also covers the tap: a tap without its
+                    // grant stalls input, so take it out right away.
+                    if !snapshot.accessibility && self.interceptor.isRunning {
+                        self.accessibilityLost()
+                    }
                     let lost = self.lastGranted.subtracting(now)
                     self.lastGranted = now
                     if missing != self.missingStep {
@@ -227,8 +224,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 }
             }
         }
-        check()
-        permissionWatch = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { _ in check() }
+        permissionWatch = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in check() }
     }
 
     // MARK: - Tap health

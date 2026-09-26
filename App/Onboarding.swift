@@ -9,15 +9,26 @@ final class Onboarding {
     enum Step: Int, CaseIterable { case welcome, accessibility, screenRecording, automation, done }
 
     var step: Step
-    var trusted = MediaKeyInterceptor.hasAccessibility()
-    var screenGranted = PermissionStatus.screenRecording
+    // Checked by the step views off the main thread (see PermissionCheck).
+    var trusted = false
+    var screenGranted = false
     /// Automation answer per installed player.
     var automation: [String: PermissionStatus.Automation] = [:]
     var asking = false
     var openAtLogin = true
     @ObservationIgnored var onFinish: () -> Void = {}
+    /// The running Allow Media Control pass, cancelled if the window closes.
+    @ObservationIgnored private var askTask: Task<Void, Never>?
 
     init(step: Step = .welcome) { self.step = step }
+
+    @MainActor func startAsking() {
+        askTask?.cancel()
+        askTask = Task { await askAutomation() }
+    }
+
+    /// Stops asking: no further players are opened or prompted.
+    func cancel() { askTask?.cancel() }
 
     var players: [String] { PermissionStatus.installedPlayers }
     var automationDone: Bool { players.allSatisfy { automation[$0] == .allowed } }
@@ -25,12 +36,11 @@ final class Onboarding {
         players.contains { automation[$0] == nil || automation[$0] == .notAsked || automation[$0] == .notRunning }
     }
 
-    /// Re-reads the answers macOS has for running players; one that isn't
-    /// running keeps what was last learned about it.
+    /// Re-reads each player's answer: live if it's running, else the last
+    /// one seen.
     @MainActor func refreshAutomation() async {
         for id in players {
-            let state = await Task.detached { PermissionStatus.automation(id, ask: false) }.value
-            if state != .notRunning || automation[id] == nil { automation[id] = state }
+            automation[id] = await Task.detached { PermissionStatus.bestKnown(id) }.value
         }
     }
 
@@ -41,7 +51,9 @@ final class Onboarding {
         asking = true
         defer { asking = false }
         for id in players where automation[id] != .allowed && automation[id] != .denied {
+            if Task.isCancelled { return }
             var launched: NSRunningApplication?
+            defer { launched?.terminate() }
             if NSRunningApplication.runningApplications(withBundleIdentifier: id).isEmpty,
                let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) {
                 let config = NSWorkspace.OpenConfiguration()
@@ -55,8 +67,8 @@ final class Onboarding {
                 // Finished launching isn't quite ready for Apple events.
                 try? await Task.sleep(for: .seconds(1))
             }
+            if Task.isCancelled { return }
             automation[id] = await Task.detached { PermissionStatus.automation(id, ask: true) }.value
-            launched?.terminate()
         }
     }
 }
@@ -78,7 +90,10 @@ final class OnboardingWindow: NSWindow, NSWindowDelegate {
 
     // Closing it early counts as done: it won't show again until a
     // permission is revoked, and the menu bar still offers the grant.
-    func windowWillClose(_ notification: Notification) { onboarding.onFinish() }
+    func windowWillClose(_ notification: Notification) {
+        onboarding.cancel()
+        onboarding.onFinish()
+    }
 }
 
 /// The app icon's darker and lighter greys.
@@ -158,7 +173,7 @@ private struct OnboardingView: View {
             } else if onboarding.automationDone {
                 PrimaryButton("Continue") { next() }
             } else if onboarding.automationUnasked {
-                PrimaryButton("Allow Media Control") { Task { await onboarding.askAutomation() } }
+                PrimaryButton("Allow Media Control") { onboarding.startAsking() }
             } else {
                 PrimaryButton("Open System Settings") { Permissions.openAutomation() }
             }
@@ -309,8 +324,9 @@ private struct AccessibilityStep: View {
         // macOS posts nothing when the grant changes, so check while here.
         .task {
             while !Task.isCancelled && !onboarding.trusted {
+                onboarding.trusted = await Task.detached { MediaKeyInterceptor.hasAccessibility() }.value
+                if onboarding.trusted { break }
                 try? await Task.sleep(for: .seconds(0.5))
-                onboarding.trusted = MediaKeyInterceptor.hasAccessibility()
             }
         }
     }
@@ -338,8 +354,9 @@ private struct ScreenRecordingStep: View {
         }
         .task {
             while !Task.isCancelled && !onboarding.screenGranted {
+                onboarding.screenGranted = await Task.detached { PermissionStatus.screenRecording }.value
+                if onboarding.screenGranted { break }
                 try? await Task.sleep(for: .seconds(0.5))
-                onboarding.screenGranted = PermissionStatus.screenRecording
             }
         }
     }
