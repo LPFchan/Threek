@@ -52,6 +52,17 @@ enum QuickTimeDocuments {
     /// Plays or pauses one document. Returns whether QuickTime accepted it.
     @discardableResult
     static func togglePlayPause(_ document: Document) -> Bool {
+        run("if playing of d then\npause d\nelse\nplay d\nend if", on: document, label: "playpause")
+    }
+
+    /// Pauses one document; a no-op if it's already paused.
+    @discardableResult
+    static func pause(_ document: Document) -> Bool {
+        run("pause d", on: document, label: "pause")
+    }
+
+    /// Runs `action` against the open document `d` that matches `document`.
+    private static func run(_ action: String, on document: Document, label: String) -> Bool {
         let match = document.path.map { "p is \"\(escape($0))\"" }
             ?? "p is \"\" and name of d is \"\(escape(document.name))\""
         let source = """
@@ -62,11 +73,7 @@ enum QuickTimeDocuments {
                     set p to POSIX path of (file of d as alias)
                 end try
                 if \(match) then
-                    if playing of d then
-                        pause d
-                    else
-                        play d
-                    end if
+                    \(action)
                     return "ok"
                 end if
             end repeat
@@ -74,7 +81,7 @@ enum QuickTimeDocuments {
         error "document not found"
         """
         let ok = runOsascript(source) != nil
-        Log.write("[QuickTimeDocuments] playpause -> \(document.name) \(ok ? "OK" : "failed")")
+        Log.write("[QuickTimeDocuments] \(label) -> \(document.name) \(ok ? "OK" : "failed")")
         return ok
     }
 

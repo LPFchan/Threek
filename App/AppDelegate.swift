@@ -8,6 +8,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let interceptor = MediaKeyInterceptor()
     private let popup = PopupController()
     private var refreshingWhileShowing = false
+    /// Armed while ⏯ is held: fires pause-all unless the key comes back up
+    /// first (then it's a normal press, routed on release).
+    private var playPauseHold: DispatchWorkItem?
+    private let longPressDelay: TimeInterval = 0.5
     private lazy var updater = SPUStandardUpdaterController(
         startingUpdater: true, updaterDelegate: nil, userDriverDelegate: self)
 
@@ -86,6 +90,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func startInterceptor() {
         interceptor.onKeyDown = { [weak self] event in
             self?.handleMediaKey(event) ?? false
+        }
+        interceptor.onKeyUp = { [weak self] event in
+            self?.handleMediaKeyUp(event)
         }
         interceptor.onTapInvalidated = { [weak self] in
             self?.interceptor.stop()
@@ -177,6 +184,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return true
         }
 
+        // ⏯ acts on release so a hold can mean "pause everything" instead.
+        if case .playPause = event {
+            playPauseHold?.cancel()
+            let hold = DispatchWorkItem { [weak self] in
+                self?.playPauseHold = nil
+                self?.pauseAll()
+            }
+            playPauseHold = hold
+            DispatchQueue.main.asyncAfter(deadline: .now() + longPressDelay, execute: hold)
+            return true
+        }
+
+        route(event)
+        return true
+    }
+
+    private func handleMediaKeyUp(_ event: MediaKeyEvent) {
+        guard case .playPause = event, let hold = playPauseHold else { return }
+        hold.cancel()
+        playPauseHold = nil
+        route(event)
+    }
+
+    /// Pauses every controllable app that's playing and flashes them all.
+    private func pauseAll() {
+        NowPlayingService.shared.fetchAppsFast { [weak self] apps in
+            guard let self else { return }
+            let playing = apps.filter { $0.isControllable && $0.isPlaying == true }
+            Log.write("[AppDelegate] pause all: " + playing.map(\.id).joined(separator: ", "))
+            guard !playing.isEmpty else { return }
+            NowPlayingService.shared.pauseAll(playing)
+            self.popup.flashPauseAll(apps: playing)
+        }
+    }
+
+    /// Sends a media key to the right app: straight to the only one it
+    /// applies to, or through the picker when several do.
+    private func route(_ event: MediaKeyEvent) {
         NowPlayingService.shared.fetchAppsFast { [weak self] apps in
             guard let self else { return }
             let controllable = apps.filter(\.isControllable)
@@ -214,7 +259,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 self.refreshWhileShowing()
             }
         }
-        return true
     }
 
     /// Sends a key straight to the one app it applies to, and flashes that

@@ -30,6 +30,8 @@ Playing registry, and pops up a HUD so you pick the target.
 - Dispatch play/pause to the chosen app: AppleScript for scriptable apps,
   MediaRemote fallback for the active app. QuickTime Player is listed once per
   open document and each document is toggled on its own; ⏮/⏭ are no-ops for it.
+- Holding ⏯ for 0.5 s pauses every controllable playing app (pause, never
+  toggle) and flashes them with ⏸ badges; a shorter press is routed on release.
 
 ## Invariants
 

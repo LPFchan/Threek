@@ -143,6 +143,37 @@ final class NowPlayingService {
         }
     }
 
+    /// Pauses every given app: AppleScript `pause` for scriptable apps (per
+    /// document for QuickTime), and the adapter's pause, which reaches the
+    /// current now-playing app, for the rest or when AppleScript fails.
+    /// Pause rather than toggle, so an app that already stopped stays put.
+    func pauseAll(_ apps: [NowPlayingApp]) {
+        let ids = Set(apps.map(\.id))
+        for i in cachedApps.indices where ids.contains(cachedApps[i].id) {
+            cachedApps[i].isPlaying = false
+        }
+        cacheTime = Date()
+        acceptSnapshotsFrom = Date().addingTimeInterval(toggleSettle)
+        DispatchQueue.main.asyncAfter(deadline: .now() + toggleSettle) { self.warmCache() }
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            // Which apps AppleScript reached; the rest get the adapter's pause.
+            var reached = [Bool](repeating: false, count: apps.count)
+            let lock = NSLock()
+            DispatchQueue.concurrentPerform(iterations: apps.count) { i in
+                let app = apps[i]
+                var ok = false
+                if let document = app.document {
+                    ok = QuickTimeDocuments.pause(document)
+                } else if Self.scriptableBundleIDs.contains(app.effectiveBundleID) {
+                    ok = self.runTargetedAppleScript("pause", to: app.effectiveBundleID, label: "pause")
+                }
+                lock.lock(); reached[i] = ok; lock.unlock()
+            }
+            if reached.contains(false) { self.sendMediaRemoteCommandSync(.pause, label: "pause (adapter)") }
+        }
+    }
+
     /// Sends next-track or previous-track. Same osascript-first rule.
     func sendTrackCommand(_ command: TrackCommand, to app: NowPlayingApp) {
         // QuickTime documents have no tracks; skipping does nothing.
@@ -194,6 +225,7 @@ final class NowPlayingService {
 
     /// MediaRemote command numbers (subset of MRCommand used here).
     private enum MediaRemoteCommand: Int {
+        case pause = 1             // kMRAPause
         case togglePlayPause = 2   // kMRATogglePlayPause
         case nextTrack = 4         // kMRANextTrack
         case previousTrack = 5     // kMRAPreviousTrack

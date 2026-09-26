@@ -9,6 +9,10 @@ final class MediaKeyInterceptor {
     /// Return `true` to consume (suppress), `false` to pass through.
     var onKeyDown: ((MediaKeyEvent) -> Bool)?
 
+    /// Called on the main thread when a media key whose key-down was
+    /// consumed is released.
+    var onKeyUp: ((MediaKeyEvent) -> Void)?
+
     /// Called when the event tap is invalidated (e.g. permission revoked).
     var onTapInvalidated: (() -> Void)?
 
@@ -130,19 +134,22 @@ final class MediaKeyInterceptor {
         let isKeyDown = (keyFlags & 0x0100) == 0
         let isRepeat = (keyFlags & 0x0001) != 0
 
-        // Key-up / autorepeat: follow whatever we decided on the key-down.
-        if !isKeyDown || isRepeat {
-            let swallow = swallowedKeyCodes.contains(keyCode)
-            if !isKeyDown { swallowedKeyCodes.remove(keyCode) }
-            return swallow ? nil : Unmanaged.passUnretained(event)
-        }
-
         let mediaEvent: MediaKeyEvent
         switch keyCode {
         case NX_KEYTYPE_PLAY: mediaEvent = .playPause
         case NX_KEYTYPE_NEXT, NX_KEYTYPE_FAST: mediaEvent = .next
         case NX_KEYTYPE_PREVIOUS, NX_KEYTYPE_REWIND: mediaEvent = .previous
         default: mediaEvent = .other(keyCode)
+        }
+
+        // Key-up / autorepeat: follow whatever we decided on the key-down.
+        if !isKeyDown || isRepeat {
+            let swallow = swallowedKeyCodes.contains(keyCode)
+            if !isKeyDown {
+                swallowedKeyCodes.remove(keyCode)
+                if swallow { DispatchQueue.main.async { self.onKeyUp?(mediaEvent) } }
+            }
+            return swallow ? nil : Unmanaged.passUnretained(event)
         }
 
         var consume = false
