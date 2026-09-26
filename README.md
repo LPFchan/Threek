@@ -93,7 +93,7 @@ English and 28 other languages.
 
 ## Build from source
 
-**Prerequisites:** Xcode 16.3+ (the PermissionFlow package needs Swift 6.1), [XcodeGen](https://github.com/yonaskolb/XcodeGen), CMake
+**Prerequisites:** Xcode 26+ (the PermissionFlow package needs swift-tools-version 6.2), [XcodeGen](https://github.com/yonaskolb/XcodeGen), CMake
 
 ```bash
 git clone https://github.com/LPFchan/Threek.git
