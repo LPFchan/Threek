@@ -161,6 +161,8 @@ final class PopupController {
     /// Re-samples the backdrop while the HUD is up, so the glyphs follow
     /// whatever moves behind it (video, scrolling, a window switching).
     private var backdropTask: Task<Void, Never>?
+    /// The backdrop capture filter, reused across shows on one display.
+    private var captureFilter: (displayID: UInt32?, filter: SCContentFilter)?
 
     init() {
         viewModel.onDispatch = { [weak self] app, key in
@@ -198,7 +200,7 @@ final class PopupController {
 
     private func dismissAfterFlash() {
         let gen = generation
-        DispatchQueue.main.asyncAfter(deadline: .now() + SelectorViewModel.flashPickDelay + 0.32) { [weak self] in
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) { [weak self] in
             guard let self, self.generation == gen else { return }
             self.dismiss()
         }
@@ -222,23 +224,15 @@ final class PopupController {
         }
         present()
         guard let panel else { return }
-        panel.alphaValue = 0
         panel.orderFrontRegardless()
-        NSAnimationContext.runAnimationGroup { ctx in
-            ctx.duration = 0.15
-            panel.animator().alphaValue = 1
-        }
-        // Sample the content's silhouettes for the shadow once the entrance
-        // animation has settled (the snapshot is a still), then fade it in.
+        // Sample the content's silhouettes for the shadow once SwiftUI has
+        // laid out the new state (the snapshot is a still).
         shadowLayer?.alphaValue = 0
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
+        DispatchQueue.main.async { [weak self] in
             guard let self, self.generation == gen,
                   let content = self.contentView, let shadow = self.shadowLayer else { return }
             shadow.update(from: content)
-            NSAnimationContext.runAnimationGroup { ctx in
-                ctx.duration = 0.15
-                shadow.animator().alphaValue = 1
-            }
+            shadow.alphaValue = 1
         }
     }
 
@@ -341,12 +335,20 @@ final class PopupController {
         let excludeID = panel.map { CGWindowID($0.windowNumber) }
         backdropTask?.cancel()
         backdropTask = Task { [weak self] in
-            guard let content = try? await SCShareableContent.excludingDesktopWindows(
-                false, onScreenWindowsOnly: true),
-                let display = content.displays.first(where: { $0.displayID == displayID })
-                    ?? content.displays.first else { return }
-            let excluded = content.windows.filter { $0.windowID == excludeID }
-            let filter = SCContentFilter(display: display, excludingWindows: excluded)
+            // Listing shareable content stalls the HUD's first frames, so
+            // it's done once per display and the filter reused after.
+            let filter: SCContentFilter
+            if let cached = self?.captureFilter, cached.displayID == displayID {
+                filter = cached.filter
+            } else {
+                guard let content = try? await SCShareableContent.excludingDesktopWindows(
+                    false, onScreenWindowsOnly: true),
+                    let display = content.displays.first(where: { $0.displayID == displayID })
+                        ?? content.displays.first else { return }
+                let excluded = content.windows.filter { $0.windowID == excludeID }
+                filter = SCContentFilter(display: display, excludingWindows: excluded)
+                self?.captureFilter = (displayID, filter)
+            }
             let config = SCStreamConfiguration()
             config.sourceRect = rect
             config.width = max(1, Int(rect.width * scale))
@@ -354,8 +356,13 @@ final class PopupController {
             config.showsCursor = false
             var first = true
             while !Task.isCancelled {
-                if let image = try? await SCScreenshotManager.captureImage(
-                    contentFilter: filter, configuration: config), !Task.isCancelled {
+                guard let image = try? await SCScreenshotManager.captureImage(
+                    contentFilter: filter, configuration: config) else {
+                    // A stale filter (display reconfigured): rebuild next show.
+                    self?.captureFilter = nil
+                    return
+                }
+                if !Task.isCancelled {
                     self?.viewModel.noteBackdrop(luminance: Self.averageLuminance(of: image),
                                                  initial: first)
                     first = false
@@ -482,14 +489,14 @@ struct SelectorPopup: View {
                                  inverted: glyphInverted, pressed: chosen)
                     }
                     .opacity(viewModel.chosenID == nil || chosen ? 1 : 0.3)
-                    .modifier(Entrance(appeared: viewModel.appeared, index: index))
+                    .modifier(Entrance(appeared: viewModel.appeared))
                 }
             }
             // A flashed single app sits over the key that was pressed.
             .offset(x: CGFloat(flashSlot) * (PhysicalMetrics.designKeycap + gap) * s)
         case .selecting:
             CarouselRow(viewModel: viewModel)
-                .modifier(Entrance(appeared: viewModel.appeared, index: 0))
+                .modifier(Entrance(appeared: viewModel.appeared))
         }
     }
 
@@ -501,7 +508,7 @@ struct SelectorPopup: View {
             EmptyView()
         case .selecting:
             TransportRow(viewModel: viewModel, inverted: glyphInverted)
-                .modifier(Entrance(appeared: viewModel.appeared, index: 1))
+                .modifier(Entrance(appeared: viewModel.appeared))
         case .idle:
             EmptyView()
         }
@@ -532,12 +539,10 @@ struct SelectorPopup: View {
     }
 }
 
-/// Rises into place from slightly below and smaller, one column after the
-/// other (`index` staggers it), and sinks back out on dismiss.
+/// Appears in place at once, and sinks back out on dismiss.
 private struct Entrance: ViewModifier {
     static let exitDuration = 0.2
     let appeared: Bool
-    let index: Int
     @Environment(\.hudScale) private var s
 
     func body(content: Content) -> some View {
@@ -545,9 +550,7 @@ private struct Entrance: ViewModifier {
             .scaleEffect(appeared ? 1 : 0.86, anchor: .bottom)
             .offset(y: appeared ? 0 : 12 * s)
             .opacity(appeared ? 1 : 0)
-            .animation(appeared
-                ? .spring(response: 0.34, dampingFraction: 0.72).delay(Double(index) * 0.04)
-                : .easeIn(duration: Self.exitDuration), value: appeared)
+            .animation(appeared ? nil : .easeIn(duration: Self.exitDuration), value: appeared)
     }
 }
 
