@@ -76,8 +76,6 @@ final class SelectorViewModel: ObservableObject {
     /// Set with the pick in a pause-all flash, standing in for `chosenID`
     /// on every column at once.
     @Published private(set) var chosenAll = false
-    /// How long a flash shows the app before it plays the pick.
-    static let flashPickDelay: TimeInterval = 0.2
     /// Set once the HUD is on its way out, so keys pressed during the exit
     /// animation don't act again.
     private var closing = false
@@ -99,10 +97,7 @@ final class SelectorViewModel: ObservableObject {
         flashKey = nil
         pausingAll = false
         chosenAll = false
-        appeared = false
-        DispatchQueue.main.async { [weak self] in
-            withAnimation(.spring(response: 0.34, dampingFraction: 0.72)) { self?.appeared = true }
-        }
+        appeared = true
         // Uncontrollable apps never enter the picker: they can't receive a
         // command, so showing them greyed out only invites a selection that
         // silently does nothing. Filtering can drop the count below the
@@ -231,12 +226,10 @@ final class SelectorViewModel: ObservableObject {
         flashKey = key
         self.pausingAll = pausingAll
         state = .showing(apps: apps)
-        appeared = false
-        DispatchQueue.main.async { [weak self] in
-            withAnimation(.spring(response: 0.34, dampingFraction: 0.72)) { self?.appeared = true }
-        }
+        appeared = true
         let session = sessionID
-        DispatchQueue.main.asyncAfter(deadline: .now() + Self.flashPickDelay) { [weak self] in
+        // One hop, so the HUD lands unpicked and the pick plays on it.
+        DispatchQueue.main.async { [weak self] in
             guard let self, self.sessionID == session else { return }
             withAnimation(.spring(response: 0.22, dampingFraction: 0.55)) {
                 if pausingAll { self.chosenAll = true } else { self.chosenID = apps.first?.id }
