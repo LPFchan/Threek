@@ -39,9 +39,9 @@ final class Onboarding {
     /// Re-reads each player's answer: live if it's running, else the last
     /// one seen.
     @MainActor func refreshAutomation() async {
-        for id in players {
-            automation[id] = await Task.detached { PermissionStatus.bestKnown(id) }.value
-        }
+        let players = players
+        let states = await Task.detached { PermissionStatus.bestKnown(players) }.value
+        for (id, state) in states { automation[id] = state }
     }
 
     /// Asks macOS for every player not yet answered. One that isn't running
