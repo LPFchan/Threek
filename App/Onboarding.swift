@@ -68,7 +68,7 @@ final class Onboarding {
                 try? await Task.sleep(for: .seconds(1))
             }
             if Task.isCancelled { return }
-            automation[id] = await Task.detached { PermissionStatus.automation(id, ask: true) }.value
+            automation[id] = await Task.detached { PermissionStatus.ask(id) }.value
         }
     }
 }

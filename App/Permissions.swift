@@ -100,31 +100,45 @@ enum PermissionStatus {
 
     /// Players whose live query hasn't returned yet. macOS can leave that
     /// query hanging for good (seen with Spotify on macOS 27), and nothing
-    /// cancels it, so a player gets at most one at a time; until it returns,
-    /// the player is judged by its last known answer.
+    /// cancels it, so a player gets at most one at a time, prompted or not.
     private static var querying: [String: Date] = [:]
     private static var reportedStuck: Set<String> = []
 
-    /// The live answer if the player is running, else the last one seen.
-    static func bestKnown(_ bundleID: String) -> Automation {
+    /// Runs `automation(bundleID, ask:)` unless a query for that player is
+    /// still out, in which case it returns nil without asking again.
+    private static func admittedQuery(_ bundleID: String, ask: Bool) -> Automation? {
         knownLock.lock()
         if let since = querying[bundleID] {
             if reportedStuck.insert(bundleID).inserted {
                 Log.write("[PermissionStatus] \(bundleID) query still out after \(Int(-since.timeIntervalSinceNow))s; using last known")
             }
             knownLock.unlock()
-            return known(bundleID)
+            return nil
         }
         querying[bundleID] = Date()
         knownLock.unlock()
-        let live = automation(bundleID, ask: false)
+        let state = automation(bundleID, ask: ask)
         knownLock.lock()
         let since = querying.removeValue(forKey: bundleID) ?? Date()
         if reportedStuck.remove(bundleID) != nil {
             Log.write("[PermissionStatus] \(bundleID) query returned after \(Int(-since.timeIntervalSinceNow))s")
         }
         knownLock.unlock()
-        return live == .notRunning ? known(bundleID) : live
+        return state
+    }
+
+    /// The live answer if the player is running, else the last one seen.
+    static func bestKnown(_ bundleID: String) -> Automation {
+        guard let live = admittedQuery(bundleID, ask: false), live != .notRunning else {
+            return known(bundleID)
+        }
+        return live
+    }
+
+    /// Asks macOS, showing the consent prompt if it hasn't been answered.
+    /// A player whose query is still out gets its last known answer instead.
+    static func ask(_ bundleID: String) -> Automation {
+        admittedQuery(bundleID, ask: true) ?? known(bundleID)
     }
 
     /// Every player's best known answer, asked side by side. A player still
