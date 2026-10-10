@@ -204,6 +204,9 @@ final class NowPlayingService {
     /// returns whether it succeeded. Requires a one-time Automation grant for
     /// the target (error -1743 until approved); apps without an AppleScript
     /// dictionary error too, in which case the caller falls back to the adapter.
+    /// A command that doesn't finish in a few seconds is stopped and counts
+    /// as failed (macOS can leave one waiting on an app for good), unless the
+    /// app was never asked, when the wait may be the consent prompt.
     @discardableResult
     private func runTargetedAppleScript(_ verb: String, to bundleID: String, label: String) -> Bool {
         let process = Process()
@@ -218,7 +221,12 @@ final class NowPlayingService {
             Log.write("[NowPlayingService] osascript launch failed for \(bundleID): \(error)")
             return false
         }
+        if PermissionStatus.known(bundleID) != .notAsked { process.terminate(after: 3) }
         process.waitUntilExit()
+        if process.terminationReason == .uncaughtSignal {
+            Log.write("[NowPlayingService] \(label) -> \(bundleID) timed out")
+            return false
+        }
         let errText = String(data: err.fileHandleForReading.readDataToEndOfFile(),
                              encoding: .utf8)?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
