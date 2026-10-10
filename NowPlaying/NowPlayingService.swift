@@ -138,8 +138,8 @@ final class NowPlayingService {
                 QuickTimeDocuments.togglePlayPause(document)
                 return
             }
-            let ok = self.runTargetedAppleScript("playpause", to: bundleID, label: "playpause")
-            if !ok { self.sendMediaRemoteCommandSync(.togglePlayPause, label: "playpause (fallback)") }
+            let result = self.runTargetedAppleScript("playpause", to: bundleID, label: "playpause")
+            if result == .failed { self.sendMediaRemoteCommandSync(.togglePlayPause, label: "playpause (fallback)") }
         }
     }
 
@@ -159,7 +159,7 @@ final class NowPlayingService {
                 if let document = app.document {
                     ok = QuickTimeDocuments.pause(document)
                 } else if Self.scriptableBundleIDs.contains(app.effectiveBundleID) {
-                    ok = self.runTargetedAppleScript("pause", to: app.effectiveBundleID, label: "pause")
+                    ok = self.runTargetedAppleScript("pause", to: app.effectiveBundleID, label: "pause") == .ok
                 }
                 lock.lock(); reached[i] = ok; lock.unlock()
             }
@@ -193,8 +193,8 @@ final class NowPlayingService {
         let label = command == .next ? "next track" : "previous track"
         let verb = command == .next ? "next track" : "previous track"
         DispatchQueue.global(qos: .userInitiated).async {
-            let ok = self.runTargetedAppleScript(verb, to: bundleID, label: label)
-            if !ok { self.sendMediaRemoteCommandSync(mr, label: "\(label) (fallback)") }
+            let result = self.runTargetedAppleScript(verb, to: bundleID, label: label)
+            if result == .failed { self.sendMediaRemoteCommandSync(mr, label: "\(label) (fallback)") }
         }
     }
 
@@ -204,11 +204,11 @@ final class NowPlayingService {
     /// returns whether it succeeded. Requires a one-time Automation grant for
     /// the target (error -1743 until approved); apps without an AppleScript
     /// dictionary error too, in which case the caller falls back to the adapter.
-    /// A command that doesn't finish in a few seconds is stopped and counts
-    /// as failed (macOS can leave one waiting on an app for good), unless the
-    /// app was never asked, when the wait may be the consent prompt.
-    @discardableResult
-    private func runTargetedAppleScript(_ verb: String, to bundleID: String, label: String) -> Bool {
+    /// A command that doesn't finish in a few seconds is stopped (macOS can
+    /// leave one waiting on an app for good), unless the app was never asked,
+    /// when the wait may be the consent prompt. A stopped command may still
+    /// have reached the app, so callers mustn't resend a toggle or a skip.
+    private func runTargetedAppleScript(_ verb: String, to bundleID: String, label: String) -> ScriptResult {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
         process.arguments = ["-e", "tell application id \"\(bundleID)\" to \(verb)"]
@@ -219,25 +219,27 @@ final class NowPlayingService {
             try process.run()
         } catch {
             Log.write("[NowPlayingService] osascript launch failed for \(bundleID): \(error)")
-            return false
+            return .failed
         }
         if PermissionStatus.known(bundleID) != .notAsked { process.terminate(after: 3) }
         process.waitUntilExit()
         if process.terminationReason == .uncaughtSignal {
-            Log.write("[NowPlayingService] \(label) -> \(bundleID) timed out")
-            return false
+            Log.write("[NowPlayingService] \(label) -> \(bundleID) timed out; not resent")
+            return .timedOut
         }
         let errText = String(data: err.fileHandleForReading.readDataToEndOfFile(),
                              encoding: .utf8)?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if process.terminationStatus == 0 {
             Log.write("[NowPlayingService] \(label) -> \(bundleID) OK (targeted)")
-            return true
+            return .ok
         } else {
             Log.write("[NowPlayingService] \(label) -> \(bundleID) failed: \(errText)")
-            return false
+            return .failed
         }
     }
+
+    private enum ScriptResult { case ok, failed, timedOut }
 
     // MARK: - Command dispatch via the adapter
 
