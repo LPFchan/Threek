@@ -121,7 +121,8 @@ enum QuickTimeDocuments {
     }
 
     /// Runs AppleScript through `/usr/bin/osascript`, like the rest of the
-    /// targeted dispatch, and returns stdout, or nil on failure.
+    /// targeted dispatch, and returns stdout, or nil on failure. Same time
+    /// limit as the targeted dispatch.
     private static func runOsascript(_ source: String) -> String? {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
@@ -130,6 +131,7 @@ enum QuickTimeDocuments {
         process.standardOutput = out
         process.standardError = Pipe()
         do { try process.run() } catch { return nil }
+        if PermissionStatus.known(bundleID) != .notAsked { process.terminate(after: 3) }
         let data = out.fileHandleForReading.readDataToEndOfFile()
         process.waitUntilExit()
         guard process.terminationStatus == 0 else { return nil }

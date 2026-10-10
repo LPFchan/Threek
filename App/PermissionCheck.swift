@@ -48,7 +48,8 @@ enum PermissionCheck {
         return status == 0
     }
 
-    /// Runs a checker and returns its exit status, or nil if it can't start.
+    /// Runs a checker and returns its exit status, or nil if it can't start
+    /// or doesn't answer within a few seconds.
     private static func run(_ permission: Permission) -> Int32? {
         let checker = Process()
         checker.executableURL = Bundle.main.executableURL
@@ -56,7 +57,12 @@ enum PermissionCheck {
         checker.standardOutput = FileHandle.nullDevice
         checker.standardError = FileHandle.nullDevice
         do { try checker.run() } catch { return nil }
+        checker.terminate(after: 3)
         checker.waitUntilExit()
+        guard checker.terminationReason == .exit else {
+            Log.write("[PermissionCheck] \(permission.rawValue) checker timed out")
+            return nil
+        }
         return checker.terminationStatus
     }
 }
