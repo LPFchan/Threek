@@ -38,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// True once we've confirmed the event tap actually receives events. A
     /// stale TCC grant leaves AXIsProcessTrusted()==true but the tap blind.
     private var tapVerified = false
+    private var checkingPermissions = false
     private var selfTestKeyCode: Int32 = -1
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -60,17 +61,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // reset, a new media app) gets it back at that step.
         let firstRun = CommandLine.arguments.contains("--onboarding")
             || !UserDefaults.standard.bool(forKey: "onboarded")
-        let snapshot = PermissionStatus.snapshot()
-        missingStep = snapshot.missing
-        lastGranted = snapshot.granted
-        let unanswered = snapshot.unanswered
-        let onboard = firstRun || unanswered != nil
-        Log.write("[AppDelegate] launch: firstRun=\(firstRun) unanswered=\(unanswered.map { "\($0)" } ?? "none") onboard=\(onboard)")
-        // The onboarding asks for each permission itself, with an
-        // explanation first, rather than the bare system prompt at launch.
-        checkAccessibilityAndStart(prompt: !onboard)
-        if onboard { showOnboarding(from: firstRun ? .welcome : unanswered ?? .welcome) }
-        watchPermissions()
+        checkPermissions { [weak self] snapshot in
+            guard let self else { return }
+            self.missingStep = snapshot.missing
+            self.lastGranted = snapshot.granted
+            let unanswered = snapshot.unanswered
+            let onboard = firstRun || unanswered != nil
+            Log.write("[AppDelegate] launch: firstRun=\(firstRun) unanswered=\(unanswered.map { "\($0)" } ?? "none") onboard=\(onboard)")
+            // The onboarding asks for each permission itself, with an
+            // explanation first, rather than the bare system prompt at launch.
+            self.checkAccessibilityAndStart(prompt: !onboard)
+            if onboard { self.showOnboarding(from: firstRun ? .welcome : unanswered ?? .welcome) }
+            self.watchPermissions()
+        }
         NowPlayingService.shared.warmCache()
 
         // `--preview-hud` auto-opens the picker shortly after launch so the
@@ -222,31 +225,43 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     /// not to allow doesn't bring the window back again and again.
     private func watchPermissions() {
         let check = { [weak self] in
-            DispatchQueue.global(qos: .utility).async {
-                let snapshot = PermissionStatus.snapshot()
+            self?.checkPermissions { [weak self] snapshot in
+                guard let self else { return }
                 let now = snapshot.granted
                 let missing = snapshot.missing
-                DispatchQueue.main.async {
-                    guard let self else { return }
-                    // This watch also covers the tap: a tap without its
-                    // grant stalls input, so take it out right away.
-                    if !snapshot.accessibility && self.interceptor.isRunning {
-                        self.accessibilityLost()
-                    }
-                    let lost = self.lastGranted.subtracting(now)
-                    self.lastGranted = now
-                    if missing != self.missingStep {
-                        self.missingStep = missing
-                        self.buildMenu()
-                    }
-                    if !lost.isEmpty, let missing {
-                        Log.write("[AppDelegate] permission revoked: \(lost.sorted())")
-                        self.showOnboarding(from: missing)
-                    }
+                // This watch also covers the tap: a tap without its
+                // grant stalls input, so take it out right away.
+                if !snapshot.accessibility && self.interceptor.isRunning {
+                    self.accessibilityLost()
+                }
+                let lost = self.lastGranted.subtracting(now)
+                self.lastGranted = now
+                if missing != self.missingStep {
+                    self.missingStep = missing
+                    self.buildMenu()
+                }
+                if !lost.isEmpty, let missing {
+                    Log.write("[AppDelegate] permission revoked: \(lost.sorted())")
+                    self.showOnboarding(from: missing)
                 }
             }
         }
         permissionWatch = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { _ in check() }
+    }
+
+    /// Takes a permission snapshot off the main thread and hands it over on
+    /// the main thread. One at a time: a check asked for while another is
+    /// still out is skipped, so slow answers never pile up.
+    private func checkPermissions(_ done: @escaping (PermissionStatus.Snapshot) -> Void) {
+        guard !checkingPermissions else { return }
+        checkingPermissions = true
+        DispatchQueue.global(qos: .userInitiated).async {
+            let snapshot = PermissionStatus.snapshot()
+            DispatchQueue.main.async {
+                self.checkingPermissions = false
+                done(snapshot)
+            }
+        }
     }
 
     // MARK: - Tap health
