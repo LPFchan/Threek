@@ -539,6 +539,8 @@ final class NowPlayingService {
         "com.apple.Podcasts",
         "com.colliderli.iina",
         "com.cog.cog",
+        "com.music.bitchord",            // BitChord (desktop)
+        "com.marierie.bitchordkorean",   // BitChord KR
     ]
 
     /// The bundle ID of the app macOS currently reports as now-playing, read
