@@ -47,7 +47,7 @@ enum PermissionStatus {
 
     /// Supported players that are installed, in a stable order.
     static var installedPlayers: [String] {
-        (NowPlayingService.scriptableBundleIDs.union([QuickTimeDocuments.bundleID]))
+        Set(NowPlayingService.installedScriptablePlayers + [QuickTimeDocuments.bundleID])
             .filter { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) != nil }
             .sorted()
     }
