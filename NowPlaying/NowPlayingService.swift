@@ -11,7 +11,7 @@ import Foundation
 /// reports back as JSON. See `Vendor/mediaremote-adapter`.
 ///
 /// State probing and command dispatch use AppleScript, which needs no private
-/// API and works for any scriptable media app (Music, Spotify, VLC, …).
+/// API and works for any media app with a dictionary (Music, Spotify, …).
 final class NowPlayingService {
 
     static let shared = NowPlayingService()
@@ -158,7 +158,7 @@ final class NowPlayingService {
                 var ok = false
                 if let document = app.document {
                     ok = QuickTimeDocuments.pause(document)
-                } else if Self.scriptableBundleIDs.contains(app.effectiveBundleID) {
+                } else if Self.isScriptable(app.effectiveBundleID) {
                     ok = self.runTargetedAppleScript("pause", to: app.effectiveBundleID, label: "pause") == .ok
                 }
                 lock.lock(); reached[i] = ok; lock.unlock()
@@ -448,7 +448,7 @@ final class NowPlayingService {
             // An app is reliably controllable if we can drive it directly with
             // AppleScript, or if it's the current now-playing app (reachable
             // via the adapter). Non-scriptable background apps get greyed out.
-            app.isControllable = Self.scriptableBundleIDs.contains(app.effectiveBundleID)
+            app.isControllable = Self.isScriptable(app.effectiveBundleID)
                 || app.effectiveBundleID == nowPlaying
             if let meta = freshMetadata[app.effectiveBundleID] {
                 app.trackTitle = meta.title
@@ -528,20 +528,52 @@ final class NowPlayingService {
         }
     }
 
-    /// Bundle IDs known to respond to `tell application id … to playpause`.
-    /// Anything not listed here is treated as non-scriptable (browsers, Zen)
-    /// and is only controllable while it is the active now-playing app.
-    static let scriptableBundleIDs: Set<String> = [
-        "com.apple.Music",
-        "com.spotify.client",
-        "org.videolan.vlc",
-        "com.apple.TV",
-        "com.apple.Podcasts",
-        "com.colliderli.iina",
-        "com.cog.cog",
-        "com.music.bitchord",            // BitChord (desktop)
-        "com.marierie.bitchordkorean",   // BitChord KR
-    ]
+    /// Whether the app's AppleScript dictionary lists `playpause`, the
+    /// command Threek sends it. Read from the app itself, so any player that
+    /// ships one works without being named here. Anything else (browsers,
+    /// Zen) is only controllable while it is the active now-playing app.
+    static func isScriptable(_ bundleID: String) -> Bool {
+        guard let app = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleID) else { return false }
+        return isScriptable(app: app)
+    }
+
+    /// Installed players with that dictionary, found once per launch.
+    static let installedScriptablePlayers: [String] = {
+        let fm = FileManager.default
+        let folders = [URL(fileURLWithPath: "/Applications"),
+                       URL(fileURLWithPath: "/System/Applications"),
+                       fm.homeDirectoryForCurrentUser.appendingPathComponent("Applications")]
+        let ids = folders
+            .flatMap { (try? fm.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil)) ?? [] }
+            .filter { $0.pathExtension == "app" && isScriptable(app: $0) }
+            .compactMap { Bundle(url: $0)?.bundleIdentifier }
+        return Array(Set(ids))
+    }()
+
+    /// Each app's answer, kept until its Info.plist changes (an update).
+    private static var dictionaryAnswers: [String: (stamp: Date, scriptable: Bool)] = [:]
+    private static let dictionaryLock = NSLock()
+
+    private static func isScriptable(app: URL) -> Bool {
+        let plist = app.appendingPathComponent("Contents/Info.plist")
+        guard let stamp = try? plist.resourceValues(forKeys: [.contentModificationDateKey])
+            .contentModificationDate else { return false }
+        dictionaryLock.lock()
+        let known = dictionaryAnswers[app.path]
+        dictionaryLock.unlock()
+        if let known, known.stamp == stamp { return known.scriptable }
+
+        var scriptable = false
+        if let name = NSDictionary(contentsOf: plist)?["OSAScriptingDefinition"] as? String,
+           let sdef = try? XMLDocument(contentsOf: app.appendingPathComponent("Contents/Resources/\(name)")),
+           let commands = try? sdef.nodes(forXPath: "//command[@name='playpause']") {
+            scriptable = !commands.isEmpty
+        }
+        dictionaryLock.lock()
+        dictionaryAnswers[app.path] = (stamp, scriptable)
+        dictionaryLock.unlock()
+        return scriptable
+    }
 
     /// The bundle ID of the app macOS currently reports as now-playing, read
     /// from the adapter's `get` payload; nil if it can't be determined.
