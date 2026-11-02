@@ -544,7 +544,12 @@ final class NowPlayingService {
                        URL(fileURLWithPath: "/System/Applications"),
                        fm.homeDirectoryForCurrentUser.appendingPathComponent("Applications")]
         let ids = folders
-            .flatMap { (try? fm.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil)) ?? [] }
+            .flatMap { folder in
+                // Into subfolders (Utilities, a user's own), not into apps.
+                fm.enumerator(at: folder, includingPropertiesForKeys: nil,
+                              options: [.skipsPackageDescendants, .skipsHiddenFiles])?
+                    .compactMap { $0 as? URL } ?? []
+            }
             .filter { $0.pathExtension == "app" && isScriptable(app: $0) }
             .compactMap { Bundle(url: $0)?.bundleIdentifier }
         return Array(Set(ids))
